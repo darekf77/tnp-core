@@ -1,0 +1,28 @@
+{
+  "resources": [
+    "README.md"
+  ],
+  "isCoreProject": false,
+  "useFramework": false,
+  "type": "isomorphic-lib",
+  "required": [],
+  "version": "v2",
+  "overrided": {
+    "ignoreDepsPattern": [],
+    "includeAsDev": "*",
+    "includeOnly": [],
+    "dependencies": {},
+    "linkedFolders": []
+  },
+  "linkedProjects": [],
+  "libReleaseOptions": {
+    "nodts": false,
+    "obscure": false,
+    "ugly": false
+  },
+  "isGenerated": false,
+  "requiredServers": [],
+  "license": "MIT",
+  "private": false,
+  "main": "index.js"
+}
