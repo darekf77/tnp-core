@@ -3,10 +3,12 @@ import * as _ from 'lodash';
 //#region @backend
 import * as path from 'path';
 import * as fse from 'fs-extra';
+import * as rimraf from 'rimraf';
 import * as os from 'os';
 import * as child_process from 'child_process';
 import * as http from 'http';
 import * as https from 'https';
+import * as net from 'net';
 
 function crossPlatformPath(p: string) {
 
@@ -35,22 +37,25 @@ export {
   fse,
   crossPlatformPath,
   os,
-  child_process,  
+  child_process,
   http, https,
+  rimraf,
+  net,
   //#endregion
-}
+};
 
 /*
 import {
   _,
-  //#region @backend
   path,
   fse,
+  rimraf,
   crossPlatformPath,
   os,
-  child_process,  
+  child_process,
   http, https,
-  //#endregion
+  rimraf,
+  net,
 } from 'tnp-core';
 
 import { _ } from 'tnp-core';
@@ -59,4 +64,3 @@ import {  } from 'tnp-core';
 
 */
 
-//#endregion

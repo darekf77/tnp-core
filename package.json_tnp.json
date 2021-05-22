@@ -10,7 +10,10 @@
   "overrided": {
     "ignoreDepsPattern": [],
     "includeAsDev": "*",
-    "includeOnly": [],
+    "includeOnly": [
+      "lodash",
+      "@types/lodash"
+    ],
     "dependencies": {},
     "linkedFolders": []
   },
