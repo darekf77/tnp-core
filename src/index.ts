@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import * as q from 'q';
 
 //#region @backend
 import * as path from 'path';
@@ -20,7 +21,6 @@ import * as ps from 'ps-node';
 import * as  psList from 'ps-list';
 import * as fkill from 'fkill';
 import * as portfinder from 'portfinder';
-import * as q from 'q';
 
 
 function crossPlatformPath(p: string) {
