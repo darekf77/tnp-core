@@ -16,7 +16,8 @@ import * as chokidar from 'chokidar';
 import * as mkdirp from 'mkdirp';
 import * as json5 from 'json5';
 import * as ncp from 'copy-paste';
-import isElevated from 'is-elevated';
+// @ts-ignore
+import * as isElevated from 'is-elevated';
 import * as ps from 'ps-node';
 import * as  psList from 'ps-list';
 import * as fkill from 'fkill';
