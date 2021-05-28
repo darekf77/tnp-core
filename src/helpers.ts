@@ -173,12 +173,12 @@ export class HelpersCore extends HelpersMessages {
     rimraf.sync(link);
 
     if (process.platform === 'win32') {
-      target = path.win32.normalize(target).replace(/\\/g, '\\\\').replace(/\\$/, '');
-      link = path.win32.normalize(link).replace(/\\/g, '\\\\').replace(/\\$/, '');
+      target = path.win32.normalize(target).replace(/\\$/, '');
+      link = path.win32.normalize(link).replace(/\\$/, '');
 
       // const winLinkCommand = `cmd  /c "mklink /D ${link} ${target}"`;
       // const winLinkCommand = `export MSYS=winsymlinks:nativestrict && ln -s ${target} ${link}`;
-      const winLinkCommand = `mklink ${targetIsFile ? '/H' : '/j'} ${link} ${target}`;
+      const winLinkCommand = `mklink ${targetIsFile ? '/H' : '/j'} "${link}" "${target}"`;
       Helpers.log(`windows link: lnk ${target} ${link}
 
       "${winLinkCommand}'
