@@ -11,6 +11,7 @@ import {
   chalk,
   dateformat,
   spawn,
+  win32Path,
   //#endregion
 } from './core-imports';
 import { Helpers } from './index';
@@ -64,8 +65,8 @@ export class HelpersCore extends HelpersMessages {
   //#region @backend
   createSymLink(existedFileOrFolder: string, destinationPath: string,
     options?: {
-      continueWhenExistedFolderDoesntExists?: boolean
-      ;
+      continueWhenExistedFolderDoesntExists?: boolean;
+      windowsHardLink?: boolean;
       dontRenameWhenSlashAtEnd?: boolean;
     }) {
     existedFileOrFolder = crossPlatformPath(existedFileOrFolder);
@@ -81,7 +82,10 @@ export class HelpersCore extends HelpersMessages {
     if (_.isUndefined(options.dontRenameWhenSlashAtEnd)) {
       options.dontRenameWhenSlashAtEnd = false;
     }
-    const { continueWhenExistedFolderDoesntExists } = options;
+    if (_.isUndefined(options.windowsHardLink)) {
+      options.windowsHardLink = false;
+    }
+    const { continueWhenExistedFolderDoesntExists, windowsHardLink } = options;
 
     // console.log('Create link!')
 
@@ -178,7 +182,7 @@ export class HelpersCore extends HelpersMessages {
 
       // const winLinkCommand = `cmd  /c "mklink /D ${link} ${target}"`;
       // const winLinkCommand = `export MSYS=winsymlinks:nativestrict && ln -s ${target} ${link}`;
-      const winLinkCommand = `mklink ${targetIsFile ? '/H' : '/j'} "${link}" "${target}"`;
+      const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${link}" "${target}"`;
       Helpers.log(`windows link: lnk ${target} ${link}
 
       "${winLinkCommand}'
@@ -301,7 +305,7 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
     return {
-       //#region @backend
+      //#region @backend
       sync(): any { // TODO buffer
 
         if (_.isArray(options.extractFromLine)) {
@@ -825,9 +829,6 @@ command: ${command}
       ;
   }
   //#endregion
-
-
-
   stringify(inputObject: any): string {
     // if (_.isString(inputObject)) {
     //   return inputObject;
@@ -838,5 +839,31 @@ command: ${command}
     // }
     return JSON.stringify(inputObject, null, 2);
   }
+
+  //#region @backend
+  openFolderInFileExploer(folderPath: string) {
+    if (process.platform === 'win32') {
+      folderPath = win32Path(folderPath)
+    }
+    try {
+      Helpers.info(`Opening path in file explorer: "${folderPath}"`)
+      if (process.platform === 'win32') {
+        Helpers.run(`explorer ${folderPath}`).sync();
+        return;
+      }
+      if (process.platform === 'darwin') {
+        Helpers.run(`open ${folderPath}`).sync();
+        return;
+      }
+      Helpers.run(`xdg-open ${folderPath}`).sync();
+    } catch (error) {
+      if(process.platform !== 'win32') { // TODO QUICK fix explorer with path is triggering errro
+        Helpers.error(`Not able to open in file explorer: "${folderPath}"`, false, true);
+      }
+
+    }
+
+  }
+  //#endregion
 
 }
