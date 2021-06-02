@@ -816,6 +816,24 @@ command: ${command}
   /**
    * return absolute paths for folders inside folders
    */
+  linksFrom(pathToFolder: string | string[]) {
+    if (_.isArray(pathToFolder)) {
+      pathToFolder = path.join(...pathToFolder) as string;
+    }
+    if (!Helpers.exists(pathToFolder)) {
+      return [];
+    }
+    return fse.readdirSync(pathToFolder)
+      .map(f => path.join(pathToFolder as string, f))
+      .filter(f => Helpers.isLink(f))
+      ;
+  }
+  //#endregion
+
+  //#region @backend
+  /**
+   * return absolute paths for folders inside folders
+   */
   filesFrom(pathToFolder: string | string[]) {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
@@ -857,7 +875,7 @@ command: ${command}
       }
       Helpers.run(`xdg-open ${folderPath}`).sync();
     } catch (error) {
-      if(process.platform !== 'win32') { // TODO QUICK fix explorer with path is triggering errro
+      if (process.platform !== 'win32') { // TODO QUICK fix explorer with path is triggering errro
         Helpers.error(`Not able to open in file explorer: "${folderPath}"`, false, true);
       }
 
