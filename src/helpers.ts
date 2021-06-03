@@ -796,6 +796,27 @@ command: ${command}
 
   //#region @backend
   /**
+   * wrapper for fs.writeFileSync
+   */
+  writeJson(absoluteFilePath: string | (string[]), input: object): boolean {
+    if (_.isArray(absoluteFilePath)) {
+      absoluteFilePath = path.join.apply(this, absoluteFilePath);
+    }
+    absoluteFilePath = absoluteFilePath as string;
+    if (!Helpers.exists(path.dirname(absoluteFilePath))) {
+      Helpers.mkdirp(path.dirname(absoluteFilePath));
+    }
+
+    fse.writeJSONSync(absoluteFilePath, input, {
+      encoding,
+      spaces: 2
+    });
+    return true;
+  }
+  //#endregion
+
+  //#region @backend
+  /**
    * return absolute paths for folders inside folders
    */
   foldersFrom(pathToFolder: string | string[]) {
