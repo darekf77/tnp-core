@@ -58,6 +58,31 @@ export class HelpersCore extends HelpersMessages {
     return s;
   }
 
+  stringify(inputObject: any): string {
+    // if (_.isString(inputObject)) {
+    //   return inputObject;
+    // }
+    // if (_.isObject(inputObject)) {
+    //   config.log(inputObject)
+    //   Helpers.error(`[tnp-helpers] trying to stringify not a object`, false, true);
+    // }
+    return JSON.stringify(inputObject, null, 2);
+  }
+
+  async runSyncOrAsync(fn: Function | [string, object], ...firstArg: any[]) {
+    if (_.isUndefined(fn)) {
+      return;
+    }
+    // let wasPromise = false;
+    let promisOrValue = _.isArray(fn) ? fn[1][fn[0]](...firstArg) : fn(...firstArg);
+    if (promisOrValue instanceof Promise) {
+      // wasPromise = true;
+      promisOrValue = Promise.resolve(promisOrValue)
+    }
+    // console.log('was promis ', wasPromise)
+    return promisOrValue;
+  }
+
   //#region @backend
   readonly processes: child_process.ChildProcess[] = [];
   //#endregion
@@ -744,22 +769,6 @@ command: ${command}
   //#endregion
 
   //#region @backend
-  async runSyncOrAsync(fn: Function | [string, object], ...firstArg: any[]) {
-    if (_.isUndefined(fn)) {
-      return;
-    }
-    // let wasPromise = false;
-    let promisOrValue = _.isArray(fn) ? fn[1][fn[0]](...firstArg) : fn(...firstArg);
-    if (promisOrValue instanceof Promise) {
-      // wasPromise = true;
-      promisOrValue = Promise.resolve(promisOrValue)
-    }
-    // console.log('was promis ', wasPromise)
-    return promisOrValue;
-  }
-  //#endregion
-
-  //#region @backend
   /**
    * wrapper for fs.writeFileSync
    */
@@ -868,16 +877,6 @@ command: ${command}
       ;
   }
   //#endregion
-  stringify(inputObject: any): string {
-    // if (_.isString(inputObject)) {
-    //   return inputObject;
-    // }
-    // if (_.isObject(inputObject)) {
-    //   config.log(inputObject)
-    //   Helpers.error(`[tnp-helpers] trying to stringify not a object`, false, true);
-    // }
-    return JSON.stringify(inputObject, null, 2);
-  }
 
   //#region @backend
   openFolderInFileExploer(folderPath: string) {
