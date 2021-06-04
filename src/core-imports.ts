@@ -25,14 +25,20 @@ import * as  psList from 'ps-list';
 import * as fkill from 'fkill';
 import * as portfinder from 'portfinder';
 
-function win32Path(p:string) {
+function win32Path(p: string) {
+  if (process.platform !== 'win32') {
+    return p;
+  }
   if (/^\/[a-z]\//.test(p)) {
     p = p.replace(/^\/[a-z]\//, `${p.charAt(1).toUpperCase()}:/`);
   }
-  return  path.win32.normalize(p);
+  return path.win32.normalize(p);
 }
 
 function crossPlatformPath(p: string) {
+  if (process.platform !== 'win32') {
+    return p;
+  }
   if (typeof p !== 'string') {
     return p;
   }
