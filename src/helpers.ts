@@ -93,6 +93,10 @@ export class HelpersCore extends HelpersMessages {
       continueWhenExistedFolderDoesntExists?: boolean;
       windowsHardLink?: boolean;
       dontRenameWhenSlashAtEnd?: boolean;
+      /**
+       * only if you know that symlink can be created
+       */
+      speedUpProcess?: boolean;
     }) {
     existedFileOrFolder = crossPlatformPath(existedFileOrFolder);
     destinationPath = crossPlatformPath(destinationPath);
@@ -110,7 +114,10 @@ export class HelpersCore extends HelpersMessages {
     if (_.isUndefined(options.windowsHardLink)) {
       options.windowsHardLink = false;
     }
-    const { continueWhenExistedFolderDoesntExists, windowsHardLink } = options;
+    if (_.isUndefined(options.speedUpProcess)) {
+      options.speedUpProcess = false;
+    }
+    const { continueWhenExistedFolderDoesntExists, windowsHardLink, speedUpProcess } = options;
 
     // console.log('Create link!')
 
@@ -154,52 +161,56 @@ export class HelpersCore extends HelpersMessages {
 
     const resolvedLink = crossPlatformPath(path.resolve(link));
     const resolvedTarget = crossPlatformPath(path.resolve(target));
-    const exactSameLocations = (resolvedLink === resolvedTarget);
-    // const tagetIsLink = Helpers.isLink(resolvedTarget);
-    // const exactSameLinks = (tagetIsLink && (fse.readlinkSync(resolvedTarget) === resolvedLink));
-    // const exactSameOverrideTargetLink = (tagetIsLink && (fse.readlinkSync(resolvedTarget) === resolvedTarget));
     const targetIsFile = Helpers.isFile(resolvedTarget);
-    const targetIsLink = Helpers.isLink(resolvedTarget);
 
-    const exactSameOVerrideTarget = (
-      !Helpers.isLink(resolvedLink)
-      && Helpers.exists(resolvedLink)
-      && !targetIsLink
-      && Helpers.exists(resolvedTarget)
-      && Helpers.isFile(resolvedLink)
-      && targetIsFile // TODO refactor this
-      && Helpers.readFile(resolvedLink) === Helpers.readFile(resolvedTarget)
-    );
-    if (exactSameLocations) {
-      Helpers.warn(`[createSymLink] Trying to link same location`);
-      return;
-    }
-    // if (exactSameLinks) {
-    //   Helpers.warn(`[createSymLink] Trying to link same link`);
-    //   return;
-    // }
-    // if (exactSameOverrideTargetLink) {
-    //   Helpers.warn(`[createSymLink] Trying to override same link with link to itself`);
-    //   return;
-    // }
-    if (exactSameOVerrideTarget) {
-      const linkContainerLink = Helpers.pathContainLink(resolvedLink);
-      const targetContainerLink = Helpers.pathContainLink(resolvedTarget);
-      if (
-        (!linkContainerLink && targetContainerLink)
-        || (linkContainerLink && !targetContainerLink)
-      ) {
-        Helpers.warn(`[createSymLink] Trying to override same file with link to itself:
-        ${resolvedLink}
-        to
-        ${resolvedTarget}
-        `);
+    if (!speedUpProcess) {
+      const exactSameLocations = (resolvedLink === resolvedTarget);
+      // const tagetIsLink = Helpers.isLink(resolvedTarget);
+      // const exactSameLinks = (tagetIsLink && (fse.readlinkSync(resolvedTarget) === resolvedLink));
+      // const exactSameOverrideTargetLink = (tagetIsLink && (fse.readlinkSync(resolvedTarget) === resolvedTarget));
+
+      const targetIsLink = Helpers.isLink(resolvedTarget);
+
+      const exactSameOVerrideTarget = (
+        !Helpers.isLink(resolvedLink)
+        && Helpers.exists(resolvedLink)
+        && !targetIsLink
+        && Helpers.exists(resolvedTarget)
+        && Helpers.isFile(resolvedLink)
+        && targetIsFile // TODO refactor this
+        && Helpers.readFile(resolvedLink) === Helpers.readFile(resolvedTarget)
+      );
+      if (exactSameLocations) {
+        Helpers.warn(`[createSymLink] Trying to link same location`);
         return;
       }
+      // if (exactSameLinks) {
+      //   Helpers.warn(`[createSymLink] Trying to link same link`);
+      //   return;
+      // }
+      // if (exactSameOverrideTargetLink) {
+      //   Helpers.warn(`[createSymLink] Trying to override same link with link to itself`);
+      //   return;
+      // }
+      if (exactSameOVerrideTarget) {
+        const linkContainerLink = Helpers.pathContainLink(resolvedLink);
+        const targetContainerLink = Helpers.pathContainLink(resolvedTarget);
+        if (
+          (!linkContainerLink && targetContainerLink)
+          || (linkContainerLink && !targetContainerLink)
+        ) {
+          Helpers.warn(`[createSymLink] Trying to override same file with link to itself:
+          ${resolvedLink}
+          to
+          ${resolvedTarget}
+          `);
+          return;
+        }
+      }
+
+
+      rimraf.sync(link);
     }
-
-
-    rimraf.sync(link);
 
     if (process.platform === 'win32') {
       target = path.win32.normalize(target).replace(/\\$/, '');
@@ -255,28 +266,38 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region @backend
-  isLink(filePath: string) {
+  /**
+   * @param existedLink check if source of link exists
+   */
+  isLink(filePath: string, existedLink = false) {
     if (!fse.existsSync(filePath)) {
       return false;
     }
     filePath = Helpers.removeSlashAtEnd(filePath);
+    let isLink = false;
     if (process.platform === 'win32') {
       filePath = path.win32.normalize(filePath);
       // console.log('extename: ', path.extname(filePath))
-      return fse.lstatSync(filePath).isSymbolicLink() || path.extname(filePath) === '.lnk';
+      isLink = fse.lstatSync(filePath).isSymbolicLink() || path.extname(filePath) === '.lnk';
     } else {
       if (process.platform === 'darwin') {
-        try {
-          const command = `[[ -L "${filePath}" && -d "${filePath}" ]] && echo "symlink"`;
-          // console.log(command)
-          const res = Helpers.run(command, { output: false, biggerBuffer: false }).sync().toString()
-          return res.trim() === 'symlink'
-        } catch (error) {
-          return false;
-        }
+        isLink = fse.lstatSync(filePath).isSymbolicLink();
+        // try { // TODO Why would I want that ?
+        //   const command = `[[ -L "${filePath}" && -d "${filePath}" ]] && echo "symlink"`;
+        //   // console.log(command)
+        //   const res = Helpers.run(command, { output: false, biggerBuffer: false }).sync().toString()
+        //   return res.trim() === 'symlink'
+        // } catch (error) {
+        //   return false;
+        // }
       } else { // TODO QUICK FIX
-        return fse.lstatSync(filePath).isSymbolicLink();
+        isLink = fse.lstatSync(filePath).isSymbolicLink();
       }
+      if (existedLink) {
+        const realPath = fse.realpathSync(filePath);
+        return Helpers.exists(realPath);
+      }
+      return isLink;
     }
   }
   //#endregion
@@ -840,13 +861,9 @@ command: ${command}
       .filter(f => fse.lstatSync(f).isDirectory())
       ;
   }
-  //#endregion
 
-  //#region @backend
-  /**
-   * return absolute paths for folders inside folders
-   */
-  linksFrom(pathToFolder: string | string[]) {
+
+  linksToFoldersFrom(pathToFolder: string | string[]) {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
@@ -855,8 +872,57 @@ command: ${command}
     }
     return fse.readdirSync(pathToFolder)
       .map(f => path.join(pathToFolder as string, f))
-      .filter(f => Helpers.isLink(f))
-      ;
+      .filter(f => fse.lstatSync(f).isSymbolicLink())
+      .filter(f => {
+        const realPath = fse.realpathSync(f);
+        return Helpers.isFolder(realPath);
+      });
+  }
+  //#endregion
+
+  //#region @backend
+  /**
+   * return absolute paths for folders inside folders
+   */
+  linksFrom(
+    pathToFolder: string | string[],
+    options?: {
+      onlyLinksToExistedFilesOrFolder?: boolean;
+      linksOnlyTo: 'files' | 'folders' | 'both'
+    }
+  ) {
+    options = (options || {}) as any;
+    if (_.isUndefined(options.linksOnlyTo)) {
+      options.linksOnlyTo = 'both';
+    }
+    if (_.isUndefined(options.onlyLinksToExistedFilesOrFolder)) {
+      options.onlyLinksToExistedFilesOrFolder = true;
+    }
+    if (_.isArray(pathToFolder)) {
+      pathToFolder = path.join(...pathToFolder) as string;
+    }
+    if (!Helpers.exists(pathToFolder)) {
+      return [];
+    }
+    return fse.readdirSync(pathToFolder)
+      .map(f => path.join(pathToFolder as string, f))
+      .filter(f => {
+        let res = false;
+        if (Helpers.isLink(f)) {
+          res = !options.onlyLinksToExistedFilesOrFolder;
+          const realPath = fse.realpathSync(f);
+          if (Helpers.exists(realPath)) {
+            res = true;
+            if (options.linksOnlyTo === 'folders') {
+              res = Helpers.isFolder(realPath)
+            }
+            if (options.linksOnlyTo === 'files') {
+              res = Helpers.isFile(realPath)
+            }
+          }
+        }
+        return res;
+      });
   }
   //#endregion
 
