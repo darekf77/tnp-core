@@ -504,6 +504,8 @@ export class HelpersCore extends HelpersMessages {
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
     let stdio = Helpers.getStdio(options)
     Helpers.checkProcess(cwd, command);
+
+
     let proc: child_process.ChildProcess;
     if (detach) {
       const cmd = _.first(command.split(' '));
@@ -532,7 +534,9 @@ export class HelpersCore extends HelpersMessages {
       `)
       // proc = child.exec(`${command} &`, { cwd, maxBuffer, });
     } else {
-      proc = child_process.exec(command, { cwd, maxBuffer, });
+      // Helpers.log(`Command to execture: ${command}`)
+      const env = { ...process.env, FORCE_COLOR: '1' };
+      proc = child_process.exec(command, { cwd, maxBuffer, env });
     }
     return Helpers.logProc(proc,
       detach ? true : output,

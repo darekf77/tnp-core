@@ -1,6 +1,6 @@
 //#region @backend
 declare const global: any;
-import { chalk } from './core-imports';
+import { chalk, _, json5 } from './core-imports';
 //#endregion
 // import { config } from 'tnp-config';
 // import { PROGRESS_DATA } from 'tnp-models';
@@ -192,7 +192,11 @@ export class HelpersMessages extends HelpersIsomorphic {
         global[KEY.LAST_LOG] = details;
       }
       if (global.globalSystemToolMode) {
-        console.log(chalk.gray(details))
+        if (_.isObject(details)) {
+          console.log(chalk.gray(json5.stringify(details)))
+        } else {
+          console.log(chalk.gray(details))
+        }
       }
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: details })
