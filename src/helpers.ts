@@ -718,6 +718,22 @@ command: ${command}
   }
   //#endregion
 
+  /**
+   * Quick fix for object values
+   */
+  values(obj: any) {
+    if (_.isObject(obj) && !Array.isArray(obj)) {
+      const values = [];
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          values.push(obj[key]);
+        }
+      }
+      return values;
+    }
+    return [];
+  }
+
   //#region @backend
   isFile(pathToFileOrMaybeFolder: string) {
     return pathToFileOrMaybeFolder && fse.existsSync(pathToFileOrMaybeFolder) &&
