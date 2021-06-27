@@ -192,11 +192,11 @@ export class HelpersMessages extends HelpersIsomorphic {
         global[KEY.LAST_LOG] = details;
       }
       if (global.globalSystemToolMode) {
-        if (_.isObject(details)) {
-          console.log(chalk.gray(json5.stringify(details)))
-        } else {
-          console.log(chalk.gray(details))
-        }
+        // if (_.isObject(details)) {
+        //   console.log(chalk.gray(json5.stringify(details)))
+        // } else {
+        console.log(chalk.gray(details))
+        // }
       }
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: details })
