@@ -152,14 +152,14 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#endregion
   }
 
-  info(details: string) {
+  info(details: string, repeatable = false) {
     if (Helpers.isBrowser) {
       console.info(details);
       return;
     }
     //#region @backend
     if (!global.muteMessages && !global.hideInfos) {
-      if (global[KEY.LAST_INFO] === details) {
+      if ((global[KEY.LAST_INFO] === details) && !repeatable) {
         process.stdout.write('.');
         return;
       } else {
