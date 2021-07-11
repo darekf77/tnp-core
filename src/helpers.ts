@@ -18,6 +18,7 @@ import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { RunOptions } from './core-models';
 
+declare const global: any;
 const encoding = 'utf8';
 
 export class HelpersCore extends HelpersMessages {
@@ -47,10 +48,10 @@ export class HelpersCore extends HelpersMessages {
   readonly bigMaxBuffer = 2024 * 500;
   constructor() {
     super();
-    //#region @backend
-    process.on('SIGINT', this.cleanExit); // catch ctrl-c
-    process.on('SIGTERM', this.cleanExit); // catch kill
-    //#endregion
+    // //#region @backend
+    // process.on('SIGINT', this.cleanExit); // catch ctrl-c
+    // process.on('SIGTERM', this.cleanExit); // catch kill
+    // //#endregion
   }
 
   removeSlashAtEnd(s: string) {
@@ -469,6 +470,18 @@ export class HelpersCore extends HelpersMessages {
       //#endregion
     }
   }
+  //#region @backend
+  get isRunningIn() {
+    return {
+      mochaTest() {
+        return (typeof global['it'] === 'function');
+      },
+      cliMode() {
+        return !!global['globalSystemToolMode'];
+      },
+    }
+  }
+  //#endregion
 
   //#region @backend
   getStdio(options?: RunOptions) {
