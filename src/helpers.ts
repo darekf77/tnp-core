@@ -758,7 +758,12 @@ command: ${command}
   /**
     * wrapper for fs.readFileSync
     */
-  readFile(absoluteFilePath: string, defaultValueWhenNotExists = void 0 as string): string | undefined {
+  readFile(absoluteFilePath: string | string[], defaultValueWhenNotExists = void 0 as string): string | undefined {
+    if (_.isArray(absoluteFilePath)) {
+      absoluteFilePath = path.join.apply(this, absoluteFilePath);
+    }
+    absoluteFilePath = absoluteFilePath as string;
+
     if (!fse.existsSync(absoluteFilePath)) {
       return defaultValueWhenNotExists;
     }
@@ -772,7 +777,12 @@ command: ${command}
   //#endregion
 
   //#region @backend
-  readJson(absoluteFilePath: string, defaultValue = {}, useJson5 = false) {
+  readJson(absoluteFilePath: string | string[], defaultValue = {}, useJson5 = false) {
+    if (_.isArray(absoluteFilePath)) {
+      absoluteFilePath = path.join.apply(this, absoluteFilePath);
+    }
+    absoluteFilePath = absoluteFilePath as string;
+
     if (!fse.existsSync(absoluteFilePath)) {
       return {};
     }
@@ -831,6 +841,7 @@ command: ${command}
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
+
     if (!fse.existsSync(path.dirname(absoluteFilePath))) {
       Helpers.mkdirp(path.dirname(absoluteFilePath));
     }
@@ -866,6 +877,7 @@ command: ${command}
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
+
     if (!Helpers.exists(path.dirname(absoluteFilePath))) {
       Helpers.mkdirp(path.dirname(absoluteFilePath));
     }
