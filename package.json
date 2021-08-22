@@ -46,7 +46,7 @@
   },
   "lastBuildTagHash": "95e2ad61045d7d3f2ae02a8cde5eb65163ce4c2f",
   "name": "tnp-core",
-  "version": "0.0.56",
+  "version": "0.0.57",
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
@@ -205,7 +205,7 @@
     "minimist": "1.2.0",
     "mocha": "5.2.0",
     "moment": "2.22.2",
-    "morphi": "~4.0.29",
+    "morphi": "~4.0.33",
     "ng-modal-lib": "0.0.6",
     "ng-packagr": "5.7.1",
     "ng-talkback": "~2.4.17",
