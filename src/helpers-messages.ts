@@ -72,7 +72,7 @@ export class HelpersMessages extends HelpersIsomorphic {
         const json = JSON.stringify(details)
         if (global.globalSystemToolMode) {
           if (global[KEY.LAST_ERROR] === json) {
-            // process.stdout.write('.');
+            process.stdout.write('.');
             return;
           } else {
             global[KEY.LAST_ERROR] = json;
@@ -84,7 +84,7 @@ export class HelpersMessages extends HelpersIsomorphic {
           }
         } else {
           if (global[KEY.LAST_ERROR] === json) {
-            // process.stdout.write('.');
+            process.stdout.write('.');
             return;
           } else {
             global[KEY.LAST_ERROR] = json;
@@ -97,7 +97,7 @@ export class HelpersMessages extends HelpersIsomorphic {
       } catch (error) {
         if (global.globalSystemToolMode) {
           if (global[KEY.LAST_ERROR] === details) {
-            // process.stdout.write('.');
+            process.stdout.write('.');
             return;
           } else {
             global[KEY.LAST_ERROR] = details;
@@ -109,7 +109,7 @@ export class HelpersMessages extends HelpersIsomorphic {
           }
         } else {
           if (global[KEY.LAST_ERROR] === details) {
-            // process.stdout.write('.');
+            process.stdout.write('.');
             return;
           } else {
             global[KEY.LAST_ERROR] = details;
@@ -121,7 +121,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     } else {
       if (global.globalSystemToolMode) {
         if (global[KEY.LAST_ERROR] === details) {
-          // process.stdout.write('.');
+          process.stdout.write('.');
           return;
         } else {
           global[KEY.LAST_ERROR] = details;
@@ -133,7 +133,7 @@ export class HelpersMessages extends HelpersIsomorphic {
         }
       } else {
         if (global[KEY.LAST_ERROR] === details) {
-          // process.stdout.write('.');
+          process.stdout.write('.');
           return;
         } else {
           global[KEY.LAST_ERROR] = details;
@@ -160,7 +160,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#region @backend
     if (!global.muteMessages && !global.hideInfos) {
       if ((global[KEY.LAST_INFO] === details) && !repeatable) {
-        // process.stdout.write('.');
+        process.stdout.write('.');
         return;
       } else {
         global[KEY.LAST_INFO] = details;
@@ -186,7 +186,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     // console.log('global.hideLog', global.hideLog);
     if ((!global.muteMessages && !global.hideLog)) {
       if (global[KEY.LAST_LOG] === details) {
-        // process.stdout.write('.');
+        process.stdout.write('.');
         return;
       } else {
         global[KEY.LAST_LOG] = details;
@@ -215,7 +215,7 @@ export class HelpersMessages extends HelpersIsomorphic {
       trace = false;
     }
     if (global[KEY.LAST_WARN] === details) {
-      // process.stdout.write('.');
+      process.stdout.write('.');
       return;
     } else {
       global[KEY.LAST_WARN] = details;
