@@ -46,7 +46,7 @@
   },
   "lastBuildTagHash": "95e2ad61045d7d3f2ae02a8cde5eb65163ce4c2f",
   "name": "tnp-core",
-  "version": "0.0.54",
+  "version": "0.0.56",
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
