@@ -214,6 +214,10 @@ export class HelpersCore extends HelpersMessages {
     }
 
     if (process.platform === 'win32') {
+      if (Helpers.isLink(target)) {
+        target = crossPlatformPath(fse.realpathSync(target)) ;
+        // TODO QUICK_FIX on windows you can't create link to link
+      }
       target = path.win32.normalize(target).replace(/\\$/, '');
       link = path.win32.normalize(link).replace(/\\$/, '');
 
