@@ -216,7 +216,7 @@ export class HelpersCore extends HelpersMessages {
     if (process.platform === 'win32') {
       if (Helpers.isLink(target)) {
         Helpers.info(`FIXING TARGET FOR WINDOWS`)
-        target = crossPlatformPath(fse.realpathSync(target)) ;
+        target = crossPlatformPath(fse.realpathSync(target));
         // TODO QUICK_FIX on windows you can't create link to link
       }
       target = path.win32.normalize(target).replace(/\\$/, '');
@@ -299,12 +299,12 @@ export class HelpersCore extends HelpersMessages {
       } else { // TODO QUICK FIX
         isLink = fse.lstatSync(filePath).isSymbolicLink();
       }
-      if (existedLink) {
-        const realPath = fse.realpathSync(filePath);
-        return Helpers.exists(realPath);
-      }
-      return isLink;
     }
+    if (existedLink) {
+      const realPath = fse.realpathSync(filePath);
+      return Helpers.exists(realPath);
+    }
+    return isLink;
   }
   //#endregion
 
