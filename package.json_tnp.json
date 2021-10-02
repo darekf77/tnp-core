@@ -6,7 +6,7 @@
   "useFramework": false,
   "type": "isomorphic-lib",
   "required": [],
-  "version": "v2",
+  "version": "v3",
   "overrided": {
     "ignoreDepsPattern": [],
     "includeAsDev": "*",
