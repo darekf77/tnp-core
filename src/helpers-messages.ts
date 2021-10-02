@@ -51,10 +51,12 @@ const KEY = {
 export class HelpersMessages extends HelpersIsomorphic {
 
   msgCacheClear() {
+    //#region @backend
     global[KEY.LAST_LOG] = void 0;
     global[KEY.LAST_WARN] = void 0;
     global[KEY.LAST_ERROR] = void 0;
     global[KEY.LAST_INFO] = void 0;
+    //#endregion
   }
 
   error(details: any, noExit = false, noTrace = false) {
