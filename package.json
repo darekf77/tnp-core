@@ -47,7 +47,7 @@
   },
   "lastBuildTagHash": "e6bcc728b22e3530efaa3cdec5c493b2a248bd0e",
   "name": "tnp-core",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
@@ -267,7 +267,7 @@
     "systeminformation": "3.45.7",
     "task.js": "0.1.5",
     "tnp-cli": "~2.0.12",
-    "tnp-config": "~1.0.11",
+    "tnp-config": "~1.0.14",
     "tnp-core": "~1.0.27",
     "tnp-db": "~0.0.33",
     "tnp-helpers": "~0.0.61",
@@ -287,15 +287,10 @@
     "underscore": "1.9.1",
     "uuid": "8.3.2",
     "validator": "9.2.0",
-    "vpn-split": "~0.0.13",
+    "vpn-split": "~0.0.14",
     "watch": "1.0.2",
     "webpack-cli": "3.3.11",
     "zone.js": "0.11.3"
   },
-  "private": false,
-  "husky": {
-    "hooks": {
-      "pre-push": "tnp deps:show:if:standalone"
-    }
-  }
+  "private": false
 }
