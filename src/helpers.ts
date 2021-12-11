@@ -358,7 +358,7 @@ export class HelpersCore extends HelpersMessages {
     //#endregion
     return {
       //#region @backend
-      sync(): any { // TODO buffer
+      sync() { // TODO buffer
 
         if (_.isArray(options.extractFromLine)) {
           Helpers.error(`[tnp-helper] extractFromLine only for:
@@ -372,15 +372,14 @@ export class HelpersCore extends HelpersMessages {
           // TODO try again when fail
           // try {
           const proc = Helpers.runSyncIn(command, options);
-          return proc as any;
+          return proc;
           // } catch (error) {
 
           //  TODO: WAIT FUNCTION HERE
           //   return Helpers.run(command, options).sync()
           // }
         }
-        return Helpers.runSyncIn(command, options) as any;
-        4
+        return Helpers.runSyncIn(command, options);
       },
       async(detach = false) {
 
