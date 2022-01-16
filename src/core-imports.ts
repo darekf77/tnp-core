@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import * as q from 'q';
+import * as moment from 'moment';
 
 //#region @backend
 import * as path from 'path';
@@ -92,6 +93,7 @@ apppyFor([
 export {
   _,
   q,
+  moment,
   //#region @backend
   dateformat,
   spawn,
