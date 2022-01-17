@@ -912,7 +912,7 @@ command: ${command}
   }
 
 
-  linksToFoldersFrom(pathToFolder: string | string[]) {
+  linksToFoldersFrom(pathToFolder: string | string[], outputRealPath = false) {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
@@ -922,10 +922,17 @@ command: ${command}
     return fse.readdirSync(pathToFolder)
       .map(f => path.join(pathToFolder as string, f))
       .filter(f => fse.lstatSync(f).isSymbolicLink())
-      .filter(f => {
+      .map(f => {
         const realPath = fse.realpathSync(f);
-        return Helpers.isFolder(realPath);
-      });
+        const isFolder = Helpers.isFolder(realPath);
+        if (isFolder) {
+          if (outputRealPath) {
+            return realPath;
+          } else {
+            return f;
+          }
+        }
+      }).filter(f => !!f);
   }
   //#endregion
 
@@ -939,7 +946,7 @@ command: ${command}
       onlyLinksToExistedFilesOrFolder?: boolean;
       linksOnlyTo: 'files' | 'folders' | 'both'
     }
-  ) {
+  ): string[] {
     options = (options || {}) as any;
     if (_.isUndefined(options.linksOnlyTo)) {
       options.linksOnlyTo = 'both';
