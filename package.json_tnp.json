@@ -7,6 +7,9 @@
   "type": "isomorphic-lib",
   "required": [],
   "version": "v3",
+  "additionalNpmNames": [
+    "firedev-core"
+  ],
   "overrided": {
     "ignoreDepsPattern": [],
     "includeAsDev": "*",
