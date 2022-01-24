@@ -921,7 +921,7 @@ command: ${command}
     }
     return fse.readdirSync(pathToFolder)
       .map(f => path.join(pathToFolder as string, f))
-      .filter(f => fse.lstatSync(f).isSymbolicLink())
+      .filter(f => fse.existsSync(f) && fse.lstatSync(f).isSymbolicLink())
       .map(f => {
         const realPath = fse.realpathSync(f);
         const isFolder = Helpers.isFolder(realPath);
