@@ -1,6 +1,13 @@
 {
   "files.exclude": {
     "webpack.backend-bundle-build.js": true,
+    "projects/my-lib/tsconfig.spec.json": true,
+    "projects/my-lib/tsconfig.lib.prod.json": true,
+    "projects/my-lib/tsconfig.lib.json": true,
+    "projects/my-lib/README.md": true,
+    "projects/my-lib/package.json": true,
+    "projects/my-lib/ng-package.json": true,
+    "projects/my-lib/karma.conf.js": true,
     "angular.json.filetemplate": true,
     "tsconfig.ng.json.filetemplate": true,
     "node_modules": true,
