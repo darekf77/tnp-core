@@ -2,14 +2,6 @@
   "resources": [
     "README.md"
   ],
-  "isCoreProject": false,
-  "useFramework": false,
-  "type": "isomorphic-lib",
-  "required": [],
-  "version": "v3",
-  "additionalNpmNames": [
-    "firedev-core"
-  ],
   "overrided": {
     "ignoreDepsPattern": [],
     "includeAsDev": "*",
@@ -41,6 +33,14 @@
     "obscure": false,
     "ugly": false
   },
+  "isCoreProject": false,
+  "useFramework": false,
+  "type": "isomorphic-lib",
+  "required": [],
+  "version": "v3",
+  "additionalNpmNames": [
+    "firedev-core"
+  ],
   "isGenerated": false,
   "requiredServers": [],
   "license": "MIT",

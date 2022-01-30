@@ -845,6 +845,10 @@ command: ${command}
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
+    if (Helpers.isLink(absoluteFilePath as any)) {
+      Helpers.warn(`WRITTING JSON into real path`);
+      absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
+    }
 
     if (!fse.existsSync(path.dirname(absoluteFilePath))) {
       Helpers.mkdirp(path.dirname(absoluteFilePath));
