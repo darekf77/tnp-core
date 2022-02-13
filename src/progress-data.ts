@@ -67,12 +67,12 @@ export class PROGRESS_DATA implements IPROGRESS_DATA {
     return res;
   }
 
-  public value: number;
-  public msg: string;
+  public value?: number;
+  public msg?: string;
 
   public type: PROGRESS_DATA_TYPE = 'event'
 
-  public date: Date;
+  public date?: Date;
 
 
 }

@@ -75,6 +75,7 @@ export class HelpersCore extends HelpersMessages {
       return;
     }
     // let wasPromise = false;
+    // @ts-ignore
     let promisOrValue = _.isArray(fn) ? fn[1][fn[0]](...firstArg) : fn(...firstArg);
     if (promisOrValue instanceof Promise) {
       // wasPromise = true;
