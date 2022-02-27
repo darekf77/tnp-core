@@ -37,7 +37,7 @@
   "useFramework": false,
   "type": "isomorphic-lib",
   "required": [],
-  "version": "v3",
+  "version": "v2",
   "additionalNpmNames": [
     "firedev-core"
   ],

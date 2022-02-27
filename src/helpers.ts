@@ -328,8 +328,9 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
-  //#region @backend
+
   exists(folderOrFilePath: string | string[], allowUnexistedLinks = false) {
+    //#region @backendFunc
     if (_.isArray(folderOrFilePath)) {
       folderOrFilePath = path.join(...folderOrFilePath);
     }
@@ -338,12 +339,17 @@ export class HelpersCore extends HelpersMessages {
       return false;
     }
     if (!path.isAbsolute(folderOrFilePath)) {
-      Helpers.warn(`[helpers][exists] Path is not absolute, abort.. ${folderOrFilePath}`, true);
+      Helpers.warn(`
+
+      ${folderOrFilePath}
+
+      `, true);
       return false;
     }
     return fse.existsSync(folderOrFilePath);
+    //#endregion
   }
-  //#endregion
+
 
   run(command: string,
     options?: RunOptions) {
