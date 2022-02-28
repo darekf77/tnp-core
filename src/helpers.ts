@@ -210,8 +210,17 @@ export class HelpersCore extends HelpersMessages {
         }
       }
 
+      if (Helpers.exists(link)) {
+        rimraf.sync(link);
+      }
+    }
 
-      rimraf.sync(link);
+    if (Helpers.isFile(path.dirname(link))) {
+      fse.unlinkSync(path.dirname(link));
+    }
+
+    if (!Helpers.exists(path.dirname(link))) {
+      Helpers.mkdirp(path.dirname(link));
     }
 
     if (process.platform === 'win32') {
