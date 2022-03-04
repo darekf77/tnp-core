@@ -442,7 +442,7 @@ export class HelpersCore extends HelpersMessages {
           const proc = Helpers.runAsyncIn(command, options);
           proc.stderr.on('data', (message) => {
             const data: string = message.toString().trim();
-            if (!isResolved) {
+            if (!isResolved && _.isArray(stderMsg)) {
               for (let index = 0; index < stderMsg.length; index++) {
                 const rejectm = stderMsg[index];
                 if ((data.search(rejectm) !== -1)) {
@@ -470,7 +470,7 @@ export class HelpersCore extends HelpersMessages {
                 }
               }
             }
-            if (!isResolved) {
+            if (!isResolved && _.isArray(stderMsg)) {
               for (let index = 0; index < stderMsg.length; index++) {
                 const rejectm = stderMsg[index];
                 if ((data.search(rejectm) !== -1)) {
@@ -844,7 +844,7 @@ command: ${command}
       await Helpers.runSyncOrAsync(fn)
       Helpers.log(`${currentDate()} ${executionType} "${taskName}" Done\u2713`)
     } catch (error) {
-      Helpers.log(chalk.red(error));
+      Helpers.error(chalk.red(error), false, true);
       Helpers.log(`${currentDate()} ${executionType} ${taskName} ERROR`);
       process.exit(1);
     }
