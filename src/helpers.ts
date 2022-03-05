@@ -1006,18 +1006,42 @@ command: ${command}
   /**
    * return absolute paths for folders inside folders
    */
-  filesFrom(pathToFolder: string | string[]) {
+  filesFrom(pathToFolder: string | string[], recrusive = false): string[] {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
     if (!Helpers.exists(pathToFolder)) {
       return [];
     }
+    if (recrusive) {
+      const all = fse.readdirSync(pathToFolder)
+        .map(f => path.join(pathToFolder as string, f));
+      const folders = [] as string[];
+      const files = all.filter(f => {
+        if (fse.lstatSync(f).isDirectory()) {
+          folders.push(f)
+          return false;
+        }
+        return true;
+      });
+
+      return [
+        ...files,
+        ...folders
+          .map(f => this.filesFrom(f, recrusive))
+          .reduce((a, b) => {
+            return a.concat(b);
+          }, []),
+      ]
+    }
     return fse.readdirSync(pathToFolder)
       .map(f => path.join(pathToFolder as string, f))
       .filter(f => !fse.lstatSync(f).isDirectory())
       ;
   }
+
+
+
   //#endregion
 
   //#region @backend
