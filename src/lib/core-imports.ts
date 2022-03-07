@@ -19,8 +19,13 @@ import * as chokidar from 'chokidar';
 import * as mkdirp from 'mkdirp';
 import * as json5 from 'json5';
 import * as ncp from 'copy-paste';
-// @ts-ignore
-import * as isElevated from 'is-elevated';
+const isRoot = require('is-root');
+const isAdmin = require('is-admin');
+
+async function isElevated() {
+  return (process.platform === 'win32' ? isAdmin() : isRoot())
+};
+
 import * as ps from 'ps-node';
 import * as  psList from 'ps-list';
 import * as fkill from 'fkill';
