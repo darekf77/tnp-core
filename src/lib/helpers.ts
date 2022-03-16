@@ -338,7 +338,9 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
 
-  exists(folderOrFilePath: string | string[], allowUnexistedLinks = false) {
+  exists(folderOrFilePath: string | string[]
+    // , allowUnexistedLinks = false
+    ) {
     //#region @backendFunc
     if (_.isArray(folderOrFilePath)) {
       folderOrFilePath = path.join(...folderOrFilePath);
@@ -355,6 +357,8 @@ export class HelpersCore extends HelpersMessages {
       `, true);
       return false;
     }
+
+
     return fse.existsSync(folderOrFilePath);
     //#endregion
   }
