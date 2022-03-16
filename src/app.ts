@@ -1,6 +1,6 @@
 //#region @notForNpm
 
-import { Helpers } from './index';
+import { Helpers } from './lib';
 
 
 console.log(Helpers.values({ test: 'testvalue' }))
