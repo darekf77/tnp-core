@@ -215,6 +215,14 @@ export class HelpersCore extends HelpersMessages {
       }
     }
 
+    // if (Helpers.isLink(path.dirname(link))) {
+    //   fse.unlinkSync(link)
+    // }
+
+    // if (Helpers.isLink(link)) {
+    //   fse.unlinkSync(link)
+    // }
+
     if (Helpers.isFile(path.dirname(link))) {
       fse.unlinkSync(path.dirname(link));
     }
@@ -286,6 +294,19 @@ export class HelpersCore extends HelpersMessages {
    * @param existedLink check if source of link exists
    */
   isLink(filePath: string, existedLink = false) {
+    // try {
+    //   fse.realpathSync(filePath);
+    // } catch (error) {
+    //   try {
+    //     fse.unlinkSync(filePath);
+    //   } catch (error) {
+    //     try {
+    //       fse.unlinkSync(filePath);
+    //     } catch (error) {
+    //       fse.removeSync(filePath)
+    //     }
+    //   }
+    // }
     if (!fse.existsSync(filePath)) {
       return false;
     }
@@ -340,7 +361,7 @@ export class HelpersCore extends HelpersMessages {
 
   exists(folderOrFilePath: string | string[]
     // , allowUnexistedLinks = false
-    ) {
+  ) {
     //#region @backendFunc
     if (_.isArray(folderOrFilePath)) {
       folderOrFilePath = path.join(...folderOrFilePath);
