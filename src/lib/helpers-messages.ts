@@ -210,7 +210,7 @@ export class HelpersMessages extends HelpersIsomorphic {
 
   warn(details: string, trace = false) {
     if (_.isString(details)) {
-      details = _.upperCase(details);
+      details = (details).toUpperCase();
     }
     if (Helpers.isBrowser) {
       console.warn(details);
