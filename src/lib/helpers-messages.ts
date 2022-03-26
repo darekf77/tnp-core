@@ -1,7 +1,8 @@
 //#region @backend
 declare const global: any;
-import { chalk, _, json5 } from './core-imports';
+import { chalk } from './core-imports';
 //#endregion
+import { _ } from './core-imports';
 // import { config } from 'tnp-config';
 // import { PROGRESS_DATA } from 'tnp-models';
 import { Helpers } from './index';
@@ -208,6 +209,9 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
 
   warn(details: string, trace = false) {
+    if (_.isString(details)) {
+      details = _.upperCase(details);
+    }
     if (Helpers.isBrowser) {
       console.warn(details);
       return;

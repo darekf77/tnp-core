@@ -100,6 +100,8 @@ export class HelpersCore extends HelpersMessages {
        */
       speedUpProcess?: boolean;
     }) {
+
+    //#region fix parameters
     existedFileOrFolder = crossPlatformPath(existedFileOrFolder);
     destinationPath = crossPlatformPath(destinationPath);
 
@@ -119,19 +121,24 @@ export class HelpersCore extends HelpersMessages {
     if (_.isUndefined(options.speedUpProcess)) {
       options.speedUpProcess = false;
     }
+    //#endregion
+
     const { continueWhenExistedFolderDoesntExists, windowsHardLink, speedUpProcess } = options;
 
     // console.log('Create link!')
 
 
-    let target = existedFileOrFolder;
-    let link = destinationPath;
+    let targetExisted = existedFileOrFolder;
+    let linkDest = destinationPath;
 
     if (!fse.existsSync(existedFileOrFolder)) {
       if (continueWhenExistedFolderDoesntExists) {
         // just continue and create link to not existed folder
       } else {
-        Helpers.error(`[helpers.createLink] target path doesn't exist: ${existedFileOrFolder}`)
+        Helpers.error(`[helpers.createLink] target path doesn't exist: ${existedFileOrFolder}
+          use option "continueWhenExistedFolderDoesntExists" to fix this if you know that
+          file will be eventually in place
+        `)
       }
     }
 
@@ -141,109 +148,56 @@ export class HelpersCore extends HelpersMessages {
      * ln -s . /test/inside -> /test/inside/mysource
      * ln -s ./ /test/inside -> /test/inside/mysource
      */
-    if (link === '.' || link === './') {
-      link = crossPlatformPath(process.cwd());
+    if (linkDest === '.' || linkDest === './') {
+      linkDest = crossPlatformPath(process.cwd());
     }
 
-    if (!path.isAbsolute(link)) {
-      link = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), link));
+    if (!path.isAbsolute(linkDest)) {
+      linkDest = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), linkDest));
     }
 
-    if (!path.isAbsolute(target)) {
-      target = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), target));
+    if (!path.isAbsolute(targetExisted)) {
+      targetExisted = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), targetExisted));
     }
 
-    if (link.endsWith('/')) {
-      link = crossPlatformPath(path.join(link, path.basename(target)))
+    if (linkDest.endsWith('/')) {
+      linkDest = crossPlatformPath(path.join(linkDest, path.basename(targetExisted)))
     }
 
-    if (!fse.existsSync(path.dirname(link))) {
-      Helpers.mkdirp(path.dirname(link))
+    const parentFolderLinkDest = path.dirname(linkDest);
+
+    if (Helpers.isSymlinkFileExitedOrUnexisted(parentFolderLinkDest)) {
+      fse.unlinkSync(parentFolderLinkDest)
     }
 
-    const resolvedLink = crossPlatformPath(path.resolve(link));
-    const resolvedTarget = crossPlatformPath(path.resolve(target));
-    const targetIsFile = Helpers.isFile(resolvedTarget);
+    if (!Helpers.isFolder(parentFolderLinkDest)) {
+      rimraf.sync(parentFolderLinkDest);
+      Helpers.mkdirp(parentFolderLinkDest);
+    }
 
     if (!speedUpProcess) {
-      const exactSameLocations = (resolvedLink === resolvedTarget);
-      // const tagetIsLink = Helpers.isLink(resolvedTarget);
-      // const exactSameLinks = (tagetIsLink && (fse.readlinkSync(resolvedTarget) === resolvedLink));
-      // const exactSameOverrideTargetLink = (tagetIsLink && (fse.readlinkSync(resolvedTarget) === resolvedTarget));
-
-      const targetIsLink = Helpers.isLink(resolvedTarget);
-
-      const exactSameOVerrideTarget = (
-        !Helpers.isLink(resolvedLink)
-        && Helpers.exists(resolvedLink)
-        && !targetIsLink
-        && Helpers.exists(resolvedTarget)
-        && Helpers.isFile(resolvedLink)
-        && targetIsFile // TODO refactor this
-        && Helpers.readFile(resolvedLink) === Helpers.readFile(resolvedTarget)
-      );
-      if (exactSameLocations) {
-        Helpers.warn(`[createSymLink] Trying to link same location`);
-        return;
+      if (Helpers.exists(linkDest)) {
+        rimraf.sync(linkDest);
       }
-      // if (exactSameLinks) {
-      //   Helpers.warn(`[createSymLink] Trying to link same link`);
-      //   return;
-      // }
-      // if (exactSameOverrideTargetLink) {
-      //   Helpers.warn(`[createSymLink] Trying to override same link with link to itself`);
-      //   return;
-      // }
-      if (exactSameOVerrideTarget) {
-        const linkContainerLink = Helpers.pathContainLink(resolvedLink);
-        const targetContainerLink = Helpers.pathContainLink(resolvedTarget);
-        if (
-          (!linkContainerLink && targetContainerLink)
-          || (linkContainerLink && !targetContainerLink)
-        ) {
-          Helpers.warn(`[createSymLink] Trying to override same file with link to itself:
-          ${resolvedLink}
-          to
-          ${resolvedTarget}
-          `);
-          return;
-        }
-      }
-
-      if (Helpers.exists(link)) {
-        rimraf.sync(link);
-      }
-    }
-
-    // if (Helpers.isLink(path.dirname(link))) {
-    //   fse.unlinkSync(link)
-    // }
-
-    // if (Helpers.isLink(link)) {
-    //   fse.unlinkSync(link)
-    // }
-
-    if (Helpers.isFile(path.dirname(link))) {
-      fse.unlinkSync(path.dirname(link));
-    }
-
-    if (!Helpers.exists(path.dirname(link))) {
-      Helpers.mkdirp(path.dirname(link));
     }
 
     if (process.platform === 'win32') {
-      if (Helpers.isLink(target)) {
-        Helpers.info(`FIXING TARGET FOR WINDOWS`)
-        target = crossPlatformPath(fse.realpathSync(target));
+
+      const resolvedTarget = crossPlatformPath(path.resolve(targetExisted));
+      const targetIsFile = Helpers.isFile(resolvedTarget);
+
+      if (Helpers.isSymlinkFileExitedOrUnexisted(targetExisted)) {
+        //   Helpers.info(`FIXING TARGET FOR WINDOWS`)
+        targetExisted = crossPlatformPath(fse.realpathSync(targetExisted));
         // TODO QUICK_FIX on windows you can't create link to link
       }
-      target = path.win32.normalize(target).replace(/\\$/, '');
-      link = path.win32.normalize(link).replace(/\\$/, '');
+      targetExisted = path.win32.normalize(targetExisted).replace(/\\$/, '');
+      linkDest = path.win32.normalize(linkDest).replace(/\\$/, '');
 
       // const winLinkCommand = `cmd  /c "mklink /D ${link} ${target}"`;
       // const winLinkCommand = `export MSYS=winsymlinks:nativestrict && ln -s ${target} ${link}`;
-      const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${link}" "${target}"`;
-      Helpers.log(`windows link: lnk ${target} ${link}
+      const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${linkDest}" "${targetExisted}"`;
+      Helpers.log(`windows link: lnk ${targetExisted} ${linkDest}
 
       "${winLinkCommand}'
       `);
@@ -254,13 +208,13 @@ export class HelpersCore extends HelpersMessages {
         Helpers.error(`
         command: "${winLinkCommand}"
         [tnp-helpers] windows link error
-        target: "${target}"
-        link: "${link}"
+        target: "${targetExisted}"
+        link: "${linkDest}"
         command: "${winLinkCommand}"
         `, true, false)
       }
     } else {
-      fse.symlinkSync(target, link)
+      fse.symlinkSync(targetExisted, linkDest)
     }
 
   }
@@ -289,55 +243,95 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
-  //#region @backend
+
+  /**
+   * symlink may have existed or unexisted destiantion url
+   * @param destUrl M
+   */
+  isSymlinkThatMatchesUrl(possibleSymlink: string, destUrl: string, absoluteFileMatch = false): boolean {
+    //#region @backendFunc
+    destUrl = crossPlatformPath(destUrl);
+
+    if (Helpers.exists(possibleSymlink)) {
+      if (Helpers.isExistedSymlink(possibleSymlink)) {
+        let fileLink = fse.readlinkSync(possibleSymlink);
+        if (absoluteFileMatch) {
+          fileLink = fse.realpathSync(fileLink);
+        }
+        fileLink = crossPlatformPath(fileLink)
+        return fileLink === destUrl;
+      }
+      if (Helpers.isFolder(possibleSymlink)) {
+        return false;
+      }
+    }
+
+    try {
+      const linkToUnexitedLink = fse.lstatSync(possibleSymlink).isSymbolicLink();
+      if (linkToUnexitedLink) {
+        let fileLink = fse.readlinkSync(possibleSymlink);
+        if (absoluteFileMatch) {
+          fileLink = fse.realpathSync(fileLink);
+        }
+        fileLink = crossPlatformPath(fileLink)
+        return (fileLink === destUrl);
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+    //#endregion
+  }
+
+  isSymlinkFileExitedOrUnexisted(filePath: string): boolean {
+    //#region @backendFunc
+    try {
+      const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
+      return linkToUnexitedLink;
+    } catch (error) {
+      return false;
+    }
+    //#endregion
+  }
+
+  /**
+   * If symbolnk link that target file does not exits
+   */
+  isUnexistedLink(filePath: string): boolean {
+    //#region @backendFunc
+    filePath = Helpers.removeSlashAtEnd(filePath);
+    if (process.platform === 'win32') {
+      filePath = path.win32.normalize(filePath);
+    }
+
+    try {
+      const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
+      return linkToUnexitedLink && !fse.existsSync(fse.readlinkSync(filePath));
+    } catch (error) {
+      return false;
+    }
+    //#endregion
+  }
+
   /**
    * @param existedLink check if source of link exists
    */
-  isLink(filePath: string, existedLink = false) {
-    // try {
-    //   fse.realpathSync(filePath);
-    // } catch (error) {
-    //   try {
-    //     fse.unlinkSync(filePath);
-    //   } catch (error) {
-    //     try {
-    //       fse.unlinkSync(filePath);
-    //     } catch (error) {
-    //       fse.removeSync(filePath)
-    //     }
-    //   }
-    // }
-    if (!fse.existsSync(filePath)) {
-      return false;
-    }
+  isExistedSymlink(filePath: string): boolean {
+
+    //#region @backendFunc
     filePath = Helpers.removeSlashAtEnd(filePath);
-    let isLink = false;
     if (process.platform === 'win32') {
       filePath = path.win32.normalize(filePath);
-      // console.log('extename: ', path.extname(filePath))
-      isLink = fse.lstatSync(filePath).isSymbolicLink() || path.extname(filePath) === '.lnk';
-    } else {
-      if (process.platform === 'darwin') {
-        isLink = fse.lstatSync(filePath).isSymbolicLink();
-        // try { // TODO Why would I want that ?
-        //   const command = `[[ -L "${filePath}" && -d "${filePath}" ]] && echo "symlink"`;
-        //   // console.log(command)
-        //   const res = Helpers.run(command, { output: false, biggerBuffer: false }).sync().toString()
-        //   return res.trim() === 'symlink'
-        // } catch (error) {
-        //   return false;
-        // }
-      } else { // TODO QUICK FIX
-        isLink = fse.lstatSync(filePath).isSymbolicLink();
-      }
     }
-    if (existedLink) {
-      const realPath = fse.realpathSync(filePath);
-      return Helpers.exists(realPath);
+
+    try {
+      const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
+      return linkToUnexitedLink && fse.existsSync(fse.readlinkSync(filePath));
+    } catch (error) {
+      return false;
     }
-    return isLink;
+    //#endregion
   }
-  //#endregion
 
   //#region @backend
   pathContainLink(p: string) {
@@ -347,7 +341,7 @@ export class HelpersCore extends HelpersMessages {
       if (p === previous) {
         return false;
       }
-      if (Helpers.isLink(p)) {
+      if (Helpers.isExistedSymlink(p)) {
         return true;
       }
       if (!Helpers.exists(p)) {
@@ -793,7 +787,10 @@ command: ${command}
   }
 
   //#region @backend
-  isFile(pathToFileOrMaybeFolder: string) {
+  /**
+   * does not make sense
+   */
+  private isFile(pathToFileOrMaybeFolder: string) {
     return pathToFileOrMaybeFolder && fse.existsSync(pathToFileOrMaybeFolder) &&
       !fse.lstatSync(pathToFileOrMaybeFolder).isDirectory();
   }
@@ -886,7 +883,7 @@ command: ${command}
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
-    if (Helpers.isLink(absoluteFilePath as any)) {
+    if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
       Helpers.warn(`WRITTING JSON into real path`);
       absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
     }
@@ -985,20 +982,16 @@ command: ${command}
   /**
    * return absolute paths for folders inside folders
    */
-  linksFrom(
+  linksToFolderFrom(
     pathToFolder: string | string[],
-    options?: {
-      onlyLinksToExistedFilesOrFolder?: boolean;
-      linksOnlyTo: 'files' | 'folders' | 'both'
-    }
+    // options?: {
+    //   linksOnlyTo: 'files' | 'folders' | 'both'
+    // }
   ): string[] {
-    options = (options || {}) as any;
-    if (_.isUndefined(options.linksOnlyTo)) {
-      options.linksOnlyTo = 'both';
-    }
-    if (_.isUndefined(options.onlyLinksToExistedFilesOrFolder)) {
-      options.onlyLinksToExistedFilesOrFolder = true;
-    }
+    // options = (options || {}) as any;
+    // if (_.isUndefined(options.linksOnlyTo)) {
+    //   options.linksOnlyTo = 'both';
+    // }
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
@@ -1009,18 +1002,9 @@ command: ${command}
       .map(f => path.join(pathToFolder as string, f))
       .filter(f => {
         let res = false;
-        if (Helpers.isLink(f)) {
-          res = !options.onlyLinksToExistedFilesOrFolder;
+        if (Helpers.isExistedSymlink(f)) {
           const realPath = fse.realpathSync(f);
-          if (Helpers.exists(realPath)) {
-            res = true;
-            if (options.linksOnlyTo === 'folders') {
-              res = Helpers.isFolder(realPath)
-            }
-            if (options.linksOnlyTo === 'files') {
-              res = Helpers.isFile(realPath)
-            }
-          }
+          return Helpers.isFolder(realPath);
         }
         return res;
       });
