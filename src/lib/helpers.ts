@@ -95,6 +95,7 @@ export class HelpersCore extends HelpersMessages {
       continueWhenExistedFolderDoesntExists?: boolean;
       windowsHardLink?: boolean;
       dontRenameWhenSlashAtEnd?: boolean;
+      allowNotAbsolutePathes?: boolean;
       /**
        * only if you know that symlink can be created
        */
@@ -120,6 +121,9 @@ export class HelpersCore extends HelpersMessages {
     }
     if (_.isUndefined(options.speedUpProcess)) {
       options.speedUpProcess = false;
+    }
+    if (_.isUndefined(options.allowNotAbsolutePathes)) {
+      options.allowNotAbsolutePathes = false;
     }
     //#endregion
 
@@ -148,17 +152,34 @@ export class HelpersCore extends HelpersMessages {
      * ln -s . /test/inside -> /test/inside/mysource
      * ln -s ./ /test/inside -> /test/inside/mysource
      */
-    if (linkDest === '.' || linkDest === './') {
-      linkDest = crossPlatformPath(process.cwd());
+    if (options.allowNotAbsolutePathes) {
+
+      if (linkDest === '.' || linkDest === './') {
+        linkDest = crossPlatformPath(process.cwd());
+      }
+
+      if (!path.isAbsolute(linkDest)) {
+        linkDest = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), linkDest));
+      }
+
+      if (!path.isAbsolute(targetExisted)) {
+        targetExisted = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), targetExisted));
+      }
+    } else {
+      if (!path.isAbsolute(linkDest)) {
+        Helpers.error(`[createsymlink] path is not absolute:
+        targetExisted: ${targetExisted}
+        linkDest: ${linkDest}
+        `)
+      }
+      if (!path.isAbsolute(targetExisted)) {
+        Helpers.error(`[createsymlink] path is not absolute:
+        targetExisted: ${targetExisted}
+        linkDest: ${linkDest}
+        `)
+      }
     }
 
-    if (!path.isAbsolute(linkDest)) {
-      linkDest = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), linkDest));
-    }
-
-    if (!path.isAbsolute(targetExisted)) {
-      targetExisted = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), targetExisted));
-    }
 
     if (linkDest.endsWith('/')) {
       linkDest = crossPlatformPath(path.join(linkDest, path.basename(targetExisted)))
@@ -176,9 +197,7 @@ export class HelpersCore extends HelpersMessages {
     }
 
     if (!speedUpProcess) {
-      if (Helpers.exists(linkDest)) {
-        rimraf.sync(linkDest);
-      }
+      rimraf.sync(linkDest);
     }
 
     if (process.platform === 'win32') {
