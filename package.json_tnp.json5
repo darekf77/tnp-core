@@ -28,6 +28,7 @@
       "copy-paste",
       "is-root",
       "is-admin",
+      "dateformat"
     ],
     "dependencies": {},
     "linkedFolders": []
