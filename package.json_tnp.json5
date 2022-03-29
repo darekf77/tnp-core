@@ -7,7 +7,6 @@
     "includeAsDev": "*",
     "includeOnly": [
       "glob",
-      "ps-node",
       'moment',
       "fkill",
       "copy-paste",
@@ -23,7 +22,12 @@
       "@types/q",
       "json5",
       "is-elevated",
-      "portfinder"
+      "portfinder",
+      "cross-spawn",
+      "chalk",
+      "copy-paste",
+      "is-root",
+      "is-admin",
     ],
     "dependencies": {},
     "linkedFolders": []
