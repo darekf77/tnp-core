@@ -59,6 +59,11 @@ export class HelpersCore extends HelpersMessages {
     return s;
   }
 
+  removeSlashAtBegin(s: string) {
+    s = s?.startsWith(`/`) ? s.slice(1) : s;
+    return s;
+  }
+
   stringify(inputObject: any): string {
     // if (_.isString(inputObject)) {
     //   return inputObject;
