@@ -902,7 +902,9 @@ command: ${command}
   /**
    * wrapper for fs.writeFileSync
    */
-  writeFile(absoluteFilePath: string | (string[]), input: string | object, dontWriteSameFile = true): boolean {
+  writeFile(absoluteFilePath: string | (string[]), input: string | object,
+    options?: { overrideSameFile?: boolean; preventParentFile?: boolean; }): boolean {
+
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -910,6 +912,15 @@ command: ${command}
     if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
       Helpers.warn(`WRITTING JSON into real path`);
       absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
+    }
+
+    const { preventParentFile, overrideSameFile } = options || {};
+    const dontWriteSameFile = !overrideSameFile;
+
+    if (preventParentFile) {
+      if (Helpers.isFile(path.dirname(absoluteFilePath)) && fse.existsSync(path.dirname(absoluteFilePath))) {
+        fse.unlinkSync(path.dirname(absoluteFilePath));
+      }
     }
 
     if (!fse.existsSync(path.dirname(absoluteFilePath))) {
@@ -942,13 +953,22 @@ command: ${command}
   /**
    * wrapper for fs.writeFileSync
    */
-  writeJson(absoluteFilePath: string | (string[]), input: object): boolean {
+  writeJson(absoluteFilePath: string | (string[]), input: object,
+    optoins?: { preventParentFile?: boolean }): boolean {
+
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
+    const { preventParentFile } = optoins || {};
 
-    if (!Helpers.exists(path.dirname(absoluteFilePath))) {
+    if (preventParentFile) {
+      if (Helpers.isFile(path.dirname(absoluteFilePath)) && fse.existsSync(path.dirname(absoluteFilePath))) {
+        fse.unlinkSync(path.dirname(absoluteFilePath));
+      }
+    }
+
+    if (!fse.existsSync(path.dirname(absoluteFilePath))) {
       Helpers.mkdirp(path.dirname(absoluteFilePath));
     }
 
