@@ -1,33 +1,37 @@
 //#region @notForNpm
 
-import { Helpers } from './lib';
+// import { Helpers } from './lib';
 
 
-console.log(Helpers.values({ test: 'testvalue' }))
+// console.log(Helpers.values({ test: 'testvalue' }))
 
 
-import { NgModule } from '@angular/core';
+// import { NgModule } from '@angular/core';
 
-import { Component, OnInit } from '@angular/core';
+// import { Component, OnInit } from '@angular/core';
 
-@Component({
-  selector: 'app-tnp-core',
-  template: `hello`
-})
+// @Component({
+//   selector: 'app-tnp-core',
+//   template: `hello`
+// })
 
-export class TnpCoreComponent implements OnInit {
-  constructor() { }
+// export class TnpCoreComponent implements OnInit {
+//   constructor() { }
 
-  ngOnInit() { }
+//   ngOnInit() { }
+// }
+
+// @NgModule({
+//   imports: [],
+//   exports: [TnpCoreComponent],
+//   declarations: [TnpCoreComponent],
+//   providers: [],
+// })
+// export class TnpCoreModule { }
+
+
+export default function () {
+  console.log('hello')
 }
-
-@NgModule({
-  imports: [],
-  exports: [TnpCoreComponent],
-  declarations: [TnpCoreComponent],
-  providers: [],
-})
-export class TnpCoreModule { }
-
 
 //#endregion
