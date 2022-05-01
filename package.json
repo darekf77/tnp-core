@@ -1,7 +1,7 @@
 {
   "lastBuildTagHash": "ffa3e89a3009e19227234383a1ce39df4b507d08",
   "name": "tnp-core",
-  "version": "13.0.39",
+  "version": "13.0.40",
   "license": "MIT",
   "dependencies": {
     "@types/lodash": "4.14.92",
