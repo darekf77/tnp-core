@@ -218,10 +218,23 @@ export class HelpersCore extends HelpersMessages {
       targetExisted = path.win32.normalize(targetExisted).replace(/\\$/, '');
       linkDest = path.win32.normalize(linkDest).replace(/\\$/, '');
 
+      if (windowsHardLink) {
+        fse.symlinkSync(targetExisted, linkDest, 'dir')
+      } else {
+        if (targetIsFile) {
+          fse.linkSync(targetExisted, linkDest)
+        } else {
+          fse.symlinkSync(targetExisted, linkDest, 'junction')
+        }
+      }
+
+      //#region old windows linking
+      /*
       // const winLinkCommand = `cmd  /c "mklink /D ${link} ${target}"`;
       // const winLinkCommand = `export MSYS=winsymlinks:nativestrict && ln -s ${target} ${link}`;
       const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${linkDest}" "${targetExisted}"`;
       Helpers.log(`windows link: lnk ${targetExisted} ${linkDest}
+
 
       "${winLinkCommand}'
       `);
@@ -237,6 +250,8 @@ export class HelpersCore extends HelpersMessages {
         command: "${winLinkCommand}"
         `, true, false)
       }
+      */
+      //#endregion
     } else {
       fse.symlinkSync(targetExisted, linkDest)
     }
@@ -553,7 +568,7 @@ export class HelpersCore extends HelpersMessages {
       // pipeToParentProcerss = false,
       // inheritFromParentProcerss = false
     } = options;
-    if(stdio) {
+    if (stdio) {
       return stdio;
     }
     let resstdio = output ? [0, 1, 2] : ((_.isBoolean(silence) && silence) ? 'ignore' : undefined);
