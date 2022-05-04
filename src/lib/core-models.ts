@@ -9,6 +9,7 @@ export interface RunOptions {
   output?: boolean;
 
   silence?: boolean;
+  stdio?: any;
 
   /**
    * Modify output line by line

@@ -549,18 +549,21 @@ export class HelpersCore extends HelpersMessages {
   //#region @backend
   getStdio(options?: RunOptions) {
     const {
-      output, silence,
+      output, silence, stdio
       // pipeToParentProcerss = false,
       // inheritFromParentProcerss = false
     } = options;
-    let stdio = output ? [0, 1, 2] : ((_.isBoolean(silence) && silence) ? 'ignore' : undefined);
+    if(stdio) {
+      return stdio;
+    }
+    let resstdio = output ? [0, 1, 2] : ((_.isBoolean(silence) && silence) ? 'ignore' : undefined);
     // if (pipeToParentProcerss) {
     //   stdio = ['pipe', 'pipe', 'pipe'] as any;
     // }
     // if (inheritFromParentProcerss) {
     //   stdio = ['inherit', 'inherit', 'inherit'] as any;
     // }
-    return stdio;
+    return resstdio;
   }
   //#endregion
 
