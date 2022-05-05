@@ -207,18 +207,31 @@ export class HelpersCore extends HelpersMessages {
 
     if (process.platform === 'win32') {
 
-      const resolvedTarget = crossPlatformPath(path.resolve(targetExisted));
-      const targetIsFile = Helpers.isFile(resolvedTarget);
-
+      // const resolvedTarget = crossPlatformPath(path.resolve(targetExisted));    
+      
+      // console.log(`resolved target from ${targetExisted} = ${resolvedTarget}, isFile: ${targetIsFile}`)
       if (Helpers.isSymlinkFileExitedOrUnexisted(targetExisted)) {
         //   Helpers.info(`FIXING TARGET FOR WINDOWS`)
         targetExisted = crossPlatformPath(fse.realpathSync(targetExisted));
         // TODO QUICK_FIX on windows you can't create link to link
       }
-      targetExisted = path.win32.normalize(targetExisted).replace(/\\$/, '');
-      linkDest = path.win32.normalize(linkDest).replace(/\\$/, '');
+      // targetExisted = path.win32.normalize(targetExisted).replace(/\\$/, '');
+      // linkDest = path.win32.normalize(linkDest).replace(/\\$/, '');
+      const targetIsFile = Helpers.isFile(targetExisted);
 
-      if (windowsHardLink) {
+      // const destIsLink = Helpers.isExistedSymlink(linkDest) || Helpers.isUnexistedLink(linkDest)
+
+      // console.log({
+      //   targetExisted,
+      //   linkDest,
+      //   destIsLink
+      // });
+
+      // if (destIsLink) {
+      //   fse.unlinkSync(linkDest)
+      // }
+
+      if (windowsHardLink) { // ADMIN RIGHT REQURED??
         fse.symlinkSync(targetExisted, linkDest, 'dir')
       } else {
         if (targetIsFile) {
