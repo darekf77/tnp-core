@@ -1,7 +1,7 @@
 {
   "lastBuildTagHash": "1b5c562fdf8c70d3f9c07ccdf2e1bce82864e596",
   "name": "tnp-core",
-  "version": "13.0.41",
+  "version": "13.0.42",
   "license": "MIT",
   "dependencies": {
     "@types/lodash": "4.14.92",
@@ -29,6 +29,7 @@
   "main": "index.js",
   "devDependencies": {
     "@angular-devkit/build-angular": "~13.2.5",
+    "@angular-devkit/core": "~13.2.6",
     "@angular/animations": "~13.2.0",
     "@angular/cdk": "~13.2.4",
     "@angular/cli": "~13.2.5",
@@ -100,6 +101,7 @@
     "babel-preset-es2015": "6.24.1",
     "background-worker-process": "~13.0.17",
     "bcryptjs": "2.4.3",
+    "better-sqlite3": "7.5.1",
     "body-parser": "1.18.2",
     "bootstrap": "5.1.3",
     "bs4-breakpoint": "13.0.13",
@@ -209,7 +211,7 @@
     "sloc": "0.2.0",
     "socket.io": "2.4.1",
     "sort-package-json": "1.11.0",
-    "static-columns": "~13.0.16",
+    "static-columns": "13.0.16",
     "string-similarity": "4.0.2",
     "sudo-block": "3.0.0",
     "systeminformation": "3.45.7",
