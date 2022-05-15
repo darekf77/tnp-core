@@ -207,8 +207,8 @@ export class HelpersCore extends HelpersMessages {
 
     if (process.platform === 'win32') {
 
-      // const resolvedTarget = crossPlatformPath(path.resolve(targetExisted));    
-      
+      // const resolvedTarget = crossPlatformPath(path.resolve(targetExisted));
+
       // console.log(`resolved target from ${targetExisted} = ${resolvedTarget}, isFile: ${targetIsFile}`)
       if (Helpers.isSymlinkFileExitedOrUnexisted(targetExisted)) {
         //   Helpers.info(`FIXING TARGET FOR WINDOWS`)
@@ -644,6 +644,10 @@ export class HelpersCore extends HelpersMessages {
       // Helpers.log(`Command to execture: ${command}`)
       const env = { ...process.env, FORCE_COLOR: '1' };
       proc = child_process.exec(command, { cwd, maxBuffer, env });
+      proc.on('exit', (code) => {
+        console.log('EXITING BIG PROCESS')
+        process.exit(code);
+      });
     }
     return Helpers.logProc(proc,
       detach ? true : output,
