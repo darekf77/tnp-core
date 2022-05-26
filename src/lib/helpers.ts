@@ -644,10 +644,12 @@ export class HelpersCore extends HelpersMessages {
       // Helpers.log(`Command to execture: ${command}`)
       const env = { ...process.env, FORCE_COLOR: '1' };
       proc = child_process.exec(command, { cwd, maxBuffer, env });
-      proc.on('exit', (code) => {
-        console.log('EXITING BIG PROCESS')
-        process.exit(code);
-      });
+      if (global.globalSystemToolMode) {
+        proc.on('exit', (code) => {
+          console.log('EXITING BIG PROCESS')
+          process.exit(code);
+        });
+      }
     }
     return Helpers.logProc(proc,
       detach ? true : output,
