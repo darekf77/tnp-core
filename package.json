@@ -1,5 +1,5 @@
 {
-  "lastBuildTagHash": "60868de40491c3cb9105e035663a340ae7966c8f",
+  "lastBuildTagHash": "9e3dd469e5e0e991d2ed6422129137e52554061f",
   "name": "tnp-core",
   "version": "13.0.44",
   "license": "MIT",
@@ -219,7 +219,7 @@
     "task.js": "0.1.5",
     "tnp-cli": "~13.0.18",
     "tnp-config": "~13.0.21",
-    "tnp-core": "~13.0.43",
+    "tnp-core": "~13.0.44",
     "tnp-db": "~13.0.28",
     "tnp-helpers": "~13.0.28",
     "tnp-models": "~13.0.19",
