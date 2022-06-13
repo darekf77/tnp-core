@@ -1,7 +1,7 @@
 {
   "lastBuildTagHash": "9e3dd469e5e0e991d2ed6422129137e52554061f",
   "name": "tnp-core",
-  "version": "13.0.44",
+  "version": "13.0.45",
   "license": "MIT",
   "dependencies": {
     "@types/lodash": "4.14.92",
@@ -174,7 +174,7 @@
     "method-override": "2.3.10",
     "minimist": "1.2.0",
     "mocha": "5.2.0",
-    "morphi": "~13.0.38",
+    "morphi": "~13.0.39",
     "ng-packagr": "13.0.0",
     "ng-talkback": "~13.0.13",
     "ng2-logger": "~13.0.16",
@@ -221,7 +221,7 @@
     "tnp-config": "~13.0.21",
     "tnp-core": "~13.0.44",
     "tnp-db": "~13.0.28",
-    "tnp-helpers": "~13.0.28",
+    "tnp-helpers": "~13.0.29",
     "tnp-models": "~13.0.19",
     "tnp-ui": "~13.0.18",
     "ts-debug": "1.3.0",
