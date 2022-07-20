@@ -430,6 +430,62 @@ export class HelpersCore extends HelpersMessages {
     //#endregion
   }
 
+  command(command: string) {
+    return {
+      //#region @backend
+      getherOutput(options?: {
+        ommitStder: boolean;
+        cwd: string;
+        biggerBuffer: boolean;
+        gatherColors: boolean;
+      }) {
+        if (!options) {
+          options = {} as any;
+        }
+        return new Promise<string>((resolve) => {
+          let { ommitStder, cwd, biggerBuffer, gatherColors } = options;
+          if (!cwd) {
+            cwd = process.cwd()
+          }
+          const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : void 0;
+
+          const env = gatherColors ? { ...process.env, FORCE_COLOR: '1' } : {};
+          const proc = child_process.exec(command, {
+            cwd,
+            maxBuffer,
+            env
+          });
+          let gatheredData = '';
+
+          proc.on('exit', (code) => {
+            resolve(gatheredData);
+          });
+
+          proc.stdout.on('data', (data) => {
+            gatheredData = `${gatheredData}${data?.toString() || ''}`;
+          })
+
+          proc.stdout.on('error', (data) => {
+            gatheredData = `${gatheredData}${data?.toString() || ''}`;
+          })
+
+          if (!ommitStder) {
+            proc.stderr.on('data', (data) => {
+              gatheredData = `${gatheredData}${data?.toString() || ''}`;
+            })
+
+            proc.stderr.on('error', (data) => {
+              gatheredData = `${gatheredData}${data?.toString() || ''}`;
+            })
+          }
+
+        })
+
+      }
+      //#endregion
+    }
+  }
+
 
   run(command: string,
     options?: RunOptions) {
@@ -581,7 +637,7 @@ export class HelpersCore extends HelpersMessages {
       // pipeToParentProcerss = false,
       // inheritFromParentProcerss = false
     } = options;
-    if (stdio) {
+    if (typeof stdio !== 'undefined') {
       return stdio;
     }
     let resstdio = output ? [0, 1, 2] : ((_.isBoolean(silence) && silence) ? 'ignore' : undefined);
