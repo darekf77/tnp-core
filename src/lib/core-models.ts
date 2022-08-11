@@ -1,24 +1,15 @@
 
-export interface RunOptions {
-  showCommand?: boolean;
+export interface ExecuteOptions {
   /** Extract string from line */
   extractFromLine?: (string | Function)[];
-  /**
-   * Show process output
-   */
-  output?: boolean;
-
-  silence?: boolean;
-  stdio?: any;
-
   /**
    * Modify output line by line
    */
   outputLineReplace?: (outputLine: string) => string;
-
-
-  // detached?: boolean;
-  cwd?: string;
+  resolvePromiseMsg?: {
+    stdout?: string | string[];
+    stderr?: string | string[];
+  }
   prefix?: string;
   detach?: boolean;
   /**
@@ -30,6 +21,32 @@ export interface RunOptions {
    * Use big buffer for big webpack logs
    */
   biggerBuffer?: boolean;
+  exitOnError?: boolean;
+  exitOnErrorCallback?: (code: number) => void;
+  /**
+   * From displaying in console
+   */
+  hideOutput?: {
+    stdout?: boolean;
+    stderr?: boolean;
+  }
+}
+
+export interface RunOptions extends ExecuteOptions {
+
+
+  /**
+   * Show process output
+   */
+  output?: boolean;
+
+  silence?: boolean;
+  stdio?: any;
+
+  // detached?: boolean;
+  cwd?: string;
+
+
 }
 
 export type PROGRESS_DATA_TYPE = 'info' | 'error' | 'warning' | 'event';

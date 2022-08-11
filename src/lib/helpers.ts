@@ -16,7 +16,7 @@ import {
 } from './core-imports';
 import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
-import { RunOptions } from './core-models';
+import { ExecuteOptions, RunOptions } from './core-models';
 
 declare const global: any;
 const encoding = 'utf8';
@@ -752,27 +752,59 @@ export class HelpersCore extends HelpersMessages {
     return proc;
   }
 
-  logProc2(proc: child_process.ChildProcess, stdoutMsg?: string | string[], stderMsg?: string | string[]) {
+  execute(childProcess: child_process.ChildProcess,
+    options?: ExecuteOptions
+  ) {
+    let {
+      hideOutput,
+      resolvePromiseMsg,
+      outputLineReplace,
+      prefix,
+      extractFromLine,
+      exitOnError,
+      exitOnErrorCallback,
+    } = options || {};
+    // let {
+    //   stderMsgForPromiseResolve,
+    //   stdoutMsgForPromiseResolve
+    // } = resolvePromiseMsg || {};
+
     // processes.push(proc);
+    if (!resolvePromiseMsg) {
+      resolvePromiseMsg = {};
+    }
+    if (!hideOutput) {
+      hideOutput = {};
+    }
+
     let isResolved = false;
 
-    if (_.isString(stdoutMsg)) {
-      stdoutMsg = [stdoutMsg];
+    if (_.isString(resolvePromiseMsg.stdout)) {
+      resolvePromiseMsg.stdout = [resolvePromiseMsg.stdout];
     }
-    if (_.isString(stderMsg)) {
-      stderMsg = [stderMsg];
+    if (_.isString(resolvePromiseMsg.stderr)) {
+      resolvePromiseMsg.stderr = [resolvePromiseMsg.stderr];
     }
 
     return new Promise((resolve, reject) => {
 
       // let stdio = [0,1,2]
-      proc.stdout.on('data', (message) => {
-        process.stdout.write(message);
-        const data: string = message.toString().trim();
+      childProcess.stdout.on('data', (rawData) => {
+        let data = (rawData?.toString() || '');
+        data = Helpers.modifyLineByLine(
+          data,
+          outputLineReplace,
+          prefix,
+          extractFromLine
+        );
 
-        if (!isResolved && _.isArray(stdoutMsg)) {
-          for (let index = 0; index < stdoutMsg.length; index++) {
-            const m = stdoutMsg[index];
+        if (!hideOutput.stdout) {
+          process.stdout.write(data);
+        }
+
+        if (!isResolved && _.isArray(resolvePromiseMsg.stdout)) {
+          for (let index = 0; index < resolvePromiseMsg.stdout.length; index++) {
+            const m = resolvePromiseMsg.stdout[index];
             if ((data.search(m) !== -1)) {
               // Helpers.info(`[unitlOutputContains] Move to next step...`)
               isResolved = true;
@@ -781,39 +813,71 @@ export class HelpersCore extends HelpersMessages {
             }
           }
         }
-        if (!isResolved && _.isArray(stderMsg)) {
-          for (let index = 0; index < stderMsg.length; index++) {
-            const rejectm = stderMsg[index];
+        if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) {
+          for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) {
+            const rejectm = resolvePromiseMsg.stderr[index];
             if ((data.search(rejectm) !== -1)) {
               // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
               isResolved = true;
               reject();
-              proc.kill('SIGINT');
+              childProcess.kill('SIGINT');
               break;
             }
           }
         }
 
         // console.log(data.toString());
-      })
+      });
 
-      proc.stdout.on('error', (data) => {
-        process.stdout.write(JSON.stringify(data))
+      childProcess.on('exit', async (code) => {
+        if (exitOnError && code !== 0) {
+          if (_.isFunction(exitOnErrorCallback)) {
+            try {
+              await this.runSyncOrAsync(exitOnErrorCallback, code);
+            } catch (error) { }
+          }
+          process.exit(code);
+        }
+        resolve(void 0);
+      });
+
+      childProcess.stdout.on('error', (rawData) => {
+        let data = (rawData?.toString() || '');
+        data = Helpers.modifyLineByLine(
+          data,
+          outputLineReplace,
+          prefix,
+          extractFromLine
+        );
+
+        if (!hideOutput.stdout) {
+          process.stdout.write(JSON.stringify(data))
+        }
+
         // console.log(data);
       })
 
-      proc.stderr.on('data', (message) => {
-        process.stderr.write(message);
-        // console.log(data.toString());
-        const data: string = message.toString().trim();
-        if (!isResolved && _.isArray(stderMsg)) {
-          for (let index = 0; index < stderMsg.length; index++) {
-            const rejectm = stderMsg[index];
+      childProcess.stderr.on('data', (rawData) => {
+        let data = (rawData?.toString() || '');
+        data = Helpers.modifyLineByLine(
+          data,
+          outputLineReplace,
+          prefix,
+          extractFromLine
+        );
+
+        if (!hideOutput.stderr) {
+          process.stderr.write(data);
+        }
+
+        if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) {
+          for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) {
+            const rejectm = resolvePromiseMsg.stderr[index];
             if ((data.search(rejectm) !== -1)) {
               // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
               isResolved = true;
               reject();
-              proc.kill('SIGINT');
+              childProcess.kill('SIGINT');
               break;
             }
           }
@@ -821,10 +885,22 @@ export class HelpersCore extends HelpersMessages {
 
       })
 
-      proc.stderr.on('error', (data) => {
-        process.stderr.write(JSON.stringify(data))
+      childProcess.stderr.on('error', (rawData) => {
+        let data = (rawData?.toString() || '');
+        data = Helpers.modifyLineByLine(
+          data,
+          outputLineReplace,
+          prefix,
+          extractFromLine
+        );
+
+        if (!hideOutput.stderr) {
+          process.stderr.write(JSON.stringify(data))
+        }
         // console.log(data);
       });
+
+
     });
 
   }
@@ -851,10 +927,13 @@ command: ${command}
     prefix: string,
     extractFromLine?: (string | Function)[],
   ) {
+    // const chalkCharactersRegex = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
     const checkExtract = (_.isArray(extractFromLine) && extractFromLine.length > 0);
     let modifyOutput = _.isFunction(outputLineReplace);
     if (modifyOutput && _.isString(data)) {
-      data = data.split(/\r?\n/).map(line => outputLineReplace(line)).join('\n');
+      data = data.split(/\r?\n/).map(line => outputLineReplace(
+        line // .replace(chalkCharactersRegex, '')
+      )).join('\n');
     }
     if (prefix && _.isString(data)) {
       return data.split('\n').map(singleLine => {
