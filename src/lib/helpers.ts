@@ -921,13 +921,14 @@ command: ${command}
   //#endregion
 
   //#region @backend
+
   modifyLineByLine(
     data: string | Buffer | Error,
     outputLineReplace: (outputLine: string) => string,
     prefix: string,
     extractFromLine?: (string | Function)[],
   ) {
-    // const chalkCharactersRegex = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
+    //
     const checkExtract = (_.isArray(extractFromLine) && extractFromLine.length > 0);
     let modifyOutput = _.isFunction(outputLineReplace);
     if (modifyOutput && _.isString(data)) {
