@@ -928,7 +928,6 @@ command: ${command}
     prefix: string,
     extractFromLine?: (string | Function)[],
   ) {
-    //
     const checkExtract = (_.isArray(extractFromLine) && extractFromLine.length > 0);
     let modifyOutput = _.isFunction(outputLineReplace);
     if (modifyOutput && _.isString(data)) {
