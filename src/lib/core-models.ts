@@ -33,7 +33,7 @@ export interface ExecuteOptions {
 }
 
 export interface RunOptions extends ExecuteOptions {
-
+  showCommand?: boolean;
 
   /**
    * Show process output
