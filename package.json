@@ -1,7 +1,7 @@
 {
   "lastBuildTagHash": "c9415f8371138c38849c36dbb2e732d35be7aaa7",
   "name": "tnp-core",
-  "version": "13.0.55",
+  "version": "13.0.56",
   "license": "MIT",
   "dependencies": {
     "@types/lodash": "4.14.92",
@@ -172,7 +172,7 @@
     "method-override": "2.3.10",
     "minimist": "1.2.0",
     "mocha": "5.2.0",
-    "morphi": "~13.0.45",
+    "morphi": "~13.0.47",
     "ng-packagr": "13.0.0",
     "ng-talkback": "~13.0.14",
     "ng2-logger": "~13.0.22",
