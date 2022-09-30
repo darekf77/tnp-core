@@ -17,6 +17,22 @@ export class HelpersIsomorphic {
     //#endregion
     return Helpers.simulateBrowser || !!(typeof window !== 'undefined' && window.document);
   }
+
+  get isWebSQL() {
+    //#region @backend
+    if (Helpers.isBackend) {
+      return false;
+    }
+    //#endregion
+
+    //#region @websqlOnly
+    const isBrowser = !!(typeof window !== 'undefined' && window.document);
+    if (isBrowser) {
+      return true;
+    }
+    //#endregion
+    return false;
+  }
   get isNode() {
     //#region @backend
     if (Helpers.isBackend) {
