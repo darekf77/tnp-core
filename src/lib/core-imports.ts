@@ -3,7 +3,7 @@ import * as q from 'q';
 import * as moment from 'moment';
 
 //#region @backend
-import * as path from 'path';
+import * as pathBase from 'path';
 import * as os from 'os';
 import * as child_process from 'child_process';
 import * as http from 'http';
@@ -19,6 +19,10 @@ import * as chokidar from 'chokidar';
 import * as mkdirp from 'mkdirp';
 import * as json5 from 'json5';
 import * as ncp from 'copy-paste';
+import * as ps from 'ps-node';
+import * as  psList from 'ps-list';
+import * as fkill from 'fkill';
+import * as portfinder from 'portfinder';
 const isRoot = require('is-root');
 const isAdmin = require('is-admin');
 
@@ -26,15 +30,35 @@ async function isElevated() {
   return (process.platform === 'win32' ? isAdmin() : isRoot())
 };
 
-import * as ps from 'ps-node';
-import * as  psList from 'ps-list';
-import * as fkill from 'fkill';
-import * as portfinder from 'portfinder';
+//#endregion
+
+let path
+  // #region @backend
+  = pathBase;
+//#endregion
+
+//#region @websqlOnly
+// @ts-ignore
+path = {
+  join(...args) {
+    return args.join('/')
+  }, // @ts-ignore
+  win32: { // @ts-ignore
+    normalize: (p) => {
+      return p;
+     }
+  }
+}
+//#endregion
+
+
 
 function win32Path(p: string) {
+  //#region @backend
   if (process.platform !== 'win32') {
     return p;
   }
+  //#endregion
   if (/^\/[a-z]\//.test(p)) {
     p = p.replace(/^\/[a-z]\//, `${p.charAt(1).toUpperCase()}:/`);
   }
@@ -42,9 +66,11 @@ function win32Path(p: string) {
 }
 
 function crossPlatformPath(p: string) {
+  //#region @backend
   if (process.platform !== 'win32') {
     return p;
   }
+  //#endregion
   if (typeof p !== 'string') {
     return p;
   }
@@ -57,49 +83,27 @@ function crossPlatformPath(p: string) {
   }
 
   return p.replace(/\\/g, '/');
-
-  // if (process.platform === 'win32') {
-  //   return p.replace(/\\/g, '/');
-  // }
-  // return p;
 }
 
-/*
-function apppyFor(arr: any[], obj: any) {
-  for (let index = 0; index < arr.length; index++) {
-    const fnName = arr[index];
-    const orgFn = obj[fnName];
-    obj[fnName] = (...args) => {
-      return crossPlatformPath((orgFn as Function).call(null, ...args));
-    };
-  }
-}
 
-apppyFor([
-  'realpathSync',
-], fse);
-
-apppyFor([
-  'join',
-  'resolve',
-  'dirname',
-  'extname',
-  'isAbsolute',
-  'normalize',
-  'parse',
-  'format'
-], path);
-*/
-
-//#endregion
-
-// export { Helpers as CoreHelpers  } from './core-helpers';
 
 export {
   _,
   q,
   moment,
-  //#region @backend
+  crossPlatformPath,
+  win32Path,
+}
+
+//#region @websql
+export {
+  path
+}
+//#endregion
+
+//#region @backend
+export {
+
   dateformat,
   spawn,
   chalk,
@@ -109,10 +113,7 @@ export {
   mkdirp,
   ncp,
   json5,
-  path,
   fse,
-  win32Path,
-  crossPlatformPath,
   os,
   child_process,
   http, https,
@@ -122,26 +123,5 @@ export {
   fkill,
   portfinder,
   psList,
-  //#endregion
 };
-
-/*
-import {
-  _,
-  path,
-  fse,
-  rimraf,
-  crossPlatformPath,
-  os,
-  child_process,
-  http, https,
-  rimraf,
-  net,
-} from 'tnp-core';
-
-import { _ } from 'tnp-core';
-
-import {  } from 'tnp-core';
-
-*/
-
+ //#endregion

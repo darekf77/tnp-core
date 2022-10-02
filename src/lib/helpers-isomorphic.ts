@@ -3,7 +3,7 @@ import { Helpers } from './index';
 
 export class HelpersIsomorphic {
   public simulateBrowser = false;
-  //#region @backend
+  //#region @websql
   private isBackend = false;
   setIsBackend() {
     Helpers.isBackend = true;
