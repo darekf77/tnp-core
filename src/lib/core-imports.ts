@@ -43,6 +43,9 @@ path = {
   join(...args) {
     return args.join('/')
   }, // @ts-ignore
+  basename: (args:string)=> {
+    return _.last((args || '').split('/|\\'));
+  },  // @ts-ignore
   win32: { // @ts-ignore
     normalize: (p) => {
       return p;
@@ -50,8 +53,6 @@ path = {
   }
 }
 //#endregion
-
-
 
 function win32Path(p: string) {
   //#region @backend
