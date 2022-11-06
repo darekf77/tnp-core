@@ -10,12 +10,30 @@ import { HelpersIsomorphic } from './helpers-isomorphic';
 import { PROGRESS_DATA } from './progress-data';
 import { CoreConfig } from './core-config';
 
+// TODO handle global.testMode ?
+
 const KEY = {
   LAST_ERROR: Symbol(),
   LAST_INFO: Symbol(),
   LAST_WARN: Symbol(),
   LAST_LOG: Symbol(),
 }
+
+const KEY_COUNT = {
+  LAST_ERROR: Symbol(),
+  LAST_INFO: Symbol(),
+  LAST_WARN: Symbol(),
+  LAST_LOG: Symbol(),
+}
+
+//#region @backend
+global[KEY_COUNT.LAST_ERROR] = 0;
+global[KEY_COUNT.LAST_INFO] = 0;
+global[KEY_COUNT.LAST_WARN] = 0;
+global[KEY_COUNT.LAST_LOG] = 0;
+//#endregion
+
+const LIMIT = 10;
 
 // export class Log {
 //   private static _instance: Log;
@@ -60,6 +78,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#endregion
   }
 
+  //#region error
   error(details: any, noExit = false, noTrace = false) {
     if (Helpers.isBrowser) {
       console.error(details)
@@ -75,9 +94,15 @@ export class HelpersMessages extends HelpersIsomorphic {
         const json = JSON.stringify(details)
         if (global.globalSystemToolMode) {
           if (global[KEY.LAST_ERROR] === json) {
-            process.stdout.write('.');
+            global[KEY_COUNT.LAST_ERROR]++;
+            if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
+              process.stdout.write('.');
+            } else {
+              console.log(details)
+            }
             return;
           } else {
+            global[KEY_COUNT.LAST_ERROR] = 0;
             global[KEY.LAST_ERROR] = json;
           }
           if (noTrace) {
@@ -87,9 +112,15 @@ export class HelpersMessages extends HelpersIsomorphic {
           }
         } else {
           if (global[KEY.LAST_ERROR] === json) {
-            process.stdout.write('.');
+            global[KEY_COUNT.LAST_ERROR]++;
+            if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
+              process.stdout.write('.');
+            } else {
+              console.log(details);
+            }
             return;
           } else {
+            global[KEY_COUNT.LAST_ERROR] = 0;
             global[KEY.LAST_ERROR] = json;
           }
           console.log(json);
@@ -100,9 +131,15 @@ export class HelpersMessages extends HelpersIsomorphic {
       } catch (error) {
         if (global.globalSystemToolMode) {
           if (global[KEY.LAST_ERROR] === details) {
-            process.stdout.write('.');
+            global[KEY_COUNT.LAST_ERROR]++;
+            if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
+              process.stdout.write('.');
+            } else {
+              console.log(details)
+            }
             return;
           } else {
+            global[KEY_COUNT.LAST_ERROR] = 0;
             global[KEY.LAST_ERROR] = details;
           }
           if (noTrace) {
@@ -112,9 +149,15 @@ export class HelpersMessages extends HelpersIsomorphic {
           }
         } else {
           if (global[KEY.LAST_ERROR] === details) {
-            process.stdout.write('.');
+            global[KEY_COUNT.LAST_ERROR]++;
+            if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
+              process.stdout.write('.');
+            } else {
+              console.log(details)
+            }
             return;
           } else {
+            global[KEY_COUNT.LAST_ERROR] = 0;
             global[KEY.LAST_ERROR] = details;
           }
           console.log(details)
@@ -124,9 +167,15 @@ export class HelpersMessages extends HelpersIsomorphic {
     } else {
       if (global.globalSystemToolMode) {
         if (global[KEY.LAST_ERROR] === details) {
-          process.stdout.write('.');
+          global[KEY_COUNT.LAST_ERROR]++;
+          if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
+            process.stdout.write('.');
+          } else {
+            console.log(details)
+          }
           return;
         } else {
+          global[KEY_COUNT.LAST_ERROR] = 0;
           global[KEY.LAST_ERROR] = details;
         }
         if (noTrace) {
@@ -136,9 +185,15 @@ export class HelpersMessages extends HelpersIsomorphic {
         }
       } else {
         if (global[KEY.LAST_ERROR] === details) {
-          process.stdout.write('.');
+          global[KEY_COUNT.LAST_ERROR]++;
+          if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
+            process.stdout.write('.');
+          } else {
+            console.log(details)
+          }
           return;
         } else {
+          global[KEY_COUNT.LAST_ERROR] = 0;
           global[KEY.LAST_ERROR] = details;
         }
         console.log(details)
@@ -154,7 +209,9 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region info
   info(details: string, repeatable = false) {
     if (Helpers.isBrowser) {
       console.info(details);
@@ -163,9 +220,15 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#region @backend
     if (!global.muteMessages && !global.hideInfos) {
       if ((global[KEY.LAST_INFO] === details) && !repeatable) {
-        process.stdout.write('.');
+        global[KEY_COUNT.LAST_INFO]++;
+        if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
+          process.stdout.write('.');
+        } else {
+          console.log(chalk.green(details))
+        }
         return;
       } else {
+        global[KEY_COUNT.LAST_INFO] = 0;
         global[KEY.LAST_INFO] = details;
       }
       console.log(chalk.green(details))
@@ -175,23 +238,34 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region log
   log(details: string, debugLevel = 0) {
+    // //#region @backend
+    // console.log({ verboseLevel: global.verboseLevel })
+    // //#endregion
     if (Helpers.isBrowser) {
       console.log(details);
       return;
     }
     //#region @backend
-    if (debugLevel > global.verboseLevel) {
+    if (debugLevel > (global.verboseLevel || 0)) {
       return;
     }
     // console.log('global.muteMessages', global.muteMessages);
     // console.log('global.hideLog', global.hideLog);
     if ((!global.muteMessages && !global.hideLog)) {
       if (global[KEY.LAST_LOG] === details) {
-        process.stdout.write('.');
+        global[KEY_COUNT.LAST_LOG]++;
+        if (global[KEY_COUNT.LAST_LOG] > LIMIT) {
+          process.stdout.write('.');
+        } else {
+          console.log(chalk.gray(details))
+        }
         return;
       } else {
+        global[KEY_COUNT.LAST_LOG] = 0;
         global[KEY.LAST_LOG] = details;
       }
       if (global.globalSystemToolMode) {
@@ -207,7 +281,9 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region warn
   warn(details: string, trace = false) {
     // if (_.isString(details)) {
     //   details = (details).toUpperCase();
@@ -221,9 +297,15 @@ export class HelpersMessages extends HelpersIsomorphic {
       trace = false;
     }
     if (global[KEY.LAST_WARN] === details) {
-      process.stdout.write('.');
+      global[KEY_COUNT.LAST_WARN]++;
+      if (global[KEY_COUNT.LAST_WARN] > LIMIT) {
+        process.stdout.write('.');
+      } else {
+        console.log(chalk.yellow(details))
+      }
       return;
     } else {
+      global[KEY_COUNT.LAST_WARN] = 0;
       global[KEY.LAST_WARN] = details;
     }
     if (trace) {
@@ -233,4 +315,5 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#endregion
   }
+  //#endregion
 }

@@ -1082,8 +1082,12 @@ command: ${command}
     }
     absoluteFilePath = absoluteFilePath as string;
     if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
-      Helpers.warn(`WRITTING JSON into real path`);
+      const beforePath = absoluteFilePath;
       absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
+      Helpers.warn(`WRITTING JSON into real path:
+      original: ${beforePath}
+      real    : ${absoluteFilePath}
+      `);
     }
 
     const { preventParentFile, overrideSameFile } = options || {};
