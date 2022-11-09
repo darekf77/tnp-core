@@ -208,13 +208,13 @@ export class HelpersMessages extends HelpersIsomorphic {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
       }
       if (dot) {
-        process.stdout.write(chalk.magenta('.'));
+        process.stdout.write(chalk.green('.'));
       } else {
         if (useSpinner) {
-          process?.send(`success::${chalk.magenta(details)}`);
+          process?.send(`success::${chalk.green(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log(chalk.magenta(details))
+            console.log(chalk.green(details))
           } else {
             console.log(details)
           }
@@ -260,13 +260,13 @@ export class HelpersMessages extends HelpersIsomorphic {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
       }
       if (dot) {
-        process.stdout.write(chalk.gray('.'));
+        process.stdout.write(chalk.magenta('.'));
       } else {
         if (useSpinner) {
-          process?.send(`taskstart::- ${chalk.gray(details)}`);
+          process?.send(`taskstart::- ${chalk.magenta(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log('- '+chalk.gray(details))
+            console.log('- '+chalk.magenta(details))
           } else {
             console.log(details)
           }
