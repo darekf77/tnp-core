@@ -1,3 +1,4 @@
+import { Helpers } from '.';
 import { _ } from './core-imports';
 import { PROGRESS_DATA_TYPE } from './core-models';
 
@@ -20,7 +21,7 @@ export class PROGRESS_DATA implements IPROGRESS_DATA {
   public static log(log: IPROGRESS_DATA) {
     //#region @backend
     if (global.tnpShowProgress) {
-      console.log(`[[[${JSON.stringify({ value: log.value, msg: log.msg, date: new Date() } as IPROGRESS_DATA)}]]]`)
+      Helpers.log(`[[[${JSON.stringify({ value: log.value, msg: log.msg, date: new Date() } as IPROGRESS_DATA)}]]]`, 1)
     }
     //#endregion
   }
@@ -60,8 +61,8 @@ export class PROGRESS_DATA implements IPROGRESS_DATA {
           callbackOnFounded(single);
         }
       } catch (err) {
-        console.log(err)
-        console.error(`ProgresssBarData: fail to parse "${progress}"`)
+        Helpers.error(err, true, true)
+        Helpers.error(`ProgresssBarData: fail to parse "${progress}"`, true, true)
       }
     }
     return res;

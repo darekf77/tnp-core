@@ -431,6 +431,8 @@ export class HelpersCore extends HelpersMessages {
   }
 
   command(command: string) {
+    // console.log({ command })
+
     return {
       //#region @backend
       getherOutput(options?: {
@@ -489,6 +491,8 @@ export class HelpersCore extends HelpersMessages {
 
   run(command: string,
     options?: RunOptions) {
+
+    // console.log({ command })
 
     //#region @backend
     if (!options) options = {};
@@ -673,7 +677,7 @@ export class HelpersCore extends HelpersMessages {
     if (detach) {
       const cmd = _.first(command.split(' '));
       const argsForCmd = command.split(' ').slice(1);
-      console.log(`cmd: "${cmd}",  args: "${argsForCmd.join(' ')}"`)
+      Helpers.log(`cmd: "${cmd}",  args: "${argsForCmd.join(' ')}"`)
       if (process.platform === 'win32') {
         proc = spawn(cmd, argsForCmd, { cwd, detached: true });
 
@@ -690,7 +694,7 @@ export class HelpersCore extends HelpersMessages {
       } else {
         proc = child_process.spawn(cmd, argsForCmd, { cwd, detached: true });
       }
-      console.log(`
+      Helpers.log(`
 
       DETACHED PROCESS IS WORKING ON PID: ${proc.pid}
 
@@ -702,7 +706,7 @@ export class HelpersCore extends HelpersMessages {
       proc = child_process.exec(command, { cwd, maxBuffer, env });
       if (global.globalSystemToolMode) {
         proc.on('exit', (code) => {
-          console.log('EXITING BIG PROCESS')
+          Helpers.log('EXITING BIG PROCESS')
           process.exit(code);
         });
       }
@@ -710,14 +714,23 @@ export class HelpersCore extends HelpersMessages {
     return Helpers.logProc(proc,
       detach ? true : output,
       detach ? void 0 : stdio,
-      outputLineReplace, options.prefix, extractFromLine);
+      outputLineReplace,
+      options.prefix,
+      extractFromLine,
+      command,
+    );
   }
   //#endregion
 
   //#region @backend
-  logProc(proc: child_process.ChildProcess, output = true, stdio,
-    outputLineReplace: (outputLine: string) => string, prefix: string,
-    extractFromLine?: (string | Function)[]) {
+  logProc(proc: child_process.ChildProcess,
+    output = true,
+    stdio,
+    outputLineReplace: (outputLine: string) => string,
+    prefix: string,
+    extractFromLine?: (string | Function)[],
+    command?: string,
+  ) {
     Helpers.processes.push(proc);
 
     if (stdio) {
@@ -732,18 +745,32 @@ export class HelpersCore extends HelpersMessages {
 
     if (output) {
       proc.stdout.on('data', (data) => {
+        // if (data?.toString().search('was unexpected at this time') !== -1) {
+        //   console.log('!!!COMMAND',command)
+        // }
+
         process.stdout.write(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine))
       })
 
       proc.stdout.on('error', (data) => {
+        // if (data?.toString().search('was unexpected at this time') !== -1) {
+        //   console.log('!!!COMMAND',command)
+        // }
+
         console.log(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine));
       })
 
       proc.stderr.on('data', (data) => {
+        // if (data?.toString().search('was unexpected at this time') !== -1) {
+        //   console.log('!!!COMMAND',command)
+        // }
         process.stderr.write(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine))
       })
 
       proc.stderr.on('error', (data) => {
+        // if (data?.toString().search('was unexpected at this time') !== -1) {
+        //   console.log('!!!COMMAND',command)
+        // }
         console.log(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine));
       })
 
@@ -791,6 +818,7 @@ export class HelpersCore extends HelpersMessages {
       // let stdio = [0,1,2]
       childProcess.stdout.on('data', (rawData) => {
         let data = (rawData?.toString() || '');
+
         data = Helpers.modifyLineByLine(
           data,
           outputLineReplace,
@@ -1049,6 +1077,8 @@ command: ${command}
   //#region @backend
   async compilationWrapper(fn: () => void, taskName: string = 'Task',
     executionType: 'Compilation of' | 'Code execution of' | 'Event:' = 'Compilation of') {
+
+    // global?.spinner?.start();
     function currentDate() {
       return `[${dateformat(new Date(), 'HH:MM:ss')}]`;
     }
@@ -1066,7 +1096,7 @@ command: ${command}
       Helpers.log(`${currentDate()} ${executionType} ${taskName} ERROR`);
       process.exit(1);
     }
-
+    // global?.spinner?.stop();
   }
   //#endregion
 

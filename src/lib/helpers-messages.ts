@@ -8,7 +8,6 @@ import { _ } from './core-imports';
 import { Helpers } from './index';
 import { HelpersIsomorphic } from './helpers-isomorphic';
 import { PROGRESS_DATA } from './progress-data';
-import { CoreConfig } from './core-config';
 
 // TODO handle global.testMode ?
 
@@ -31,6 +30,9 @@ global[KEY_COUNT.LAST_ERROR] = 0;
 global[KEY_COUNT.LAST_INFO] = 0;
 global[KEY_COUNT.LAST_WARN] = 0;
 global[KEY_COUNT.LAST_LOG] = 0;
+
+const useSpinner = global['spinnerInParentProcess'];
+
 //#endregion
 
 const LIMIT = 10;
@@ -78,12 +80,14 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#endregion
   }
 
-  //#region error
   error(details: any, noExit = false, noTrace = false) {
+    //#region browser mode
     if (Helpers.isBrowser) {
       console.error(details)
       return;
     }
+    //#endregion
+
     //#region @backend
     // Error.stackTraceLimit = Infinity;
     if (!global.globalSystemToolMode) {
@@ -91,121 +95,49 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     if (typeof details === 'object') {
       try {
-        const json = JSON.stringify(details)
-        if (global.globalSystemToolMode) {
-          if (global[KEY.LAST_ERROR] === json) {
-            global[KEY_COUNT.LAST_ERROR]++;
-            if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
-              process.stdout.write('.');
-            } else {
-              console.log(details)
-            }
-            return;
-          } else {
-            global[KEY_COUNT.LAST_ERROR] = 0;
-            global[KEY.LAST_ERROR] = json;
-          }
-          if (noTrace) {
-            !global.muteMessages && console.log(chalk.red(json));
-          } else {
-            !global.muteMessages && console.trace(chalk.red(json));
-          }
-        } else {
-          if (global[KEY.LAST_ERROR] === json) {
-            global[KEY_COUNT.LAST_ERROR]++;
-            if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
-              process.stdout.write('.');
-            } else {
-              console.log(details);
-            }
-            return;
-          } else {
-            global[KEY_COUNT.LAST_ERROR] = 0;
-            global[KEY.LAST_ERROR] = json;
-          }
-          console.log(json);
-          return;
-        }
-
-
-      } catch (error) {
-        if (global.globalSystemToolMode) {
-          if (global[KEY.LAST_ERROR] === details) {
-            global[KEY_COUNT.LAST_ERROR]++;
-            if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
-              process.stdout.write('.');
-            } else {
-              console.log(details)
-            }
-            return;
-          } else {
-            global[KEY_COUNT.LAST_ERROR] = 0;
-            global[KEY.LAST_ERROR] = details;
-          }
-          if (noTrace) {
-            !global.muteMessages && console.log(details);
-          } else {
-            !global.muteMessages && console.trace(details);
-          }
-        } else {
-          if (global[KEY.LAST_ERROR] === details) {
-            global[KEY_COUNT.LAST_ERROR]++;
-            if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
-              process.stdout.write('.');
-            } else {
-              console.log(details)
-            }
-            return;
-          } else {
-            global[KEY_COUNT.LAST_ERROR] = 0;
-            global[KEY.LAST_ERROR] = details;
-          }
-          console.log(details)
-          return;
-        }
-      }
-    } else {
-      if (global.globalSystemToolMode) {
-        if (global[KEY.LAST_ERROR] === details) {
-          global[KEY_COUNT.LAST_ERROR]++;
-          if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
-            process.stdout.write('.');
-          } else {
-            console.log(details)
-          }
-          return;
-        } else {
-          global[KEY_COUNT.LAST_ERROR] = 0;
-          global[KEY.LAST_ERROR] = details;
-        }
-        if (noTrace) {
-          !global.muteMessages && console.log(chalk.red(details));
-        } else {
-          !global.muteMessages && console.trace(chalk.red(details));
-        }
-      } else {
-        if (global[KEY.LAST_ERROR] === details) {
-          global[KEY_COUNT.LAST_ERROR]++;
-          if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
-            process.stdout.write('.');
-          } else {
-            console.log(details)
-          }
-          return;
-        } else {
-          global[KEY_COUNT.LAST_ERROR] = 0;
-          global[KEY.LAST_ERROR] = details;
-        }
-        console.log(details)
-        return;
-      }
-
+        const json = JSON.stringify(details);
+        details = json;
+      } catch (error) { }
     }
 
-    if (global[CoreConfig.message.globalSystemToolMode]) {
-      if (!noExit) {
-        process.exit(1);
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details })
       }
+      if (dot) {
+        process.stdout.write(chalk.red('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`error::${chalk.red(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            if (noTrace) {
+              !global.muteMessages && console.log(chalk.red(details));
+            } else {
+              !global.muteMessages && console.trace(chalk.red(details));
+            }
+            if (!noExit) {
+              process.exit(1);
+            }
+          } else {
+            console.log(details); // no formatiing debuggable code
+          }
+        }
+
+      }
+    };
+
+    if (global[KEY.LAST_ERROR] === details) {
+      global[KEY_COUNT.LAST_ERROR]++;
+      if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
+        display(true);
+      } else {
+        display();
+      }
+    } else {
+      global[KEY_COUNT.LAST_ERROR] = 0;
+      global[KEY.LAST_ERROR] = details;
+      display();
     }
     //#endregion
   }
@@ -218,22 +150,91 @@ export class HelpersMessages extends HelpersIsomorphic {
       return;
     }
     //#region @backend
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
+      }
+      if (dot) {
+        process.stdout.write(chalk.blue('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`info::${chalk.blue(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log(chalk.blue(details))
+          } else {
+            console.log(details)
+          }
+
+        }
+      }
+    };
+
     if (!global.muteMessages && !global.hideInfos) {
       if ((global[KEY.LAST_INFO] === details) && !repeatable) {
         global[KEY_COUNT.LAST_INFO]++;
         if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
-          process.stdout.write('.');
+          display(true)
         } else {
-          console.log(chalk.green(details))
+          display()
         }
-        return;
       } else {
         global[KEY_COUNT.LAST_INFO] = 0;
         global[KEY.LAST_INFO] = details;
+        display();
       }
-      console.log(chalk.green(details))
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region info
+  success(details: any | string) {
+    if (Helpers.isBrowser) {
+      console.info(details);
+      return;
+    }
+    //#region @backend
+
+    if (typeof details === 'object') {
+      try {
+        const json = JSON.stringify(details);
+        details = json;
+      } catch (error) { }
+    }
+
+    const display = (dot = false) => {
       if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: details })
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
+      }
+      if (dot) {
+        process.stdout.write(chalk.green('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`success::${chalk.green(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log(chalk.green(details))
+          } else {
+            console.log(details)
+          }
+
+        }
+      }
+    };
+
+    if (!global.muteMessages && !global.hideInfos) {
+      if ((global[KEY.LAST_INFO] === details)) {
+        global[KEY_COUNT.LAST_INFO]++;
+        if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
+          display(true)
+        } else {
+          display()
+        }
+      } else {
+        global[KEY_COUNT.LAST_INFO] = 0;
+        global[KEY.LAST_INFO] = details;
+        display();
       }
     }
     //#endregion
@@ -241,10 +242,8 @@ export class HelpersMessages extends HelpersIsomorphic {
   //#endregion
 
   //#region log
-  log(details: string, debugLevel = 0) {
-    // //#region @backend
-    // console.log({ verboseLevel: global.verboseLevel })
-    // //#endregion
+  log(details: any, debugLevel = 0) {
+
     if (Helpers.isBrowser) {
       console.log(details);
       return;
@@ -253,30 +252,49 @@ export class HelpersMessages extends HelpersIsomorphic {
     if (debugLevel > (global.verboseLevel || 0)) {
       return;
     }
-    // console.log('global.muteMessages', global.muteMessages);
-    // console.log('global.hideLog', global.hideLog);
+
+    if (typeof details === 'object') {
+      try {
+        const json = JSON.stringify(details);
+        details = json;
+      } catch (error) { }
+    }
+
+    const display = (dot = false) => {
+
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details })
+      }
+      if (dot) {
+        process.stdout.write('.');
+      } else {
+        if (useSpinner) {
+          process?.send(`log::${chalk.gray(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log(chalk.gray(details));
+          } else {
+            console.log(details);
+          }
+        }
+
+
+      }
+
+    };
+
     if ((!global.muteMessages && !global.hideLog)) {
       if (global[KEY.LAST_LOG] === details) {
         global[KEY_COUNT.LAST_LOG]++;
         if (global[KEY_COUNT.LAST_LOG] > LIMIT) {
-          process.stdout.write('.');
+          display(true)
         } else {
-          console.log(chalk.gray(details))
+          display();
         }
-        return;
       } else {
         global[KEY_COUNT.LAST_LOG] = 0;
         global[KEY.LAST_LOG] = details;
-      }
-      if (global.globalSystemToolMode) {
-        // if (_.isObject(details)) {
-        //   console.log(chalk.gray(json5.stringify(details)))
-        // } else {
-        console.log(chalk.gray(details))
-        // }
-      }
-      if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: details })
+        display();
       }
     }
     //#endregion
@@ -285,33 +303,52 @@ export class HelpersMessages extends HelpersIsomorphic {
 
   //#region warn
   warn(details: string, trace = false) {
-    // if (_.isString(details)) {
-    //   details = (details).toUpperCase();
-    // }
+
     if (Helpers.isBrowser) {
       console.warn(details);
       return;
     }
+
     //#region @backend
-    if (!global.globalSystemToolMode) {
-      trace = false;
-    }
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'warning' })
+      }
+      if (dot) {
+        process.stdout.write(chalk.yellow('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`warn::${chalk.yellow(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            if (trace) {
+              (!global.muteMessages && !global.hideWarnings) && console.trace(chalk.yellow(details))
+            } else {
+              (!global.muteMessages && !global.hideWarnings) && console.log(chalk.yellow(details))
+            }
+          } else {
+            if (trace) {
+              (!global.muteMessages && !global.hideWarnings) && console.trace(details)
+            } else {
+              (!global.muteMessages && !global.hideWarnings) && console.log(details)
+            }
+          }
+        }
+
+      }
+    };
+
     if (global[KEY.LAST_WARN] === details) {
       global[KEY_COUNT.LAST_WARN]++;
       if (global[KEY_COUNT.LAST_WARN] > LIMIT) {
-        process.stdout.write('.');
+        display(true);
       } else {
-        console.log(chalk.yellow(details))
+        display();
       }
-      return;
     } else {
       global[KEY_COUNT.LAST_WARN] = 0;
       global[KEY.LAST_WARN] = details;
-    }
-    if (trace) {
-      (!global.muteMessages && !global.hideWarnings) && console.trace(chalk.yellow(details))
-    } else {
-      (!global.muteMessages && !global.hideWarnings) && console.log(chalk.yellow(details))
+      display();
     }
     //#endregion
   }
