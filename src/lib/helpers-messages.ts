@@ -208,13 +208,117 @@ export class HelpersMessages extends HelpersIsomorphic {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
       }
       if (dot) {
+        process.stdout.write(chalk.magenta('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`success::${chalk.magenta(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log(chalk.magenta(details))
+          } else {
+            console.log(details)
+          }
+
+        }
+      }
+    };
+
+    if (!global.muteMessages && !global.hideInfos) {
+      if ((global[KEY.LAST_INFO] === details)) {
+        global[KEY_COUNT.LAST_INFO]++;
+        if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
+          display(true)
+        } else {
+          display()
+        }
+      } else {
+        global[KEY_COUNT.LAST_INFO] = 0;
+        global[KEY.LAST_INFO] = details;
+        display();
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  taskStarted(details: any | string) {
+    if (Helpers.isBrowser) {
+      console.info(details);
+      return;
+    }
+    //#region @backend
+
+    if (typeof details === 'object') {
+      try {
+        const json = JSON.stringify(details);
+        details = json;
+      } catch (error) { }
+    }
+
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
+      }
+      if (dot) {
+        process.stdout.write(chalk.gray('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`taskstart::- ${chalk.gray(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log('- '+chalk.gray(details))
+          } else {
+            console.log(details)
+          }
+
+        }
+      }
+    };
+
+    if (!global.muteMessages && !global.hideInfos) {
+      if ((global[KEY.LAST_INFO] === details)) {
+        global[KEY_COUNT.LAST_INFO]++;
+        if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
+          display(true)
+        } else {
+          display()
+        }
+      } else {
+        global[KEY_COUNT.LAST_INFO] = 0;
+        global[KEY.LAST_INFO] = details;
+        display();
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  taskDone(details: any | string) {
+    if (Helpers.isBrowser) {
+      console.info(details);
+      return;
+    }
+    //#region @backend
+
+    if (typeof details === 'object') {
+      try {
+        const json = JSON.stringify(details);
+        details = json;
+      } catch (error) { }
+    }
+
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
+      }
+      if (dot) {
         process.stdout.write(chalk.green('.'));
       } else {
         if (useSpinner) {
-          process?.send(`success::${chalk.green(details)}`);
+          process?.send(`taskdone::\u2713 ${chalk.green(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log(chalk.green(details))
+            console.log('\u2713 '+chalk.green(details))
           } else {
             console.log(details)
           }
@@ -269,10 +373,10 @@ export class HelpersMessages extends HelpersIsomorphic {
         process.stdout.write('.');
       } else {
         if (useSpinner) {
-          process?.send(`log::${chalk.gray(details)}`);
+          process?.send(`log::${chalk.black(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log(chalk.gray(details));
+            console.log(chalk.black(details));
           } else {
             console.log(details);
           }
