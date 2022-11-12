@@ -16,6 +16,9 @@ const KEY = {
   LAST_INFO: Symbol(),
   LAST_WARN: Symbol(),
   LAST_LOG: Symbol(),
+  LAST_SUCCESS: Symbol(),
+  LAST_TASK_STARTED: Symbol(),
+  LAST_TASK_DONE: Symbol(),
 }
 
 const KEY_COUNT = {
@@ -23,6 +26,9 @@ const KEY_COUNT = {
   LAST_INFO: Symbol(),
   LAST_WARN: Symbol(),
   LAST_LOG: Symbol(),
+  LAST_SUCCESS: Symbol(),
+  LAST_TASK_STARTED: Symbol(),
+  LAST_TASK_DONE: Symbol(),
 }
 
 //#region @backend
@@ -30,6 +36,9 @@ global[KEY_COUNT.LAST_ERROR] = 0;
 global[KEY_COUNT.LAST_INFO] = 0;
 global[KEY_COUNT.LAST_WARN] = 0;
 global[KEY_COUNT.LAST_LOG] = 0;
+global[KEY_COUNT.LAST_SUCCESS] = 0;
+global[KEY_COUNT.LAST_TASK_STARTED] = 0;
+global[KEY_COUNT.LAST_TASK_DONE] = 0;
 
 const useSpinner = global['spinnerInParentProcess'];
 
@@ -222,16 +231,16 @@ export class HelpersMessages extends HelpersIsomorphic {
     };
 
     if (!global.muteMessages && !global.hideInfos) {
-      if ((global[KEY.LAST_INFO] === details)) {
-        global[KEY_COUNT.LAST_INFO]++;
-        if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
+      if ((global[KEY.LAST_SUCCESS] === details)) {
+        global[KEY_COUNT.LAST_SUCCESS]++;
+        if (global[KEY_COUNT.LAST_SUCCESS] > LIMIT) {
           display(true)
         } else {
           display()
         }
       } else {
-        global[KEY_COUNT.LAST_INFO] = 0;
-        global[KEY.LAST_INFO] = details;
+        global[KEY_COUNT.LAST_SUCCESS] = 0;
+        global[KEY.LAST_SUCCESS] = details;
         display();
       }
     }
@@ -269,16 +278,16 @@ export class HelpersMessages extends HelpersIsomorphic {
     };
 
     if (!global.muteMessages && !global.hideInfos) {
-      if ((global[KEY.LAST_INFO] === details)) {
-        global[KEY_COUNT.LAST_INFO]++;
-        if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
+      if ((global[KEY.LAST_TASK_STARTED] === details)) {
+        global[KEY_COUNT.LAST_TASK_STARTED]++;
+        if (global[KEY_COUNT.LAST_TASK_STARTED] > LIMIT) {
           display(true)
         } else {
           display()
         }
       } else {
-        global[KEY_COUNT.LAST_INFO] = 0;
-        global[KEY.LAST_INFO] = details;
+        global[KEY_COUNT.LAST_TASK_STARTED] = 0;
+        global[KEY.LAST_TASK_STARTED] = details;
         display();
       }
     }
@@ -286,12 +295,17 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
   //#endregion
 
-  taskDone(details: any | string) {
+  taskDone(details?: any | string) {
     if (Helpers.isBrowser) {
       console.info(details);
       return;
     }
     //#region @backend
+
+    if(!details) {
+      const lastStatedTask = global[KEY_COUNT.LAST_TASK_STARTED];
+      details = lastStatedTask;
+    }
 
     details = transformData(details);
 
@@ -316,16 +330,16 @@ export class HelpersMessages extends HelpersIsomorphic {
     };
 
     if (!global.muteMessages && !global.hideInfos) {
-      if ((global[KEY.LAST_INFO] === details)) {
-        global[KEY_COUNT.LAST_INFO]++;
-        if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
+      if ((global[KEY.LAST_TASK_DONE] === details)) {
+        global[KEY_COUNT.LAST_TASK_DONE]++;
+        if (global[KEY_COUNT.LAST_TASK_DONE] > LIMIT) {
           display(true)
         } else {
           display()
         }
       } else {
-        global[KEY_COUNT.LAST_INFO] = 0;
-        global[KEY.LAST_INFO] = details;
+        global[KEY_COUNT.LAST_TASK_DONE] = 0;
+        global[KEY.LAST_TASK_DONE] = details;
         display();
       }
     }
