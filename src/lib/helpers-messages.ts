@@ -93,12 +93,8 @@ export class HelpersMessages extends HelpersIsomorphic {
     if (!global.globalSystemToolMode) {
       noTrace = true;
     }
-    if (typeof details === 'object') {
-      try {
-        const json = JSON.stringify(details);
-        details = json;
-      } catch (error) { }
-    }
+
+    details = transformData(details);
 
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
@@ -145,6 +141,13 @@ export class HelpersMessages extends HelpersIsomorphic {
 
   //#region info
   info(details: string, repeatable = false) {
+    // //#region @backend
+    // console.log({
+    //   shouldDiaplyInfo: details,
+    //   muteMessages: global.muteMessages,
+    //   hideInfos: global.hideInfos,
+    // });
+    // //#endregion
     if (Helpers.isBrowser) {
       console.info(details);
       return;
@@ -196,12 +199,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#region @backend
 
-    if (typeof details === 'object') {
-      try {
-        const json = JSON.stringify(details);
-        details = json;
-      } catch (error) { }
-    }
+    details = transformData(details);
 
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
@@ -248,12 +246,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#region @backend
 
-    if (typeof details === 'object') {
-      try {
-        const json = JSON.stringify(details);
-        details = json;
-      } catch (error) { }
-    }
+    details = transformData(details);
 
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
@@ -263,7 +256,7 @@ export class HelpersMessages extends HelpersIsomorphic {
         process.stdout.write(chalk.magenta('.'));
       } else {
         if (useSpinner) {
-          process?.send(`taskstart::- ${chalk.magenta(details)}`);
+          process?.send(`taskstart::► ${chalk.magenta(details)}`);
         } else {
           if (global.globalSystemToolMode) {
             console.log('- '+chalk.magenta(details))
@@ -300,12 +293,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#region @backend
 
-    if (typeof details === 'object') {
-      try {
-        const json = JSON.stringify(details);
-        details = json;
-      } catch (error) { }
-    }
+    details = transformData(details);
 
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
@@ -357,12 +345,7 @@ export class HelpersMessages extends HelpersIsomorphic {
       return;
     }
 
-    if (typeof details === 'object') {
-      try {
-        const json = JSON.stringify(details);
-        details = json;
-      } catch (error) { }
-    }
+    details = transformData(details);
 
     const display = (dot = false) => {
 
@@ -457,4 +440,19 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#endregion
   }
   //#endregion
+}
+
+
+
+function transformData(details:any) {
+  if (typeof details === 'object') {
+    if(Array.isArray(details)) {
+      return details.join('\n')
+    }
+    try {
+      const json = JSON.stringify(details);
+      details = json;
+    } catch (error) { }
+  }
+  return details;
 }
