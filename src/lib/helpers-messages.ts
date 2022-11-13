@@ -303,7 +303,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#region @backend
 
     if(!details) {
-      const lastStatedTask = global[KEY_COUNT.LAST_TASK_STARTED];
+      const lastStatedTask = global[KEY.LAST_TASK_STARTED];
       details = lastStatedTask;
     }
 
