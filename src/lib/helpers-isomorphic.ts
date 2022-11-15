@@ -1,4 +1,5 @@
 
+
 export class HelpersIsomorphic {
 
   get isBrowser() {
@@ -41,4 +42,3 @@ export class HelpersIsomorphic {
   }
 
 }
-//#endregion
