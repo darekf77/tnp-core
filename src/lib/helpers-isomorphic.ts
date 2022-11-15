@@ -1,46 +1,30 @@
 
-import { Helpers } from './index';
-
 export class HelpersIsomorphic {
-  public simulateBrowser = false;
-  //#region @websql
-  private isBackend = false;
-  setIsBackend() {
-    Helpers.isBackend = true;
-  }
-  //#endregion
+
   get isBrowser() {
     //#region @backend
-    if (Helpers.isBackend) {
-      return false;
-    }
+    return false;
     //#endregion
-    return Helpers.simulateBrowser || !!(typeof window !== 'undefined' && window.document);
+    return true;
   }
 
   get isWebSQL() {
     //#region @backend
-    if (Helpers.isBackend) {
-      return false;
-    }
+    return false;
     //#endregion
 
     //#region @websqlOnly
-    const isBrowser = !!(typeof window !== 'undefined' && window.document);
-    if (isBrowser) {
-      return true;
-    }
+    return true;
     //#endregion
     return false;
   }
   get isNode() {
     //#region @backend
-    if (Helpers.isBackend) {
-      return true;
-    }
+    return true;
     //#endregion
-    return Helpers.simulateBrowser || !Helpers.isBrowser;
+    return false;
   }
+
   contain(arr: any[], item: any): boolean {
     return arr.filter(l => {
       if (l instanceof RegExp) {
