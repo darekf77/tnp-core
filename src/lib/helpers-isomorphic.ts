@@ -1,5 +1,3 @@
-
-
 export class HelpersIsomorphic {
 
   get isBrowser() {
