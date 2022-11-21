@@ -268,7 +268,7 @@ export class HelpersMessages extends HelpersIsomorphic {
           process?.send(`taskstart::► ${chalk.magenta(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log('- '+chalk.magenta(details))
+            console.log('- ' + chalk.magenta(details))
           } else {
             console.log(details)
           }
@@ -302,7 +302,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#region @backend
 
-    if(!details) {
+    if (!details) {
       const lastStatedTask = global[KEY.LAST_TASK_STARTED];
       details = lastStatedTask;
     }
@@ -310,6 +310,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     details = transformData(details);
 
     const display = (dot = false) => {
+      details = details.replace('...', '')
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
       }
@@ -320,7 +321,7 @@ export class HelpersMessages extends HelpersIsomorphic {
           process?.send(`taskdone::\u2713 ${chalk.green(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log('\u2713 '+chalk.green(details))
+            console.log('\u2713 ' + chalk.green(details))
           } else {
             console.log(details)
           }
@@ -458,9 +459,9 @@ export class HelpersMessages extends HelpersIsomorphic {
 
 
 
-function transformData(details:any) {
+function transformData(details: any) {
   if (typeof details === 'object') {
-    if(Array.isArray(details)) {
+    if (Array.isArray(details)) {
       return details.join('\n')
     }
     try {

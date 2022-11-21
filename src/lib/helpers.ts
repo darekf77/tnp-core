@@ -21,6 +21,12 @@ import { ExecuteOptions, RunOptions } from './core-models';
 declare const global: any;
 const encoding = 'utf8';
 
+export interface RunSyncOrAsyncOptions {
+  functionFn: Function,
+  context?: object,
+  arrayOfParams?: any[],
+}
+
 export class HelpersCore extends HelpersMessages {
 
   //#region singleton
@@ -75,13 +81,26 @@ export class HelpersCore extends HelpersMessages {
     return JSON.stringify(inputObject, null, 2);
   }
 
-  async runSyncOrAsync(fn: Function | [string, object], ...firstArg: any[]) {
-    if (_.isUndefined(fn)) {
+  async runSyncOrAsync(fnOrOptions: Function | [string, object] | RunSyncOrAsyncOptions, ...firstArg: any[]) {
+    if (_.isUndefined(fnOrOptions)) {
       return;
     }
+    let promisOrValue: any;
+    const optionsMode = _.isObject(fnOrOptions)
+      && !_.isArray(fnOrOptions)
+      && !_.isFunction(fnOrOptions)
+      && !_.isNil(fnOrOptions)
+      ;
+
+    if (optionsMode) {
+      const { functionFn, context, arrayOfParams } = fnOrOptions as RunSyncOrAsyncOptions;
+      promisOrValue = functionFn.apply(context, arrayOfParams);
+    } else {
+      // @ts-ignore
+      promisOrValue = _.isArray(fnOrOptions) ? fnOrOptions[1][fnOrOptions[0]](...firstArg) : fnOrOptions(...firstArg);
+    }
     // let wasPromise = false;
-    // @ts-ignore
-    let promisOrValue = _.isArray(fn) ? fn[1][fn[0]](...firstArg) : fn(...firstArg);
+
     if (promisOrValue instanceof Promise) {
       // wasPromise = true;
       promisOrValue = Promise.resolve(promisOrValue)
