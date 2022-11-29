@@ -130,8 +130,8 @@ export class HelpersCore extends HelpersMessages {
     existedFileOrFolder = crossPlatformPath(existedFileOrFolder);
     destinationPath = crossPlatformPath(destinationPath);
 
-    Helpers.log(`[tnp-helpers][create link] exited -> dest
-    ${existedFileOrFolder} ${destinationPath}`);
+    Helpers.log(`[tnp-code][create link] exited -> dest
+    ${existedFileOrFolder} ${destinationPath}`, 1);
 
     options = options ? options : {};
     if (_.isUndefined(options.continueWhenExistedFolderDoesntExists)) {
@@ -309,6 +309,7 @@ export class HelpersCore extends HelpersMessages {
     if (fse.existsSync(folderPath)) {
       Helpers.warn(`[helpers][mkdirp] folder path already exists: ${folderPath}`, false);
     } else {
+      Helpers.log(`[tnp-core][mkdirp] ${folderPath}`,1)
       fse.mkdirpSync(folderPath);
     }
   }

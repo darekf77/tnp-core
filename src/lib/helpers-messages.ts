@@ -31,6 +31,16 @@ const KEY_COUNT = {
   LAST_TASK_DONE: Symbol(),
 }
 
+const KEY_IMPORTANTCE = {
+  LAST_ERROR: Symbol(),
+  LAST_INFO: Symbol(),
+  LAST_WARN: Symbol(),
+  LAST_LOG: Symbol(),
+  LAST_SUCCESS: Symbol(),
+  LAST_TASK_STARTED: Symbol(),
+  LAST_TASK_DONE: Symbol(),
+}
+
 //#region @backend
 global[KEY_COUNT.LAST_ERROR] = 0;
 global[KEY_COUNT.LAST_INFO] = 0;
@@ -39,6 +49,15 @@ global[KEY_COUNT.LAST_LOG] = 0;
 global[KEY_COUNT.LAST_SUCCESS] = 0;
 global[KEY_COUNT.LAST_TASK_STARTED] = 0;
 global[KEY_COUNT.LAST_TASK_DONE] = 0;
+
+
+global[KEY_IMPORTANTCE.LAST_ERROR] = 0;
+global[KEY_IMPORTANTCE.LAST_INFO] = 0;
+global[KEY_IMPORTANTCE.LAST_WARN] = 0;
+global[KEY_IMPORTANTCE.LAST_LOG] = 0;
+global[KEY_IMPORTANTCE.LAST_SUCCESS] = 0;
+global[KEY_IMPORTANTCE.LAST_TASK_STARTED] = 0;
+global[KEY_IMPORTANTCE.LAST_TASK_DONE] = 0;
 
 const useSpinner = global['spinnerInParentProcess'];
 
@@ -90,6 +109,7 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
 
   error(details: any, noExit = false, noTrace = false) {
+
     //#region browser mode
     if (Helpers.isBrowser) {
       console.error(details)
@@ -106,6 +126,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     details = transformData(details);
 
     const display = (dot = false) => {
+
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: dot ? '.' : details })
       }
@@ -248,7 +269,13 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
   //#endregion
 
-  taskStarted(details: any | string) {
+  /**
+   *
+   * @param details
+   * @param isLogTask is less important log task
+   * @returns
+   */
+  taskStarted(details: any | string, isLogTask: boolean = false) {
     if (Helpers.isBrowser) {
       console.info(details);
       return;
@@ -258,6 +285,9 @@ export class HelpersMessages extends HelpersIsomorphic {
     details = transformData(details);
 
     const display = (dot = false) => {
+      if (global.hideLog && isLogTask) {
+        return;
+      }
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
       }
@@ -276,6 +306,11 @@ export class HelpersMessages extends HelpersIsomorphic {
         }
       }
     };
+    if (isLogTask) {
+      global[KEY_IMPORTANTCE.LAST_TASK_STARTED] = 1;
+    } else {
+      global[KEY_IMPORTANTCE.LAST_TASK_STARTED] = 0;
+    }
 
     if (!global.muteMessages && !global.hideInfos) {
       if ((global[KEY.LAST_TASK_STARTED] === details)) {
@@ -295,12 +330,16 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
   //#endregion
 
-  taskDone(details?: any | string) {
+  taskDone(details?: any | string, isLessImportant = false) {
     if (Helpers.isBrowser) {
       console.info(details);
       return;
     }
     //#region @backend
+
+    if (global.hideLog && global[KEY_IMPORTANTCE.LAST_TASK_STARTED] > 0) {
+      return;
+    }
 
     if (!details) {
       const lastStatedTask = global[KEY.LAST_TASK_STARTED];
@@ -356,7 +395,17 @@ export class HelpersMessages extends HelpersIsomorphic {
       return;
     }
     //#region @backend
-    if (debugLevel > (global.verboseLevel || 0)) {
+    // console.log({
+    //   'global.hideLog': global.hideLog,
+    //   'debugLevel': debugLevel,
+    //   'global.verboseLevel': global.verboseLevel,
+    //   'global.muteMessages': global.muteMessages,
+    //   details
+    // })
+    const verboseLevel =  (global.verboseLevel|| 0);
+    debugLevel = (debugLevel || 0);
+
+    if (debugLevel > verboseLevel) {
       return;
     }
 
@@ -467,7 +516,9 @@ function transformData(details: any) {
     try {
       const json = JSON.stringify(details);
       details = json;
-    } catch (error) { }
+    } catch (error) {
+      return details;
+    }
   }
   return details;
 }
