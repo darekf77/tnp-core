@@ -1050,10 +1050,6 @@ command: ${command}
     }
     absoluteFilePath = absoluteFilePath as string;
 
-    if (absoluteFilePath.startsWith('/Users/dariusz/projects/npm/tnp-config/tmp-bundle-release/bundle/project/tnp-config/bundle/node_modules')) {
-      debugger
-    }
-
     if (!fse.existsSync(absoluteFilePath)) {
       return defaultValueWhenNotExists;
     }
