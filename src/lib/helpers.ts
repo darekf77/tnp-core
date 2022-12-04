@@ -309,7 +309,7 @@ export class HelpersCore extends HelpersMessages {
     if (fse.existsSync(folderPath)) {
       Helpers.warn(`[helpers][mkdirp] folder path already exists: ${folderPath}`, false);
     } else {
-      Helpers.log(`[tnp-core][mkdirp] ${folderPath}`,1)
+      Helpers.log(`[tnp-core][mkdirp] ${folderPath}`, 1)
       fse.mkdirpSync(folderPath);
     }
   }
@@ -1049,6 +1049,10 @@ command: ${command}
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
+
+    if (absoluteFilePath.startsWith('/Users/dariusz/projects/npm/tnp-config/tmp-bundle-release/bundle/project/tnp-config/bundle/node_modules')) {
+      debugger
+    }
 
     if (!fse.existsSync(absoluteFilePath)) {
       return defaultValueWhenNotExists;
