@@ -438,7 +438,7 @@ export class HelpersCore extends HelpersMessages {
     }
     if (!path.isAbsolute(folderOrFilePath)) {
       Helpers.warn(`
-
+      File path is not absolute:
       ${folderOrFilePath}
 
       `, true);
