@@ -20,6 +20,9 @@ import { ExecuteOptions, RunOptions } from './core-models';
 
 declare const global: any;
 const encoding = 'utf8';
+//#region @backend
+const trace = !global.hideLog;
+//#endregion
 
 export interface RunSyncOrAsyncOptions {
   functionFn: Function,
@@ -1044,7 +1047,7 @@ command: ${command}
   /**
     * wrapper for fs.readFileSync
     */
-  readFile(absoluteFilePath: string | string[], defaultValueWhenNotExists = void 0 as string): string | undefined {
+  readFile(absoluteFilePath: string | string[], defaultValueWhenNotExists = void 0 as string, notTrim = false): string | undefined {
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -1055,6 +1058,11 @@ command: ${command}
     }
     if (fse.lstatSync(absoluteFilePath).isDirectory()) {
       return defaultValueWhenNotExists;
+    }
+    if (notTrim) {
+      return fse.readFileSync(absoluteFilePath, {
+        encoding
+      }).toString();
     }
     return fse.readFileSync(absoluteFilePath, {
       encoding
@@ -1137,7 +1145,7 @@ command: ${command}
       Helpers.warn(`WRITTING JSON into real path:
       original: ${beforePath}
       real    : ${absoluteFilePath}
-      `);
+      `, trace);
     }
 
     const { preventParentFile, overrideSameFile } = options || {};
