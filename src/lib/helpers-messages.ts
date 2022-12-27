@@ -61,6 +61,8 @@ global[KEY_IMPORTANTCE.LAST_TASK_DONE] = 0;
 
 const useSpinner = global['spinnerInParentProcess'];
 
+const forceTrace = !global.hideLog;
+
 //#endregion
 
 const LIMIT = 10;
@@ -119,6 +121,9 @@ export class HelpersMessages extends HelpersIsomorphic {
 
     //#region @backend
     // Error.stackTraceLimit = Infinity;
+    if(forceTrace) {
+      noTrace = false;
+    }
     if (!global.globalSystemToolMode) {
       noTrace = true;
     }
@@ -461,6 +466,10 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
 
     //#region @backend
+    if(forceTrace) {
+      trace = true;
+    }
+
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'warning' })

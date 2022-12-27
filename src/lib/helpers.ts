@@ -302,17 +302,17 @@ export class HelpersCore extends HelpersMessages {
       folderPath = path.join(...folderPath);
     }
     if (!path.isAbsolute(folderPath)) {
-      Helpers.warn(`[helpers][mkdirp] Path is not absolute, abort ${folderPath}`, true);
+      Helpers.warn(`[firedev-core][mkdirp] Path is not absolute, abort ${folderPath}`, true);
       return;
     }
     if (_.isString(folderPath) && folderPath.startsWith('/tmp ') && os.platform() === 'darwin') {
-      Helpers.warn(`[helpers][mkdirp] On mac osx /tmp is changed to /private/tmp`, false);
+      Helpers.warn(`[firedev-core][mkdirp] On mac osx /tmp is changed to /private/tmp`, false);
       folderPath = folderPath.replace(`/tmp/`, '/private/tmp/');
     }
     if (fse.existsSync(folderPath)) {
-      Helpers.warn(`[helpers][mkdirp] folder path already exists: ${folderPath}`, false);
+      Helpers.warn(`[firedev-core][mkdirp] folder path already exists: ${folderPath}`, false);
     } else {
-      Helpers.log(`[tnp-core][mkdirp] ${folderPath}`, 1)
+      Helpers.log(`[firedev-core][mkdirp] ${folderPath}`, 1)
       fse.mkdirpSync(folderPath);
     }
   }
@@ -436,11 +436,11 @@ export class HelpersCore extends HelpersMessages {
       folderOrFilePath = path.join(...folderOrFilePath);
     }
     if (!folderOrFilePath) {
-      Helpers.warn(`[helpers][exists] Path is not a string, abort.. "${folderOrFilePath}"`, true);
+      Helpers.warn(`[firedev-core][exists] Path is not a string, abort.. "${folderOrFilePath}"`, true);
       return false;
     }
     if (!path.isAbsolute(folderOrFilePath)) {
-      Helpers.warn(`
+      Helpers.warn(`[firedev-core]
       File path is not absolute:
       ${folderOrFilePath}
 
@@ -1095,7 +1095,7 @@ command: ${command}
   parse<T = any>(jsonInstring: string, useJson5 = false) {
     if (!_.isString(jsonInstring)) {
       Helpers.log(jsonInstring)
-      Helpers.warn(`[tnp-helpers] Trying to parse no a string...`)
+      Helpers.warn(`[firedev-core] Trying to parse no a string...`)
       return jsonInstring;
     }
     return (useJson5 ? json5.parse(jsonInstring) : JSON.parse(jsonInstring)) as T;
@@ -1142,7 +1142,7 @@ command: ${command}
     if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
       const beforePath = absoluteFilePath;
       absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
-      Helpers.warn(`WRITTING JSON into real path:
+      Helpers.warn(`[firedev-core] WRITTING JSON into real path:
       original: ${beforePath}
       real    : ${absoluteFilePath}
       `, trace);
@@ -1226,7 +1226,7 @@ command: ${command}
       return [];
     }
     return fse.readdirSync(pathToFolder)
-      .map(f => path.join(pathToFolder as string, f))
+      .map(f => crossPlatformPath(path.join(pathToFolder as string, f)))
       .filter(f => fse.lstatSync(f).isDirectory())
       ;
   }
@@ -1252,7 +1252,8 @@ command: ${command}
             return f;
           }
         }
-      }).filter(f => !!f);
+      }).filter(f => !!f)
+      .map(f => crossPlatformPath(f));
   }
   //#endregion
 
@@ -1285,7 +1286,8 @@ command: ${command}
           return Helpers.isFolder(realPath);
         }
         return res;
-      });
+      })
+      .map(f => crossPlatformPath(f));
   }
   //#endregion
 
@@ -1319,12 +1321,11 @@ command: ${command}
           .reduce((a, b) => {
             return a.concat(b);
           }, []),
-      ]
+      ].map(f => crossPlatformPath(f));
     }
     return fse.readdirSync(pathToFolder)
-      .map(f => path.join(pathToFolder as string, f))
+      .map(f => crossPlatformPath(path.join(pathToFolder as string, f)))
       .filter(f => !fse.lstatSync(f).isDirectory())
-      ;
   }
 
 
