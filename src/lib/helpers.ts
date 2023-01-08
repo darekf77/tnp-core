@@ -30,6 +30,14 @@ export interface RunSyncOrAsyncOptions {
   arrayOfParams?: any[],
 }
 
+export interface CommandOutputOptions {
+  biggerBuffer?: boolean,
+  showWholeCommandNotOnlyLastLine?: boolean,
+  showStder?: boolean;
+  gatherColors?: boolean;
+  showErrorWarning?: boolean,
+}
+
 export class HelpersCore extends HelpersMessages {
 
   //#region singleton
@@ -459,10 +467,10 @@ export class HelpersCore extends HelpersMessages {
     return {
       //#region @backend
       getherOutput(options?: {
-        ommitStder: boolean;
-        cwd: string;
-        biggerBuffer: boolean;
-        gatherColors: boolean;
+        ommitStder?: boolean;
+        cwd?: string;
+        biggerBuffer?: boolean;
+        gatherColors?: boolean;
       }) {
         if (!options) {
           options = {} as any;
@@ -511,6 +519,81 @@ export class HelpersCore extends HelpersMessages {
     }
   }
 
+  //#region command output as string async
+  //#region @backend
+  async commnadOutputAsStringAsync(
+    command: string,
+    cwd = crossPlatformPath(process.cwd()),
+    options?: CommandOutputOptions,
+  ): Promise<string> {
+    const opt = (options || {}) as typeof options;
+    let output = '';
+    try {
+      output = await Helpers.command(command).getherOutput({
+        cwd,
+        biggerBuffer: opt.biggerBuffer,
+        ommitStder: !opt.showStder,
+        gatherColors: opt.gatherColors,
+      });
+      // console.log({
+      //   output
+      // })
+      if (opt.showWholeCommandNotOnlyLastLine) {
+        // console.log('SHHOW WOLE', output)
+        return output.replace(/[^\x00-\xFF]/g, '')
+      }
+      const splited = (output || '').split('\n');
+      output = (splited.pop() || '').replace(/[^\x00-\xFF]/g, '');
+    } catch (e) {
+      if (opt.showErrorWarning) {
+        Helpers.warn(`[firedev-helepr] Not able to get output from command:
+        "${command}"
+        `);
+      }
+    }
+    return output;
+  }
+  //#endregion
+  //#endregion
+
+  //#region command output as string
+  //#region @backend
+  commnadOutputAsString(
+    command: string,
+    cwd = crossPlatformPath(process.cwd()),
+    options?: CommandOutputOptions,
+  ): string {
+    const opt = (options || {}) as typeof options;
+    let output = '';
+    try {
+      const env = opt.gatherColors ? { ...process.env, FORCE_COLOR: '1' } : {};
+      // output = Helpers.run(command, { output: false, cwd, biggerBuffer }).sync().toString().trim()
+      output = (child_process.execSync(command, {
+        cwd,
+        stdio: ['ignore', 'pipe', opt.showStder ? 'pipe' : 'ignore'],
+        maxBuffer: opt.biggerBuffer ? Helpers.bigMaxBuffer : void 0,
+        env,
+      })?.toString() || '').trim();
+      // console.log({
+      //   output
+      // })
+      if (opt.showWholeCommandNotOnlyLastLine) {
+        return output.replace(/[^\x00-\xFF]/g, '')
+      }
+      const splited = (output || '').split('\n');
+      output = (splited.pop() || '').replace(/[^\x00-\xFF]/g, '');
+    } catch (e) {
+      if (opt.showErrorWarning) {
+        Helpers.warn(`[firedev-helpers] Not able to get output from command:
+      "${command}"
+      cwd: ${cwd}
+      `);
+      }
+    }
+    return output;
+  }
+  //#endregion
+  //#endregion
 
   run(command: string,
     options?: RunOptions) {
