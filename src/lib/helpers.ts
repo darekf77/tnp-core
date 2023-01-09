@@ -51,6 +51,21 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region @backend
+  remove(fileOrFolderPathOrPatter: string | string[], exactFolder = false) {
+    if (Array.isArray(fileOrFolderPathOrPatter)) {
+      fileOrFolderPathOrPatter = path.join(...fileOrFolderPathOrPatter);
+    }
+    Helpers.log(`[firedev-core][remove]: ${fileOrFolderPathOrPatter}`, 1);
+    if (exactFolder) {
+      rimraf.sync(fileOrFolderPathOrPatter, { glob: false, disableGlob: true, });
+      return;
+    }
+    rimraf.sync(fileOrFolderPathOrPatter);
+  }
+  //#endregion
+
+
+  //#region @backend
   cleanExit() {
     Helpers.processes.forEach(p => {
       p.kill('SIGINT')
@@ -317,9 +332,17 @@ export class HelpersCore extends HelpersMessages {
       Helpers.warn(`[firedev-core][mkdirp] On mac osx /tmp is changed to /private/tmp`, false);
       folderPath = folderPath.replace(`/tmp/`, '/private/tmp/');
     }
+
+    if (Helpers.isUnexistedLink(folderPath)) {
+      Helpers.remove(folderPath);
+    }
+
     if (fse.existsSync(folderPath)) {
       Helpers.warn(`[firedev-core][mkdirp] folder path already exists: ${folderPath}`, false);
     } else {
+      // if(Helpers.isSymlinkFileExitedOrUnexisted(folderPath)) {
+      //   Helpers.error(`Folder is symlink.. can't recreate`)
+      // }
       Helpers.log(`[firedev-core][mkdirp] ${folderPath}`, 1)
       fse.mkdirpSync(folderPath);
     }
@@ -461,8 +484,16 @@ export class HelpersCore extends HelpersMessages {
     //#endregion
   }
 
+  _fixCommand(command: string) {
+    if (global.skipCoreCheck && (command.startsWith('tnp ') || command.startsWith('firedev'))) {
+      command = `${command} --skipCoreCheck`
+    }
+    return command
+  }
+
   command(command: string) {
     // console.log({ command })
+    command = Helpers._fixCommand(command);
 
     return {
       //#region @backend
@@ -526,6 +557,7 @@ export class HelpersCore extends HelpersMessages {
     cwd = crossPlatformPath(process.cwd()),
     options?: CommandOutputOptions,
   ): Promise<string> {
+    command = Helpers._fixCommand(command);
     const opt = (options || {}) as typeof options;
     let output = '';
     try {
@@ -563,6 +595,7 @@ export class HelpersCore extends HelpersMessages {
     cwd = crossPlatformPath(process.cwd()),
     options?: CommandOutputOptions,
   ): string {
+    command = Helpers._fixCommand(command);
     const opt = (options || {}) as typeof options;
     let output = '';
     try {
@@ -597,6 +630,7 @@ export class HelpersCore extends HelpersMessages {
 
   run(command: string,
     options?: RunOptions) {
+    command = Helpers._fixCommand(command);
 
     // console.log({ command })
 
@@ -823,7 +857,6 @@ export class HelpersCore extends HelpersMessages {
       outputLineReplace,
       options.prefix,
       extractFromLine,
-      command,
     );
   }
   //#endregion
@@ -834,9 +867,7 @@ export class HelpersCore extends HelpersMessages {
     stdio,
     outputLineReplace: (outputLine: string) => string,
     prefix: string,
-    extractFromLine?: (string | Function)[],
-    command?: string,
-  ) {
+    extractFromLine?: (string | Function)[]) {
     Helpers.processes.push(proc);
 
     if (stdio) {
@@ -885,7 +916,9 @@ export class HelpersCore extends HelpersMessages {
     return proc;
   }
 
-  execute(childProcess: child_process.ChildProcess,
+  execute(
+    command: string,
+    cwd: string,
     options?: ExecuteOptions
   ) {
     let {
@@ -897,6 +930,10 @@ export class HelpersCore extends HelpersMessages {
       exitOnError,
       exitOnErrorCallback,
     } = options || {};
+
+    command = Helpers._fixCommand(command);
+
+    const childProcess = child_process.exec(command, { cwd })
     // let {
     //   stderMsgForPromiseResolve,
     //   stdoutMsgForPromiseResolve
