@@ -237,6 +237,6 @@
   "private": false,
   "main": "index.js",
   "name": "tnp-core",
-  "version": "13.1.56",
+  "version": "13.1.57",
   "lastBuildTagHash": "c2b71094b27453e9511dbf46c23707b33c15d413"
 }
