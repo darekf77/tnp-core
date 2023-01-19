@@ -8,6 +8,7 @@ import { _ } from './core-imports';
 import { Helpers } from './index';
 import { HelpersIsomorphic } from './helpers-isomorphic';
 import { PROGRESS_DATA } from './progress-data';
+import { frameworkName } from './framework-name';
 
 // TODO handle global.testMode ?
 
@@ -121,7 +122,7 @@ export class HelpersMessages extends HelpersIsomorphic {
 
     //#region @backend
     // Error.stackTraceLimit = Infinity;
-    if(forceTrace) {
+    if (forceTrace) {
       noTrace = false;
     }
     if (!global.globalSystemToolMode) {
@@ -407,7 +408,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     //   'global.muteMessages': global.muteMessages,
     //   details
     // })
-    const verboseLevel =  (global.verboseLevel|| 0);
+    const verboseLevel = (global.verboseLevel || 0);
     debugLevel = (debugLevel || 0);
 
     if (debugLevel > verboseLevel) {
@@ -466,7 +467,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
 
     //#region @backend
-    if(forceTrace) {
+    if (forceTrace) {
       trace = true;
     }
 
@@ -474,6 +475,7 @@ export class HelpersMessages extends HelpersIsomorphic {
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'warning' })
       }
+
       if (dot) {
         process.stdout.write(chalk.yellow('.'));
       } else {

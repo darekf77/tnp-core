@@ -1,3 +1,4 @@
+export * from './framework-name';
 export * from './core-imports';
 export * from './core-models';
 import { HelpersCore as Base } from './helpers';
