@@ -343,7 +343,7 @@ export class HelpersCore extends HelpersMessages {
     }
 
     if (fse.existsSync(folderPath)) {
-      Helpers.warn(`[firedev-core][mkdirp] folder path already exists: ${folderPath}`, false);
+      Helpers.log(`[firedev-core][mkdirp] folder path already exists: ${folderPath}`);
     } else {
       // if(Helpers.isSymlinkFileExitedOrUnexisted(folderPath)) {
       //   Helpers.error(`Folder is symlink.. can't recreate`)
