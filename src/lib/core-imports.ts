@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import * as q from 'q';
 import * as moment from 'moment';
+import * as dateformat from 'dateformat';
 
 //#region @backend
 import * as pathBase from 'path';
@@ -10,7 +11,7 @@ import * as http from 'http';
 import * as https from 'https';
 import * as net from 'net';
 import chalk from 'chalk';
-import * as dateformat from 'dateformat';
+
 import * as spawn from 'cross-spawn';
 import * as glob from 'glob';
 import * as fse from 'fs-extra';
@@ -92,6 +93,7 @@ export {
   _,
   q,
   moment,
+  dateformat,
   crossPlatformPath,
   win32Path,
 }
@@ -105,7 +107,7 @@ export {
 //#region @backend
 export {
 
-  dateformat,
+
   spawn,
   chalk,
   glob,

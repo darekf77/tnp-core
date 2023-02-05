@@ -17,6 +17,9 @@ import {
 import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { ExecuteOptions, RunOptions } from './core-models';
+//#region @browser
+import { Subject, Subscription } from 'rxjs';
+//#endregion
 
 declare const global: any;
 const encoding = 'utf8';
@@ -37,6 +40,8 @@ export interface CommandOutputOptions {
   gatherColors?: boolean;
   showErrorWarning?: boolean,
 }
+
+
 
 export class HelpersCore extends HelpersMessages {
 
@@ -550,6 +555,14 @@ export class HelpersCore extends HelpersMessages {
     }
   }
 
+  wait(second: number) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(void 0);
+      }, second * 1000)
+    })
+  }
+
   //#region command output as string async
   //#region @backend
   async commnadOutputAsStringAsync(
@@ -636,14 +649,15 @@ export class HelpersCore extends HelpersMessages {
 
     //#region @backend
     if (!options) options = {};
-    if (options.output === undefined) options.output = true;
-    if (options.biggerBuffer === undefined) options.biggerBuffer = false;
-    if (options.cwd === undefined) options.cwd = crossPlatformPath(process.cwd())
+    if (options.output === void 0) options.output = true;
+    if (options.biggerBuffer === void 0) options.biggerBuffer = false;
+    if (options.cwd === void 0) options.cwd = crossPlatformPath(process.cwd())
     if (!_.isString(command)) {
-      Helpers.error(`[tnp-helper] command is not a string`)
+      Helpers.error(`[firedev-helpers] command is not a string`)
     }
     //#endregion
     return {
+
       //#region @backend
       sync() { // TODO buffer
 
@@ -668,12 +682,78 @@ export class HelpersCore extends HelpersMessages {
         }
         return Helpers.runSyncIn(command, options);
       },
-      async(detach = false) {
+      //#endregion
 
+      //#region websql
+      async(detach = false,
+        //#region @browser
+        mockFun?: (stdoutCallback: (dataForStdout: any) => any, stdErrcCallback: (dataForStder: any) => any) => number,
+        //#endregion
+      ) {
+        //#region mock of process
+        //#region @browser
+        if (mockFun) {
+          const subStdoutSub = new Subject();
+          const subStderSub = new Subject();
+          const exitSub = new Subject();
+          const subscribtions: Subscription[] = [];
+          const endFun = (exitCode: number) => exitCode;
+          const procDummy = {
+            stdout: {
+              on(action: 'data', stdoutCallback: any) {
+                if (action == 'data') {
+                  subscribtions.push(subStdoutSub.subscribe(d => {
+                    stdoutCallback(d);
+                  }))
+                }
+              }
+            },
+            stder: {
+              on(action: 'data', stdoutCallback: any) {
+                if (action == 'data') {
+                  subscribtions.push(subStderSub.subscribe(d => {
+                    stdoutCallback(d);
+                  }))
+                }
+              }
+            },
+            on(action: 'exit', exitFun: any) {
+              if (action == 'exit') {
+                subscribtions.push(exitSub.subscribe(d => {
+                  exitFun(d);
+                }))
+              }
+            },
+            ppid: Math.round(Math.random() * (1000 - 100)) + 100,
+            pid: Math.round(Math.random() * (10000 - 1000)) + 1000,
+          };
+
+          const f = Helpers.runSyncOrAsync(mockFun, (d) => { subStdoutSub.next(d); }, (d) => { subStderSub.next(d); });
+          f.then(exitCode => {
+            if (_.isNil(exitCode)) {
+              exitCode = 0;
+            }
+            setTimeout(() => {
+              exitSub.next(exitCode);
+              subscribtions.forEach(s => s.unsubscribe());
+            })
+          }).catch(() => {
+            console.error(`Something wrong with your mock funciton`)
+            exitSub.next(1);
+            subscribtions.forEach(s => s.unsubscribe());
+          })
+          return procDummy as any;
+        }
+        //#endregion
+        //#endregion
+        //#region @backendFunc
         options.detach = detach;
         return Helpers.runAsyncIn(command, options);
-
+        //#endregion
       },
+      //#endregion
+
+      //#region @backend
       asyncAsPromise(): any { // TODO Promise<void>
 
         let isResolved = false;
@@ -695,6 +775,9 @@ export class HelpersCore extends HelpersMessages {
         });
 
       },
+      //#endregion
+
+      //#region @backend
       unitlOutputContains(stdoutMsg: string | string[], stderMsg?: string | string[]) {
 
         let isResolved = false;
@@ -761,6 +844,7 @@ export class HelpersCore extends HelpersMessages {
       //#endregion
     }
   }
+
   //#region @backend
   get isRunningIn() {
     return {
