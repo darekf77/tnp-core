@@ -42,6 +42,8 @@ export interface CommandOutputOptions {
 }
 
 
+const WEBSQL_PROC_MOCK_PROCESSES_PID = {};
+const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
 
 export class HelpersCore extends HelpersMessages {
 
@@ -641,6 +643,32 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
   //#endregion
 
+
+  killProcess(byPid: number) {
+    //#region @websqlOnly
+    if (WEBSQL_PROC_MOCK_PROCESSES_PID[byPid]) {
+      const ppid = WEBSQL_PROC_MOCK_PROCESSES_PID[byPid].ppid;
+      if (WEBSQL_PROC_MOCK_PROCESSES_PPID[ppid]) {
+        const allChilds = WEBSQL_PROC_MOCK_PROCESSES_PPID[ppid].childProcesses as number[];
+        WEBSQL_PROC_MOCK_PROCESSES_PPID[ppid].childProcesses = allChilds.filter(p => p !== byPid);
+      }
+      delete WEBSQL_PROC_MOCK_PROCESSES_PID[byPid];
+    }
+
+    if (WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid]) {
+      const childs = WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid].childProcesses as number[];
+      for (let index = 0; index < childs.length; index++) {
+        const childPid = childs[index];
+        delete WEBSQL_PROC_MOCK_PROCESSES_PID[childPid];
+      }
+      delete WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid];
+    }
+    //#endregion
+    //#region @backend
+    Helpers.run(`kill -9 ${byPid}`).sync()
+    //#endregion
+  }
+
   run(command: string,
     options?: RunOptions) {
     command = Helpers._fixCommand(command);
@@ -687,7 +715,7 @@ export class HelpersCore extends HelpersMessages {
       //#region websql
       async(detach = false,
         //#region @browser
-        mockFun?: (stdoutCallback: (dataForStdout: any) => any, stdErrcCallback: (dataForStder: any) => any) => number,
+        mockFun?: (stdoutCallback: (dataForStdout: any) => any, stdErrcCallback: (dataForStder: any) => any, shouldProcesBeDead?: () => boolean) => Promise<number> | number
         //#endregion
       ) {
         //#region mock of process
@@ -697,7 +725,8 @@ export class HelpersCore extends HelpersMessages {
           const subStderSub = new Subject();
           const exitSub = new Subject();
           const subscribtions: Subscription[] = [];
-          const endFun = (exitCode: number) => exitCode;
+
+
           const procDummy = {
             stdout: {
               on(action: 'data', stdoutCallback: any) {
@@ -708,7 +737,7 @@ export class HelpersCore extends HelpersMessages {
                 }
               }
             },
-            stder: {
+            stderr: {
               on(action: 'data', stdoutCallback: any) {
                 if (action == 'data') {
                   subscribtions.push(subStderSub.subscribe(d => {
@@ -724,11 +753,40 @@ export class HelpersCore extends HelpersMessages {
                 }))
               }
             },
-            ppid: Math.round(Math.random() * (1000 - 100)) + 100,
-            pid: Math.round(Math.random() * (10000 - 1000)) + 1000,
+            ppid: void 0 as number,
+            pid: void 0 as number,
           };
 
-          const f = Helpers.runSyncOrAsync(mockFun, (d) => { subStdoutSub.next(d); }, (d) => { subStderSub.next(d); });
+          procDummy.pid =  Math.round(Math.random() * (1000 - 100)) + 100;
+          procDummy.ppid = procDummy.pid + 9999;
+
+
+          WEBSQL_PROC_MOCK_PROCESSES_PID[procDummy.pid] = procDummy;
+          if (!WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid]) {
+            WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid] = {
+              childProcesses: [],
+            };
+          }
+          WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid].childProcesses.push(procDummy.pid);
+
+
+          const checkIfProcessShouldBeDead = () => {
+            return _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PID[procDummy.pid]) || _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid])
+          };
+
+          const f = Helpers.runSyncOrAsync(mockFun,
+            (d) => {
+              setTimeout(() => {
+                subStdoutSub.next(d);
+              });
+            }, (d) => {
+              setTimeout(() => {
+                subStderSub.next(d);
+              });
+            }, () => {
+              const shouldBeDead = checkIfProcessShouldBeDead();
+              return shouldBeDead;
+            });
           f.then(exitCode => {
             if (_.isNil(exitCode)) {
               exitCode = 0;
@@ -737,7 +795,8 @@ export class HelpersCore extends HelpersMessages {
               exitSub.next(exitCode);
               subscribtions.forEach(s => s.unsubscribe());
             })
-          }).catch(() => {
+          }).catch((e) => {
+            console.error(e);
             console.error(`Something wrong with your mock funciton`)
             exitSub.next(1);
             subscribtions.forEach(s => s.unsubscribe());
