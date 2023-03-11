@@ -6,7 +6,7 @@ isBrowser = true;
 export const frameworkNameBe = (
   ''
   //#region @backend
-  || (global['frameworkName'] ? global['frameworkName'] : 'tnp')
+  || (global['frameworkName'] ? global['frameworkName'] : '')
   //#endregion
 ) as 'firedev' | 'tnp';
 export const frameworkName = isBrowser ? 'firedev' : frameworkNameBe;
