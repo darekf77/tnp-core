@@ -175,17 +175,7 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
   //#endregion
 
-  //#region @backend
-  /**
-   * Logs not visible in normal use of firedev-cli
-   */
-  logInfo(details: string, repeatable = false) {
-    if (frameworkName === 'firedev') {
-      return;
-    }
-    Helpers.info(details, repeatable)
-  }
-  //#endregion
+
 
   //#region info
   info(details: string, repeatable = false) {
@@ -474,8 +464,32 @@ export class HelpersMessages extends HelpersIsomorphic {
   /**
    * Logs not visible in normal use of firedev-cli
    */
+  logSuccess(details: any | string) {
+    if (global.hideLog && (frameworkName === 'firedev')) {
+      return;
+    }
+    Helpers.success(details)
+  }
+  //#endregion
+
+  //#region @backend
+  /**
+   * Logs not visible in normal use of firedev-cli
+   */
+  logInfo(details: string, repeatable = false) {
+    if (global.hideLog && (frameworkName === 'firedev')) {
+      return;
+    }
+    Helpers.info(details, repeatable)
+  }
+  //#endregion
+
+  //#region @backend
+  /**
+   * Logs not visible in normal use of firedev-cli
+   */
   logWarn(details: string, trace = false) {
-    if (frameworkName === 'firedev') {
+    if (global.hideLog && (frameworkName === 'firedev')) {
       return;
     }
     Helpers.warn(details, trace)

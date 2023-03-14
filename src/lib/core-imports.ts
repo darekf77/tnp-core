@@ -44,13 +44,13 @@ path = {
   join(...args) {
     return args.join('/')
   }, // @ts-ignore
-  basename: (args:string)=> {
+  basename: (args: string) => {
     return _.last((args || '').split('/|\\'));
   },  // @ts-ignore
   win32: { // @ts-ignore
     normalize: (p) => {
       return p;
-     }
+    }
   }
 }
 //#endregion
@@ -67,24 +67,27 @@ function win32Path(p: string) {
   return path.win32.normalize(p);
 }
 
-function crossPlatformPath(p: string) {
+function crossPlatformPath(pathStringOrPathParts: string | string[]) {
+  if (Array.isArray(pathStringOrPathParts)) {
+    pathStringOrPathParts = pathStringOrPathParts.join('/')
+  }
   //#region @backend
   if (process.platform !== 'win32') {
-    return p;
+    return pathStringOrPathParts;
   }
   //#endregion
-  if (typeof p !== 'string') {
-    return p;
+  if (typeof pathStringOrPathParts !== 'string') {
+    return pathStringOrPathParts;
   }
 
-  const isExtendedLengthPath = /^\\\\\?\\/.test(p);
-  const hasNonAscii = /[^\u0000-\u0080]+/.test(p); // eslint-disable-line no-control-regex
+  const isExtendedLengthPath = /^\\\\\?\\/.test(pathStringOrPathParts);
+  const hasNonAscii = /[^\u0000-\u0080]+/.test(pathStringOrPathParts); // eslint-disable-line no-control-regex
 
   if (isExtendedLengthPath || hasNonAscii) {
-    return p;
+    return pathStringOrPathParts;
   }
 
-  return p.replace(/\\/g, '/');
+  return pathStringOrPathParts.replace(/\\/g, '/');
 }
 
 
