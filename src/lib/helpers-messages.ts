@@ -300,13 +300,13 @@ export class HelpersMessages extends HelpersIsomorphic {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
       }
       if (dot) {
-        process.stdout.write(chalk.magenta('.'));
+        process.stdout.write(chalk.cyan('.'));
       } else {
         if (useSpinner) {
-          process?.send(`taskstart::► ${chalk.magenta(details)}`);
+          process?.send(`taskstart::► ${chalk.cyan(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log('- ' + chalk.magenta(details))
+            console.log('- ' + chalk.cyan(details))
           } else {
             console.log(details)
           }
