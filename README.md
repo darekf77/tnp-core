@@ -1,5 +1,6 @@
 # tnp-core
 
-core models, helpers and improt for firedev.io
+core models, helpers and imports for firedev.io
 
-https://darekf77.github.io/tnp-core
+https://github.com/darekf77/firedev
+
