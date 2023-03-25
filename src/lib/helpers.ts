@@ -17,6 +17,7 @@ import {
 import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { ExecuteOptions, RunOptions } from './core-models';
+import { frameworkName } from './framework-name';
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
 //#endregion
@@ -287,7 +288,15 @@ export class HelpersCore extends HelpersMessages {
         fse.symlinkSync(targetExisted, linkDest, 'dir')
       } else {
         if (targetIsFile) {
-          fse.linkSync(targetExisted, linkDest)
+          if (
+            (path.basename(path.dirname(targetExisted)) === '.bin') // TODO QUICK_FIX MEGA HACK
+            && (path.basename(path.dirname(path.dirname(targetExisted))) === 'node_modules')
+          ) {
+            fse.linkSync(targetExisted, linkDest)
+          } else {
+            const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${linkDest}" "${targetExisted}"`;
+            Helpers.run(winLinkCommand, { biggerBuffer: false, output: (frameworkName === 'tnp'), silence: (frameworkName !== 'tnp'), }).sync();
+          }
         } else {
           fse.symlinkSync(targetExisted, linkDest, 'junction')
         }
@@ -757,7 +766,7 @@ export class HelpersCore extends HelpersMessages {
             pid: void 0 as number,
           };
 
-          procDummy.pid =  Math.round(Math.random() * (1000 - 100)) + 100;
+          procDummy.pid = Math.round(Math.random() * (1000 - 100)) + 100;
           procDummy.ppid = procDummy.pid + 9999;
 
 
