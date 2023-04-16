@@ -33,26 +33,18 @@ async function isElevated() {
 
 //#endregion
 
+//#region @browser
+import { path as pathMock } from './node-path-mock';
+//#endregion
+
 let path
   // #region @backend
   = pathBase;
 //#endregion
 
-//#region @websqlOnly
+//#region @browser
 // @ts-ignore
-path = {
-  join(...args) {
-    return args.join('/')
-  }, // @ts-ignore
-  basename: (args: string) => {
-    return _.last((args || '').split('/|\\'));
-  },  // @ts-ignore
-  win32: { // @ts-ignore
-    normalize: (p) => {
-      return p;
-    }
-  }
-}
+path = pathMock;
 //#endregion
 
 function win32Path(p: string) {
@@ -99,18 +91,11 @@ export {
   dateformat,
   crossPlatformPath,
   win32Path,
+  path,
 }
-
-//#region @websql
-export {
-  path
-}
-//#endregion
 
 //#region @backend
 export {
-
-
   spawn,
   chalk,
   glob,

@@ -488,6 +488,18 @@ export class HelpersMessages extends HelpersIsomorphic {
   /**
    * Logs not visible in normal use of firedev-cli
    */
+  logError(details: any, noExit = false, noTrace = false) {
+    if (global.hideLog && (frameworkName === 'firedev')) {
+      return;
+    }
+    Helpers.error(details, noExit, noTrace);
+  }
+  //#endregion
+
+  //#region @backend
+  /**
+   * Logs not visible in normal use of firedev-cli
+   */
   logWarn(details: string, trace = false) {
     if (global.hideLog && (frameworkName === 'firedev')) {
       return;
