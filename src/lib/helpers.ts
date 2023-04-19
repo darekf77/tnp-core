@@ -501,9 +501,18 @@ export class HelpersCore extends HelpersMessages {
   }
 
   _fixCommand(command: string) {
+    if (
+      (command.startsWith('tnp ') || command.startsWith('firedev')) // TODO every cli projects here that uses run and need to kill process easly!
+      &&
+      (command.search('-spinner=false') === -1) && (command.search('-spinner=off') === -1)) {
+      command = `${command} -spinner=false`
+    }
+
     if (global.skipCoreCheck && (command.startsWith('tnp ') || command.startsWith('firedev'))) {
       command = `${command} --skipCoreCheck`
     }
+
+
     return command
   }
 
@@ -654,6 +663,13 @@ export class HelpersCore extends HelpersMessages {
 
 
   killProcess(byPid: number) {
+    //#region @backend
+    Helpers.run(`kill -9 ${byPid}`).sync()
+    //#endregion
+    //#region @backend
+    // Helpers.run(`fkill --force ${byPid}`).sync()
+    // return;
+    //#endregion
     //#region @websqlOnly
     if (WEBSQL_PROC_MOCK_PROCESSES_PID[byPid]) {
       const ppid = WEBSQL_PROC_MOCK_PROCESSES_PID[byPid].ppid;
@@ -672,9 +688,6 @@ export class HelpersCore extends HelpersMessages {
       }
       delete WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid];
     }
-    //#endregion
-    //#region @backend
-    Helpers.run(`kill -9 ${byPid}`).sync()
     //#endregion
   }
 
@@ -726,7 +739,11 @@ export class HelpersCore extends HelpersMessages {
         //#region @browser
         mockFun?: (stdoutCallback: (dataForStdout: any) => any, stdErrcCallback: (dataForStder: any) => any, shouldProcesBeDead?: () => boolean) => Promise<number> | number
         //#endregion
-      ) {
+      )
+        //#region @backend
+        : child_process.ChildProcess
+      //#endregion
+      {
         //#region mock of process
         //#region @browser
         if (mockFun) {
