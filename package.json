@@ -220,11 +220,11 @@
     "systeminformation": "3.45.7",
     "task.js": "0.1.5",
     "tnp-cli": "~13.1.50",
-    "tnp-config": "~13.1.62",
+    "tnp-config": "~13.1.65",
     "tnp-core": "~13.2.7",
     "tnp-db": "~13.1.16",
-    "tnp-helpers": "~13.1.25",
-    "tnp-models": "~13.1.16",
+    "tnp-helpers": "~13.1.26",
+    "tnp-models": "~13.1.17",
     "tnp-ui": "~13.1.27",
     "ts-debug": "1.3.0",
     "ts-loader": "2.3.1",
@@ -246,6 +246,6 @@
   "private": false,
   "main": "index.js",
   "name": "tnp-core",
-  "version": "13.2.7",
+  "version": "13.2.8",
   "lastBuildTagHash": "6da46a5f90ddad55fffb1165abaeefb3663da890"
 }

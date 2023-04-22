@@ -502,13 +502,13 @@ export class HelpersCore extends HelpersMessages {
 
   _fixCommand(command: string) {
     if (
-      (command.startsWith('tnp ') || command.startsWith('firedev')) // TODO every cli projects here that uses run and need to kill process easly!
+      (command.startsWith('tnp ') || command.startsWith('firedev ')) // TODO every cli projects here that uses run and need to kill process easly!
       &&
       (command.search('-spinner=false') === -1) && (command.search('-spinner=off') === -1)) {
       command = `${command} -spinner=false`
     }
 
-    if (global.skipCoreCheck && (command.startsWith('tnp ') || command.startsWith('firedev'))) {
+    if (global.skipCoreCheck && (command.startsWith('tnp ') || command.startsWith('firedev '))) {
       command = `${command} --skipCoreCheck`
     }
 
