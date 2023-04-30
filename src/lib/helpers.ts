@@ -12,6 +12,7 @@ import {
   dateformat,
   spawn,
   win32Path,
+  glob,
   //#endregion
 } from './core-imports';
 import { Helpers } from './index';
@@ -1584,13 +1585,20 @@ command: ${command}
   /**
    * return absolute paths for folders inside folders
    */
-  filesFrom(pathToFolder: string | string[], recrusive = false): string[] {
+  filesFrom(pathToFolder: string | string[], recrusive = false, incudeUnexistedLinks = false): string[] {
+
+
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
     if (!Helpers.exists(pathToFolder)) {
       return [];
     }
+
+    if (recrusive && incudeUnexistedLinks) {
+      return glob.sync(`${pathToFolder}/**/*.*`);
+    }
+
     if (recrusive) {
       const all = fse.readdirSync(pathToFolder)
         .map(f => path.join(pathToFolder as string, f));
@@ -1614,7 +1622,9 @@ command: ${command}
     }
     return fse.readdirSync(pathToFolder)
       .map(f => crossPlatformPath(path.join(pathToFolder as string, f)))
-      .filter(f => !fse.lstatSync(f).isDirectory())
+      .filter(f => {
+        return !fse.lstatSync(f).isDirectory()
+      })
   }
 
 
