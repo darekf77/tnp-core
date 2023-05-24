@@ -15,6 +15,10 @@ import {
   glob,
   //#endregion
 } from './core-imports';
+//#region @backend
+import { Blob } from 'buffer';
+//#endregion
+
 import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { ExecuteOptions, RunOptions } from './core-models';
@@ -94,6 +98,12 @@ export class HelpersCore extends HelpersMessages {
     // process.on('SIGTERM', this.cleanExit); // catch kill
     // //#endregion
   }
+
+  isBlob(maybeBlob) {
+    // TODO is this needed hmmmm
+    return maybeBlob instanceof Blob; // || toString.call(maybeBlob) === '[object Blob]';
+  }
+
 
   removeSlashAtEnd(s: string) {
     s = s?.endsWith(`/`) ? s.slice(0, s.length - 1) : s;
