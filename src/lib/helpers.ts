@@ -174,6 +174,10 @@ export class HelpersCore extends HelpersMessages {
     //#region fix parameters
     existedFileOrFolder = crossPlatformPath(existedFileOrFolder);
     destinationPath = crossPlatformPath(destinationPath);
+    // console.trace(`Creating link:
+    // from: ${existedFileOrFolder},
+    // to: ${destinationPath},
+    // `)
 
     Helpers.log(`[tnp-code][create link] exited -> dest
     ${existedFileOrFolder} ${destinationPath}`, 1);
