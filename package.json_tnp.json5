@@ -6,6 +6,7 @@
   "overrided": {
     "ignoreDepsPattern": [],
     "includeAsDev": [],
+
     "includeOnly": [
       "glob",
       'moment',
@@ -31,8 +32,10 @@
       "is-admin",
       "dateformat"
     ],
+
     "dependencies": {},
-    "linkedFolders": []
+    "linkedFolders": [],
+    'npmFixes': [],
   },
 
   "linkedProjects": [],
