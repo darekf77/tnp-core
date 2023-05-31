@@ -679,10 +679,10 @@ export class HelpersCore extends HelpersMessages {
 
   killProcess(byPid: number) {
     //#region @backend
-    Helpers.run(`kill -9 ${byPid}`).sync()
+    // Helpers.run(`kill -9 ${byPid}`).sync()
     //#endregion
     //#region @backend
-    // Helpers.run(`fkill --force ${byPid}`).sync()
+    Helpers.run(`fkill --force ${byPid}`).sync()
     // return;
     //#endregion
     //#region @websqlOnly
