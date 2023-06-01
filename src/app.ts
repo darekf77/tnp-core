@@ -76,8 +76,6 @@ export class TnpCoreComponent implements OnInit {
   }
 
   async ngOnInit() {
-    await start();
-
     this.tasks$ = Task.ctrl.getAll().received.observable.pipe(
       takeUntil(this.destroy$),
       map(r => {
