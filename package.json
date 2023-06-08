@@ -217,7 +217,7 @@
     "socket.io": "2.4.1",
     "sort-package-json": "1.11.0",
     "sql.js": "1.8.0",
-    "static-columns": "~13.3.8",
+    "static-columns": "~16.0.1",
     "string-similarity": "4.0.2",
     "sudo-block": "3.0.0",
     "systeminformation": "3.45.7",
@@ -251,6 +251,6 @@
   "private": false,
   "main": "index.js",
   "name": "tnp-core",
-  "version": "16.0.0",
+  "version": "16.0.1",
   "lastBuildTagHash": "b803f3da117bf9cb1ced19cf78d1349637ad0993"
 }
