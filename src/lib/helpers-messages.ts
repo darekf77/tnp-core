@@ -357,7 +357,10 @@ export class HelpersMessages extends HelpersIsomorphic {
     details = transformData(details);
 
     const display = (dot = false) => {
-      details = details.replace('...', '')
+      // if(!details) {
+      //   console.warn(`Probabl you forgot set Helpers.taskStart() for Helpers.taskDone()`)
+      // }
+      details = details?.replace('...', '')
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
       }
