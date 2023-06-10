@@ -1,4 +1,65 @@
 {
+  "tnp": {
+    "resources": [
+      "README.md"
+    ],
+    "overrided": {
+      "ignoreDepsPattern": [],
+      "includeAsDev": [],
+      "includeOnly": [
+        "glob",
+        "moment",
+        "fkill",
+        "copy-paste",
+        "chokidar",
+        "fs-extra",
+        "rimraf",
+        "mkdirp",
+        "lodash",
+        "@types/lodash",
+        "ps-list",
+        "ps-node",
+        "q",
+        "@types/q",
+        "json5",
+        "is-elevated",
+        "portfinder",
+        "cross-spawn",
+        "chalk",
+        "copy-paste",
+        "is-root",
+        "is-admin",
+        "dateformat"
+      ],
+      "dependencies": {},
+      "linkedFolders": [],
+      "npmFixes": []
+    },
+    "linkedProjects": [],
+    "smartContainerBuildTarget": "",
+    "linkedRepos": [],
+    "libReleaseOptions": {
+      "nodts": false,
+      "obscure": false,
+      "ugly": false,
+      "includeNodeModules": false
+    },
+    "smartContainerTarget": "",
+    "type": "isomorphic-lib",
+    "isCoreProject": false,
+    "useFramework": false,
+    "required": [],
+    "version": "v4",
+    "additionalNpmNames": [
+      "firedev-core"
+    ],
+    "isGenerated": false,
+    "requiredServers": [],
+    "license": "MIT",
+    "private": false,
+    "main": "index.js",
+    "workerPlugins": {}
+  },
   "dependencies": {
     "@types/lodash": "4.14.92",
     "@types/q": "1.5.5",
@@ -249,7 +310,6 @@
   },
   "license": "MIT",
   "private": false,
-  "main": "index.js",
   "name": "tnp-core",
   "version": "16.0.8",
   "lastBuildTagHash": "03cd9d7a13ed2637636a05bb755fadb2d62d57f1"
