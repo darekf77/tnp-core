@@ -2,8 +2,8 @@
 // With this configuration you can use: firedev automatic:release:docs
 {
   "build": true,
-  "prod": false,
-  "websql": false,
+  "prod": true,
+  "websql": true,
   "projName": "tnp-core"
 }
 

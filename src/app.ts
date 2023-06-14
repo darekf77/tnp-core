@@ -71,9 +71,6 @@ export class TnpCoreComponent implements OnInit {
   tasks$: Observable<Task[]>;
   count$: Observable<number>;
   normalTasks = [];
-  constructor(ngzone: NgZone) {
-    Firedev.initNgZone(ngzone);
-  }
 
   async ngOnInit() {
     this.tasks$ = Task.ctrl.getAll().received.observable.pipe(
