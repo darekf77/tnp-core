@@ -141,6 +141,7 @@ export class HelpersMessages extends HelpersIsomorphic {
       } else {
         if (useSpinner) {
           process?.send(`error::${chalk.red(details)}`);
+          process.exit(1);
         } else {
           if (global.globalSystemToolMode) {
             if (noTrace) {
