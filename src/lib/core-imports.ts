@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 import * as q from 'q';
 import * as moment from 'moment';
 import * as dateformat from 'dateformat';
+import { Chalk } from 'chalk';
 
 //#region @backend
 import * as pathBase from 'path';
@@ -10,8 +11,7 @@ import * as child_process from 'child_process';
 import * as http from 'http';
 import * as https from 'https';
 import * as net from 'net';
-import chalk from 'chalk';
-
+import chalkBase from 'chalk';
 import * as spawn from 'cross-spawn';
 import * as glob from 'glob';
 import * as fse from 'fs-extra';
@@ -33,6 +33,7 @@ async function isElevated() {
 
 //#endregion
 
+//#region mock path
 //#region @browser
 import { path as pathMock } from './node-path-mock';
 //#endregion
@@ -46,6 +47,23 @@ let path
 // @ts-ignore
 path = pathMock;
 //#endregion
+//#endregion
+
+//#region mock chalk
+//#region @browser
+import { chalk as chalkMock } from './node-chalk-mock';
+//#endregion
+let chalk: Chalk
+  // #region @backend
+  = chalkBase as any;
+//#endregion
+
+//#region @browser
+// @ts-ignore
+chalk = chalkMock;
+//#endregion
+//#endregion
+
 
 function win32Path(p: string) {
   //#region @backend
@@ -92,12 +110,12 @@ export {
   crossPlatformPath,
   win32Path,
   path,
+  chalk,
 }
 
 //#region @backend
 export {
   spawn,
-  chalk,
   glob,
   isElevated,
   chokidar,

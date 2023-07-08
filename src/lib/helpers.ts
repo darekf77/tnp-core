@@ -878,7 +878,7 @@ export class HelpersCore extends HelpersMessages {
       //#endregion
 
       //#region @backend
-      unitlOutputContains(stdoutMsg: string | string[], stderMsg?: string | string[]) {
+      unitlOutputContains(stdoutMsg: string | string[], stderMsg?: string | string[], timeout = 0) {
 
         let isResolved = false;
         return new Promise<any>((resolve, reject) => {
@@ -902,8 +902,10 @@ export class HelpersCore extends HelpersMessages {
                 if ((data.search(rejectm) !== -1)) {
                   Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
                   isResolved = true;
-                  reject();
-                  proc.kill('SIGINT');
+                  setTimeout(() => {
+                    reject();
+                    proc.kill('SIGINT');
+                  }, timeout);
                   break;
                 }
               }
@@ -919,7 +921,9 @@ export class HelpersCore extends HelpersMessages {
                 if ((data.search(m) !== -1)) {
                   Helpers.info(`[unitlOutputContains] Move to next step...`)
                   isResolved = true;
-                  resolve(void 0);
+                  setTimeout(() => {
+                    resolve(void 0);
+                  }, timeout);
                   break;
                 }
               }
@@ -930,8 +934,10 @@ export class HelpersCore extends HelpersMessages {
                 if ((data.search(rejectm) !== -1)) {
                   Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
                   isResolved = true;
-                  reject();
-                  proc.kill('SIGINT');
+                  setTimeout(() => {
+                    reject();
+                    proc.kill('SIGINT');
+                  }, timeout);
                   break;
                 }
               }
