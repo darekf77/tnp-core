@@ -39,12 +39,11 @@ const all = Object.keys(allObj).map(key => {
   return allObj[key];
 })
 
-
 for (let i = 0; i < all.length; i++) {
   const e1 = all[i] as Function;
   for (let j = 0; j < all.length; j++) {
-    const e2 = all[j] as Function;
-    e1.prototype[map.get(e2)] = e2;
+    const e2 = all[j] as Function; // @ts-ignore
+    e1[map.get(e2)] = e2;
   }
 }
 
