@@ -11,6 +11,13 @@ export namespace Utils {
 
     //#region binay utils / array buffer to blob
     //#region @browser
+    /**
+     * This is for BROWSER ONLY
+     *
+     * @param buffer
+     * @param contentType
+     * @returns
+     */
     export async function arrayBufferToBlob(buffer: ArrayBuffer, contentType: ContentType): Promise<Blob> {
       // @ts-ignore
       return new Blob([buffer], { type: contentType });
@@ -19,6 +26,11 @@ export namespace Utils {
     //#endregion
 
     //#region binay utils / blob to array buffer
+    /**
+     * This is for BROWSER ONLY
+     * @param blob
+     * @returns
+     */
     export async function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
       return await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -112,6 +124,21 @@ export namespace Utils {
         responseType: 'blob'
       });
       return response.data;
+    }
+    //#endregion
+
+    //#region @backend
+    export async function blobToBuffer(blob: Blob): Promise<Buffer> {
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      return buffer;
+    }
+    //#endregion
+
+    //#region @backend
+    export async function bufferToBlob(buffer: Buffer): Promise<Blob> {
+      const blob = new Blob([buffer]); // JavaScript Blob
+      return blob;
     }
     //#endregion
 
