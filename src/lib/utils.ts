@@ -148,9 +148,18 @@ export namespace Utils {
     }
 
     export async function textToFile(text: string, fileRelativePathOrName: string): Promise<File> {
-      const type = mimeTypes[path.extname(fileRelativePathOrName)];
+      // console.log({ path })
+      const ext = path.extname(fileRelativePathOrName);
+
+      const type = mimeTypes[ext];
       const blob = new Blob([text], { type });
-      return await blobToFile(blob, fileRelativePathOrName);
+      const file = await blobToFile(blob, fileRelativePathOrName);
+      // console.log({
+      //   ext,
+      //   blob, file
+      // });
+      // debugger
+      return file;
     }
 
     export async function fileToText(file: File): Promise<string> {

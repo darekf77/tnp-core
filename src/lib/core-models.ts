@@ -131,11 +131,21 @@ export const mimeTypes = {
 } as const;
 
 export type ContentTypeKeys = keyof typeof mimeTypes;
-export type ContentType = typeof mimeTypes[ContentTypeKeys];
+export type ContentType = typeof mimeTypes[ContentTypeKeys] | 'multipart/form-data';
 
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+ */
+export type MediaType = 'text' | 'image' | 'audio' | 'font' | 'video' | 'application' | 'multipart' | 'message' | 'model';
+export const MediaTypeAllArr = [
+  'text', 'image', 'audio', 'video', 'font',
+  'application', 'multipart', 'message', 'model'
+] as MediaType[]
+
+type ContentType_ = ContentType;
 
 export namespace Files {
   export type MimeType = keyof typeof mimeTypes;
   export const MimeTypesObj = mimeTypes;
-  export type ContentType = typeof mimeTypes[ContentTypeKeys];
+  export type ContentType = ContentType_;
 }
