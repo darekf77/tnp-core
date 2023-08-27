@@ -1,3 +1,4 @@
+//#region import
 import {
   _,
   //#region @backend
@@ -26,13 +27,19 @@ import { frameworkName } from './framework-name';
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
 //#endregion
+//#endregion
 
+//#region constants
 declare const global: any;
 const encoding = 'utf8';
 //#region @backend
 const trace = !global.hideLog;
 //#endregion
+const WEBSQL_PROC_MOCK_PROCESSES_PID = {};
+const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
+//#endregion
 
+//#region models
 export interface RunSyncOrAsyncOptions {
   functionFn: Function,
   context?: object,
@@ -46,10 +53,7 @@ export interface CommandOutputOptions {
   gatherColors?: boolean;
   showErrorWarning?: boolean,
 }
-
-
-const WEBSQL_PROC_MOCK_PROCESSES_PID = {};
-const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
+//#endregion
 
 export class HelpersCore extends HelpersMessages {
 
@@ -63,6 +67,39 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
+  //#region fields / getters
+  //#region @backend
+  readonly processes: child_process.ChildProcess[] = [];
+  //#endregion
+  readonly bigMaxBuffer = 2024 * 500;
+
+  //#region @backend
+  get isRunningIn() {
+    return {
+      mochaTest() {
+        return (typeof global['it'] === 'function');
+      },
+      cliMode() {
+        return !!global['globalSystemToolMode'];
+      },
+    }
+  }
+  //#endregion
+  //#endregion
+
+  //#region constructor
+  constructor() {
+    super();
+    // //#region @backend
+    // process.on('SIGINT', this.cleanExit); // catch ctrl-c
+    // process.on('SIGTERM', this.cleanExit); // catch kill
+    // //#endregion
+  }
+  //#endregion
+
+  //#region methods
+
+  //#region methods / remove file or folder
   //#region @backend
   remove(fileOrFolderPathOrPatter: string | string[], exactFolder = false) {
     if (Array.isArray(fileOrFolderPathOrPatter)) {
@@ -76,8 +113,9 @@ export class HelpersCore extends HelpersMessages {
     rimraf.sync(fileOrFolderPathOrPatter);
   }
   //#endregion
+  //#endregion
 
-
+  //#region methods / clean exit proces
   //#region @backend
   cleanExit() {
     Helpers.processes.forEach(p => {
@@ -89,33 +127,54 @@ export class HelpersCore extends HelpersMessages {
     process.exit()
   };
   //#endregion
+  //#endregion
 
-  readonly bigMaxBuffer = 2024 * 500;
-  constructor() {
-    super();
-    // //#region @backend
-    // process.on('SIGINT', this.cleanExit); // catch ctrl-c
-    // process.on('SIGTERM', this.cleanExit); // catch kill
-    // //#endregion
-  }
-
-  isBlob(maybeBlob) {
+  //#region methods / is blob
+  /**
+   * check if data is nodejs/browser blob
+   *
+   * @param maybeBlob
+   * @returns
+   */
+  public isBlob(maybeBlob): boolean {
     // TODO is this needed hmmmm
     return maybeBlob instanceof Blob; // || toString.call(maybeBlob) === '[object Blob]';
   }
+  //#endregion
 
+  //#region methods / is buffer
+  /**
+   * Check if data is nodejs buffer
+   *
+   * @param maybeNodejsBuffer
+   * @returns
+   */
+  //#region @backend
+  public isBuffer(maybeNodejsBuffer): boolean {
+    return Buffer.isBuffer(maybeNodejsBuffer);
+  }
+  //#endregion
+  //#endregion
 
-  removeSlashAtEnd(s: string) {
+  //#region methods / remove slash at the end of string
+  public removeSlashAtEnd(s: string): string {
     s = s?.endsWith(`/`) ? s.slice(0, s.length - 1) : s;
     return s;
   }
+  //#endregion
 
-  removeSlashAtBegin(s: string) {
+  //#region methods / remove slash at the begin of string
+  public removeSlashAtBegin(s: string): string {
     s = s?.startsWith(`/`) ? s.slice(1) : s;
     return s;
   }
+  //#endregion
 
-  stringify(inputObject: any): string {
+  //#region methods / stringify object pretty format
+  /**
+   * stringify to pretty json string
+   */
+  public stringify(inputObject: any): string {
     // if (_.isString(inputObject)) {
     //   return inputObject;
     // }
@@ -125,10 +184,15 @@ export class HelpersCore extends HelpersMessages {
     // }
     return JSON.stringify(inputObject, null, 2);
   }
+  //#endregion
 
-  async runSyncOrAsync(fnOrOptions: Function | [string, object] | RunSyncOrAsyncOptions, ...firstArg: any[]) {
+  //#region methods / run sync or async
+  public async runSyncOrAsync<FUNCTION_RETURN_TYPE = any>(
+    fnOrOptions: Function | [string, object] | RunSyncOrAsyncOptions,
+    ...firstArg: any[]
+  ): Promise<FUNCTION_RETURN_TYPE> {
     if (_.isUndefined(fnOrOptions)) {
-      return;
+      return void 0 as any;
     }
     let promisOrValue: any;
     const optionsMode = _.isObject(fnOrOptions)
@@ -153,13 +217,11 @@ export class HelpersCore extends HelpersMessages {
     // console.log('was promis ', wasPromise)
     return promisOrValue;
   }
-
-  //#region @backend
-  readonly processes: child_process.ChildProcess[] = [];
   //#endregion
 
+  //#region methods / create symlink
   //#region @backend
-  createSymLink(existedFileOrFolder: string, destinationPath: string,
+  public createSymLink(existedFileOrFolder: string, destinationPath: string,
     options?: {
       continueWhenExistedFolderDoesntExists?: boolean;
       windowsHardLink?: boolean;
@@ -169,7 +231,7 @@ export class HelpersCore extends HelpersMessages {
        * only if you know that symlink can be created
        */
       speedUpProcess?: boolean;
-    }) {
+    }): void {
 
     //#region fix parameters
     existedFileOrFolder = crossPlatformPath(existedFileOrFolder);
@@ -346,12 +408,12 @@ export class HelpersCore extends HelpersMessages {
     }
 
   }
-
-
+  //#endregion
   //#endregion
 
+  //#region methods / mkdirp
   //#region @backend
-  mkdirp(folderPath: string | string[]) {
+  public mkdirp(folderPath: string | string[]): void {
     if (_.isArray(folderPath)) {
       folderPath = path.join(...folderPath);
     }
@@ -379,13 +441,18 @@ export class HelpersCore extends HelpersMessages {
     }
   }
   //#endregion
+  //#endregion
 
-
+  //#region methods / is symlink that matches url
   /**
    * symlink may have existed or unexisted destiantion url
    * @param destUrl M
    */
-  isSymlinkThatMatchesUrl(possibleSymlink: string, destUrl: string, absoluteFileMatch = false): boolean {
+  public isSymlinkThatMatchesUrl(
+    possibleSymlink: string,
+    destUrl: string,
+    absoluteFileMatch = false,
+  ): boolean {
     //#region @backendFunc
     destUrl = crossPlatformPath(destUrl);
 
@@ -419,8 +486,10 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
-  isSymlinkFileExitedOrUnexisted(filePath: string): boolean {
+  //#region methods / is symlink file existed or unexisted
+  public isSymlinkFileExitedOrUnexisted(filePath: string): boolean {
     //#region @backendFunc
     try {
       const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
@@ -430,7 +499,9 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region methods / is unexisted link
   /**
    * If symbolnk link that target file does not exits
    */
@@ -449,7 +520,9 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region methods / is exited symlink
   /**
    * @param existedLink check if source of link exists
    */
@@ -469,12 +542,15 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region methods / path contain link
   //#region @backend
-  pathContainLink(p: string) {
+  public pathContainLink(p: string) {
     let previous: string;
     while (true) {
       p = crossPlatformPath(path.dirname(p));
+      // @ts-ignore
       if (p === previous) {
         return false;
       }
@@ -488,9 +564,10 @@ export class HelpersCore extends HelpersMessages {
     }
   }
   //#endregion
+  //#endregion
 
-
-  exists(folderOrFilePath: string | string[]
+  //#region methods / exists
+  public exists(folderOrFilePath: string | string[]
     // , allowUnexistedLinks = false
   ) {
     //#region @backendFunc
@@ -514,8 +591,13 @@ export class HelpersCore extends HelpersMessages {
     return fse.existsSync(folderOrFilePath);
     //#endregion
   }
+  //#endregion
 
-  _fixCommand(command: string) {
+  //#region methods / fix command
+  /**
+   * this is HACK for running procesess inside processes
+   */
+  public _fixCommand(command: string): string {
     if (
       (command.startsWith('tnp ') || command.startsWith('firedev ')) // TODO every cli projects here that uses run and need to kill process easly!
       &&
@@ -526,12 +608,12 @@ export class HelpersCore extends HelpersMessages {
     if (global.skipCoreCheck && (command.startsWith('tnp ') || command.startsWith('firedev '))) {
       command = `${command} --skipCoreCheck`
     }
-
-
     return command
   }
+  //#endregion
 
-  command(command: string) {
+  //#region methods / command
+  public command(command: string) {
     // console.log({ command })
     command = Helpers._fixCommand(command);
 
@@ -547,6 +629,7 @@ export class HelpersCore extends HelpersMessages {
           options = {} as any;
         }
         return new Promise<string>((resolve) => {
+          // @ts-ignore
           let { ommitStder, cwd, biggerBuffer, gatherColors } = options;
           if (!cwd) {
             cwd = process.cwd()
@@ -565,19 +648,23 @@ export class HelpersCore extends HelpersMessages {
             resolve(gatheredData);
           });
 
+          // @ts-ignore
           proc.stdout.on('data', (data) => {
             gatheredData = `${gatheredData}${data?.toString() || ''}`;
           })
 
+          // @ts-ignore
           proc.stdout.on('error', (data) => {
             gatheredData = `${gatheredData}${data?.toString() || ''}`;
           })
 
           if (!ommitStder) {
+            // @ts-ignore
             proc.stderr.on('data', (data) => {
               gatheredData = `${gatheredData}${data?.toString() || ''}`;
             })
 
+            // @ts-ignore
             proc.stderr.on('error', (data) => {
               gatheredData = `${gatheredData}${data?.toString() || ''}`;
             })
@@ -589,16 +676,19 @@ export class HelpersCore extends HelpersMessages {
       //#endregion
     }
   }
+  //#endregion
 
-  wait(second: number) {
+  //#region methods / wait
+  public wait(second: number): Promise<void> {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         resolve(void 0);
-      }, second * 1000)
+      }, second * 1000);
     })
   }
+  //#endregion
 
-  //#region command output as string async
+  //#region methods / command output as string async
   //#region @backend
   async commnadOutputAsStringAsync(
     command: string,
@@ -610,14 +700,15 @@ export class HelpersCore extends HelpersMessages {
     let output = '';
     try {
       output = await Helpers.command(command).getherOutput({
-        cwd,
-        biggerBuffer: opt.biggerBuffer,
-        ommitStder: !opt.showStder,
+        cwd, // @ts-ignore
+        biggerBuffer: opt.biggerBuffer,// @ts-ignore
+        ommitStder: !opt.showStder,// @ts-ignore
         gatherColors: opt.gatherColors,
       });
       // console.log({
       //   output
       // })
+      // @ts-ignore
       if (opt.showWholeCommandNotOnlyLastLine) {
         // console.log('SHHOW WOLE', output)
         return output.replace(/[^\x00-\xFF]/g, '')
@@ -625,6 +716,7 @@ export class HelpersCore extends HelpersMessages {
       const splited = (output || '').split('\n');
       output = (splited.pop() || '').replace(/[^\x00-\xFF]/g, '');
     } catch (e) {
+      // @ts-ignore
       if (opt.showErrorWarning) {
         Helpers.warn(`[firedev-helepr] Not able to get output from command:
         "${command}"
@@ -636,7 +728,7 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
   //#endregion
 
-  //#region command output as string
+  //#region methods / command output as string
   //#region @backend
   commnadOutputAsString(
     command: string,
@@ -647,23 +739,26 @@ export class HelpersCore extends HelpersMessages {
     const opt = (options || {}) as typeof options;
     let output = '';
     try {
+      // @ts-ignore
       const env = opt.gatherColors ? { ...process.env, FORCE_COLOR: '1' } : {};
       // output = Helpers.run(command, { output: false, cwd, biggerBuffer }).sync().toString().trim()
       output = (child_process.execSync(command, {
-        cwd,
-        stdio: ['ignore', 'pipe', opt.showStder ? 'pipe' : 'ignore'],
+        cwd, // @ts-ignore
+        stdio: ['ignore', 'pipe', opt.showStder ? 'pipe' : 'ignore'], // @ts-ignore
         maxBuffer: opt.biggerBuffer ? Helpers.bigMaxBuffer : void 0,
         env,
       })?.toString() || '').trim();
       // console.log({
       //   output
       // })
+      // @ts-ignore
       if (opt.showWholeCommandNotOnlyLastLine) {
         return output.replace(/[^\x00-\xFF]/g, '')
       }
       const splited = (output || '').split('\n');
       output = (splited.pop() || '').replace(/[^\x00-\xFF]/g, '');
     } catch (e) {
+      // @ts-ignore
       if (opt.showErrorWarning) {
         Helpers.warn(`[firedev-helpers] Not able to get output from command:
       "${command}"
@@ -676,8 +771,8 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
   //#endregion
 
-
-  killProcess(byPid: number) {
+  //#region methods / kill process
+  public killProcess(byPid: number) {
     //#region @backend
     // Helpers.run(`kill -9 ${byPid}`).sync()
     //#endregion
@@ -705,8 +800,10 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
-  run(command: string,
+  //#region methods / run
+  public run(command: string,
     options?: RunOptions) {
     command = Helpers._fixCommand(command);
 
@@ -726,6 +823,7 @@ export class HelpersCore extends HelpersMessages {
       //#region @backend
       sync() { // TODO buffer
 
+        // @ts-ignore
         if (_.isArray(options.extractFromLine)) {
           Helpers.error(`[tnp-helper] extractFromLine only for:
           - asyncAsPromise
@@ -734,6 +832,8 @@ export class HelpersCore extends HelpersMessages {
 
           `, false, true);
         }
+
+        // @ts-ignore
         if (_.isNumber(options.tryAgainWhenFailAfter) && options.tryAgainWhenFailAfter > 0) {
           // TODO try again when fail
           // try {
@@ -793,8 +893,8 @@ export class HelpersCore extends HelpersMessages {
                   exitFun(d);
                 }))
               }
-            },
-            ppid: void 0 as number,
+            }, // @ts-ignore
+            ppid: void 0 as number, // @ts-ignore
             pid: void 0 as number,
           };
 
@@ -847,6 +947,7 @@ export class HelpersCore extends HelpersMessages {
         //#endregion
         //#endregion
         //#region @backendFunc
+        // @ts-ignore
         options.detach = detach;
         return Helpers.runAsyncIn(command, options);
         //#endregion
@@ -894,6 +995,7 @@ export class HelpersCore extends HelpersMessages {
           }
 
           const proc = Helpers.runAsyncIn(command, options);
+          // @ts-ignore
           proc.stderr.on('data', (message) => {
             const data: string = message.toString().trim();
             if (!isResolved && _.isArray(stderMsg)) {
@@ -912,6 +1014,7 @@ export class HelpersCore extends HelpersMessages {
             }
           });
 
+          // @ts-ignore
           proc.stdout.on('data', (message) => {
             const data: string = message.toString().trim();
 
@@ -950,23 +1053,12 @@ export class HelpersCore extends HelpersMessages {
       //#endregion
     }
   }
-
-  //#region @backend
-  get isRunningIn() {
-    return {
-      mochaTest() {
-        return (typeof global['it'] === 'function');
-      },
-      cliMode() {
-        return !!global['globalSystemToolMode'];
-      },
-    }
-  }
   //#endregion
 
+  //#region methods / get stdio
   //#region @backend
-  getStdio(options?: RunOptions) {
-    const {
+  public getStdio(options?: RunOptions) {
+    const { // @ts-ignore
       output, silence, stdio
       // pipeToParentProcerss = false,
       // inheritFromParentProcerss = false
@@ -984,9 +1076,12 @@ export class HelpersCore extends HelpersMessages {
     return resstdio;
   }
   //#endregion
+  //#endregion
 
+  //#region methods / run sync in
   //#region @backend
-  runSyncIn(command: string, options?: RunOptions) {
+  public runSyncIn(command: string, options?: RunOptions) {
+    // @ts-ignore
     const { cwd, biggerBuffer } = options;
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
     let stdio = Helpers.getStdio(options)
@@ -994,9 +1089,12 @@ export class HelpersCore extends HelpersMessages {
     return child_process.execSync(command, { stdio, cwd, maxBuffer } as any)
   }
   //#endregion
+  //#endregion
 
+  //#region methods / run async in
   //#region @backend
-  runAsyncIn(command: string, options?: RunOptions) {
+  public runAsyncIn(command: string, options?: RunOptions) {
+    // @ts-ignore
     const { output, cwd, biggerBuffer, outputLineReplace, extractFromLine, detach } = options;
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
     let stdio = Helpers.getStdio(options)
@@ -1022,6 +1120,7 @@ export class HelpersCore extends HelpersMessages {
         //   // }
         // });
       } else {
+        // @ts-ignore
         proc = child_process.spawn(cmd, argsForCmd, { cwd, detached: true });
       }
       Helpers.log(`
@@ -1037,6 +1136,7 @@ export class HelpersCore extends HelpersMessages {
       if (global.globalSystemToolMode) {
         proc.on('exit', (code) => {
           Helpers.log('EXITING BIG PROCESS')
+          // @ts-ignore
           process.exit(code);
         });
       }
@@ -1044,13 +1144,15 @@ export class HelpersCore extends HelpersMessages {
     return Helpers.logProc(proc,
       detach ? true : output,
       detach ? void 0 : stdio,
-      outputLineReplace,
+      outputLineReplace,// @ts-ignore
       options.prefix,
       extractFromLine,
     );
   }
   //#endregion
+  //#endregion
 
+  //#region methods / log process
   //#region @backend
   logProc(proc: child_process.ChildProcess,
     output = true,
@@ -1071,6 +1173,7 @@ export class HelpersCore extends HelpersMessages {
     }
 
     if (output) {
+      // @ts-ignore
       proc.stdout.on('data', (data) => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
@@ -1079,6 +1182,7 @@ export class HelpersCore extends HelpersMessages {
         process.stdout.write(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine))
       })
 
+      // @ts-ignore
       proc.stdout.on('error', (data) => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
@@ -1087,6 +1191,7 @@ export class HelpersCore extends HelpersMessages {
         console.log(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine));
       })
 
+      // @ts-ignore
       proc.stderr.on('data', (data) => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
@@ -1094,6 +1199,7 @@ export class HelpersCore extends HelpersMessages {
         process.stderr.write(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine))
       })
 
+      // @ts-ignore
       proc.stderr.on('error', (data) => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
@@ -1149,22 +1255,25 @@ export class HelpersCore extends HelpersMessages {
     return new Promise((resolve, reject) => {
 
       // let stdio = [0,1,2]
+      // @ts-ignore
       childProcess.stdout.on('data', (rawData) => {
         let data = (rawData?.toString() || '');
 
         data = Helpers.modifyLineByLine(
-          data,
+          data, // @ts-ignore
           outputLineReplace,
           prefix,
           extractFromLine
         );
 
+        // @ts-ignore
         if (!hideOutput.stdout) {
           process.stdout.write(data);
         }
 
-        if (!isResolved && _.isArray(resolvePromiseMsg.stdout)) {
-          for (let index = 0; index < resolvePromiseMsg.stdout.length; index++) {
+        // @ts-ignore
+        if (!isResolved && _.isArray(resolvePromiseMsg.stdout)) { // @ts-ignore
+          for (let index = 0; index < resolvePromiseMsg.stdout.length; index++) { // @ts-ignore
             const m = resolvePromiseMsg.stdout[index];
             if ((data.search(m) !== -1)) {
               // Helpers.info(`[unitlOutputContains] Move to next step...`)
@@ -1174,8 +1283,10 @@ export class HelpersCore extends HelpersMessages {
             }
           }
         }
-        if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) {
-          for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) {
+
+        // @ts-ignore
+        if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) { // @ts-ignore
+          for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) { // @ts-ignore
             const rejectm = resolvePromiseMsg.stderr[index];
             if ((data.search(rejectm) !== -1)) {
               // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
@@ -1197,20 +1308,23 @@ export class HelpersCore extends HelpersMessages {
               await this.runSyncOrAsync(exitOnErrorCallback, code);
             } catch (error) { }
           }
+          // @ts-ignore
           process.exit(code);
         }
         resolve(void 0);
       });
 
+      // @ts-ignore
       childProcess.stdout.on('error', (rawData) => {
         let data = (rawData?.toString() || '');
         data = Helpers.modifyLineByLine(
-          data,
+          data, // @ts-ignore
           outputLineReplace,
           prefix,
           extractFromLine
         );
 
+        // @ts-ignore
         if (!hideOutput.stdout) {
           process.stdout.write(JSON.stringify(data))
         }
@@ -1218,21 +1332,24 @@ export class HelpersCore extends HelpersMessages {
         // console.log(data);
       })
 
+      // @ts-ignore
       childProcess.stderr.on('data', (rawData) => {
         let data = (rawData?.toString() || '');
         data = Helpers.modifyLineByLine(
-          data,
+          data, // @ts-ignore
           outputLineReplace,
           prefix,
           extractFromLine
         );
 
+        // @ts-ignore
         if (!hideOutput.stderr) {
           process.stderr.write(data);
         }
 
-        if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) {
-          for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) {
+        // @ts-ignore
+        if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) { // @ts-ignore
+          for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) { // @ts-ignore
             const rejectm = resolvePromiseMsg.stderr[index];
             if ((data.search(rejectm) !== -1)) {
               // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
@@ -1246,15 +1363,17 @@ export class HelpersCore extends HelpersMessages {
 
       })
 
+      // @ts-ignore
       childProcess.stderr.on('error', (rawData) => {
         let data = (rawData?.toString() || '');
         data = Helpers.modifyLineByLine(
-          data,
+          data, // @ts-ignore
           outputLineReplace,
           prefix,
           extractFromLine
         );
 
+        // @ts-ignore
         if (!hideOutput.stderr) {
           process.stderr.write(JSON.stringify(data))
         }
@@ -1266,9 +1385,14 @@ export class HelpersCore extends HelpersMessages {
 
   }
   //#endregion
+  //#endregion
 
+  //#region methods / check process
   //#region @backend
-  checkProcess(dirPath: string, command: string) {
+  /**
+   * @deprecated
+   */
+  public checkProcess(dirPath: string, command: string) {
     if (!fse.existsSync(dirPath)) {
       Helpers.error(`
 Path for process cwd doesn't exist: ${dirPath}
@@ -1280,15 +1404,16 @@ command: ${command}
     }
   }
   //#endregion
+  //#endregion
 
+  //#region methods / modify line by line
   //#region @backend
-
-  modifyLineByLine(
+  public modifyLineByLine(
     data: string | Buffer | Error,
     outputLineReplace: (outputLine: string) => string,
     prefix: string,
     extractFromLine?: (string | Function)[],
-  ) {
+  ): string {
     const checkExtract = (_.isArray(extractFromLine) && extractFromLine.length > 0);
     let modifyOutput = _.isFunction(outputLineReplace);
     if (modifyOutput && _.isString(data)) {
@@ -1319,22 +1444,31 @@ command: ${command}
     return data as string;
   }
   //#endregion
-
-  //#region @backend
-  isFolder(pathToFileOrMaybeFolder: string) {
-    return pathToFileOrMaybeFolder && fse.existsSync(pathToFileOrMaybeFolder) &&
-      fse.lstatSync(pathToFileOrMaybeFolder).isDirectory();
-  }
   //#endregion
 
+  //#region methods / is folder
+  //#region @backend
+  public isFolder(pathToFileOrMaybeFolder: string): boolean {
+    return !!(
+      pathToFileOrMaybeFolder &&
+      fse.existsSync(pathToFileOrMaybeFolder) &&
+      fse.lstatSync(pathToFileOrMaybeFolder).isDirectory()
+    );
+  }
+  //#endregion
+  //#endregion
+
+  //#region methods / values
   /**
    * Quick fix for object values
+   * @deprecated
    */
-  values(obj: any) {
+  public values(obj: any) {
     if (_.isObject(obj) && !Array.isArray(obj)) {
       const values = [];
       for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          // @ts-ignore
           values.push(obj[key]);
         }
       }
@@ -1342,22 +1476,31 @@ command: ${command}
     }
     return [];
   }
+  //#endregion
 
+  //#region methods / is file
   //#region @backend
   /**
    * does not make sense
+   * @deprecated
    */
   private isFile(pathToFileOrMaybeFolder: string) {
     return pathToFileOrMaybeFolder && fse.existsSync(pathToFileOrMaybeFolder) &&
       !fse.lstatSync(pathToFileOrMaybeFolder).isDirectory();
   }
   //#endregion
+  //#endregion
 
+  //#region methods / read file
   //#region @backend
   /**
-    * wrapper for fs.readFileSync
-    */
-  readFile(absoluteFilePath: string | string[], defaultValueWhenNotExists = void 0 as string, notTrim = false): string | undefined {
+  * wrapper for fs.readFileSync
+  */
+  readFile(
+    absoluteFilePath: string | string[], // @ts-ignore
+    defaultValueWhenNotExists = void 0 as string,
+    notTrim = false,
+  ): string | undefined {
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -1379,9 +1522,15 @@ command: ${command}
     }).toString().trim();
   }
   //#endregion
+  //#endregion
 
+  //#region methods / read json
   //#region @backend
-  readJson(absoluteFilePath: string | string[], defaultValue = {}, useJson5 = false) {
+  /**
+   * read json from absolute path
+   * @returns json object
+   */
+  public readJson(absoluteFilePath: string | string[], defaultValue = {}, useJson5 = false): any {
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -1393,6 +1542,7 @@ command: ${command}
     try {
       const fileContent = Helpers.readFile(absoluteFilePath);
       let json;
+      // @ts-ignore
       json = Helpers.parse(fileContent, useJson5 || absoluteFilePath.endsWith('.json5'));
       return json;
     } catch (error) {
@@ -1400,9 +1550,15 @@ command: ${command}
     }
   }
   //#endregion
+  //#endregion
 
+  //#region methods / parse
   //#region @backend
-  parse<T = any>(jsonInstring: string, useJson5 = false) {
+  /**
+   * parse json from string
+   * @returns parse json object
+   */
+  public parse<T = any>(jsonInstring: string, useJson5 = false): any {
     if (!_.isString(jsonInstring)) {
       Helpers.log(jsonInstring)
       Helpers.warn(`[firedev-core] Trying to parse no a string...`)
@@ -1411,9 +1567,11 @@ command: ${command}
     return (useJson5 ? json5.parse(jsonInstring) : JSON.parse(jsonInstring)) as T;
   }
   //#endregion
+  //#endregion
 
+  //#region methods / compilation wrapper
   //#region @backend
-  async compilationWrapper(fn: () => void, taskName: string = 'Task',
+  public async compilationWrapper(fn: () => void, taskName: string = 'Task',
     executionType: 'Compilation of' | 'Code execution of' | 'Event:' = 'Compilation of') {
 
     // global?.spinner?.start();
@@ -1437,7 +1595,9 @@ command: ${command}
     // global?.spinner?.stop();
   }
   //#endregion
+  //#endregion
 
+  //#region methods / write file
   //#region @backend
   /**
    * wrapper for fs.writeFileSync
@@ -1492,7 +1652,9 @@ command: ${command}
     return true;
   }
   //#endregion
+  //#endregion
 
+  //#region methods / write json
   //#region @backend
   /**
    * wrapper for fs.writeFileSync
@@ -1523,12 +1685,15 @@ command: ${command}
     return true;
   }
   //#endregion
+  //#endregion
 
+  //#region methods / folders from
   //#region @backend
   /**
    * return absolute paths for folders inside folders
+   * @returns absoulte pathes to folders from path
    */
-  foldersFrom(pathToFolder: string | string[]) {
+  public foldersFrom(pathToFolder: string | string[]): string[] {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
@@ -1540,8 +1705,14 @@ command: ${command}
       .filter(f => fse.lstatSync(f).isDirectory())
       ;
   }
+  //#endregion
+  //#endregion
 
-
+  //#region methods / links from
+  //#region @backend
+  /**
+   * @returns absolute pathes to links from path
+   */
   linksToFoldersFrom(pathToFolder: string | string[], outputRealPath = false) {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
@@ -1563,15 +1734,18 @@ command: ${command}
           }
         }
       }).filter(f => !!f)
+      // @ts-ignore
       .map(f => crossPlatformPath(f));
   }
   //#endregion
+  //#endregion
 
+  //#region methods / links to folders from path
   //#region @backend
   /**
-   * return absolute paths for folders inside folders
+   * @returns absolute paths for folders inside folders
    */
-  linksToFolderFrom(
+  public linksToFolderFrom(
     pathToFolder: string | string[],
     // options?: {
     //   linksOnlyTo: 'files' | 'folders' | 'both'
@@ -1600,14 +1774,18 @@ command: ${command}
       .map(f => crossPlatformPath(f));
   }
   //#endregion
+  //#endregion
 
+  //#region methods / files from
   //#region @backend
   /**
    * return absolute paths for folders inside folders
    */
-  filesFrom(pathToFolder: string | string[], recrusive = false, incudeUnexistedLinks = false): string[] {
-
-
+  public filesFrom(
+    pathToFolder: string | string[],
+    recrusive = false,
+    incudeUnexistedLinks = false,
+  ): string[] {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
@@ -1646,13 +1824,12 @@ command: ${command}
         return !fse.lstatSync(f).isDirectory()
       })
   }
-
-
-
+  //#endregion
   //#endregion
 
+  //#region methods / open folder in file explorer
   //#region @backend
-  openFolderInFileExploer(folderPath: string) {
+  public openFolderInFileExploer(folderPath: string): void {
     if (process.platform === 'win32') {
       folderPath = win32Path(folderPath)
     }
@@ -1676,5 +1853,7 @@ command: ${command}
 
   }
   //#endregion
+  //#endregion
 
+  //#endregion
 }

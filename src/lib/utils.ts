@@ -6,11 +6,36 @@ import { Helpers } from "./index";
 import { Blob } from 'buffer';
 //#endregion
 
+const BLOB_SUPPORTED_IN_SQLJS = false;
+
 export namespace Utils {
 
-  export type DbBinaryFormat = Blob
+  //#region db binary format type
+  export enum DbBinaryFormatEnum {
+    Blob = 'Blob',
+    File = 'File',
+    string = 'string',
     //#region @backend
-    | Buffer;
+    Buffer = 'Buffer',
+    //#endregion
+  }
+
+  export type DbBinaryFormatForBrowser = Blob | File | string;
+  //#region @backend
+  export type DbBinaryFormatForBackend = Buffer;
+  //#endregion
+
+  /**
+   * Binary format that can be stored in database
+   *
+   * for nodejs => Buffer
+   * for sql.js => string (shoulb be blob - but not supported)
+   *
+   */
+  export type DbBinaryFormat = DbBinaryFormatForBrowser
+    //#region @backend
+    | DbBinaryFormatForBackend;
+  //#endregion
   //#endregion
   export namespace binary {
 
@@ -63,56 +88,6 @@ export namespace Utils {
     }
     //#endregion
 
-    export async function base64toDbBinaryFormat(text: string): Promise<DbBinaryFormat> {
-      let result: DbBinaryFormat;
-      //#region @browser
-      result = await (async () => {
-        const blob = await base64toBlob(text);
-        return blob;
-      })();
-      //#endregion
-      //#region @backend
-      result = await (async () => {
-        const buffer = await base64toBuffer(text);
-        return buffer;
-      })();
-      //#endregionr
-      return result;
-    }
-
-    export async function dbBinaryFormatToBase64(binaryFormat: DbBinaryFormat): Promise<string> {
-      let result: string;
-      //#region @browser
-      result = await (async () => {
-        const text = await blobToBase64(binaryFormat as any);
-        return text;
-      })();
-      //#endregion
-      //#region @backend
-      result = await (async () => {
-        const text = await bufferToBase64(binaryFormat  as any);
-        return text;
-      })();
-      //#endregionr
-      return result;
-    }
-
-    //#region @backend
-    export async function base64toBuffer(base64Data: string, contentTypeOverride?: ContentType): Promise<Buffer> {
-      const blob = await base64toBlob(base64Data, contentTypeOverride);
-      const buffer = await blobToBuffer(blob);
-      return buffer;
-    }
-    //#endregion
-
-    //#region @backend
-    export async function bufferToBase64(bufferData: Buffer): Promise<string> {
-      const blob = await bufferToBlob(bufferData);
-      const text = await blobToBase64(blob);
-      return text;
-    }
-    //#endregion
-
     //#region binay utils / base64 string to blob
     /**
      * it is revers to blobToBase64()
@@ -155,6 +130,128 @@ export namespace Utils {
     }
     //#endregion
 
+    //#region binay utils / base64 string to db binary format
+
+    export async function base64toDbBinaryFormat(text: string): Promise<DbBinaryFormat> {
+      let result: DbBinaryFormat;
+      //#region @browser
+      result = await (async () => {
+        if (BLOB_SUPPORTED_IN_SQLJS) {
+          const blob = await base64toBlob(text);
+          return blob;
+        }
+        return text as any;
+      })();
+      //#endregion
+      //#region @backend
+      result = await (async () => {
+        const buffer = await base64toBuffer(text);
+        return buffer;
+      })();
+      //#endregion
+      return result;
+    }
+    //#endregion
+
+    //#region binay utils / db binary format to base64 string
+    export async function dbBinaryFormatToBase64(binaryFormat: DbBinaryFormat): Promise<string> {
+      let result: string;
+      //#region @browser
+      result = await (async () => {
+        if (BLOB_SUPPORTED_IN_SQLJS) {
+          const text = await blobToBase64(binaryFormat as any);
+          return text;
+        }
+        return binaryFormat as any;
+      })();
+      //#endregion
+
+      //#region @backend
+      result = await (async () => {
+        const text = await bufferToBase64(binaryFormat as any);
+        return text;
+      })();
+      //#endregion
+      return result;
+    }
+    //#endregion
+
+
+
+
+
+
+
+    //#region binay utils / base64 string to db binary format
+
+    export async function textToDbBinaryFormat(text: string): Promise<DbBinaryFormat> {
+      let result: DbBinaryFormat;
+      //#region @browser
+      result = await (async () => {
+        if (BLOB_SUPPORTED_IN_SQLJS) {
+          const blob = await textToBlob(text);
+          return blob;
+        }
+        return text as any;
+      })();
+      //#endregion
+      //#region @backend
+      result = await (async () => {
+        const buffer = await textToBuffer(text);
+        return buffer;
+      })();
+      //#endregion
+      return result;
+    }
+    //#endregion
+
+    //#region binay utils / db binary format to base64 string
+    export async function dbBinaryFormatToText(binaryFormat: DbBinaryFormat): Promise<string> {
+      let result: string;
+      //#region @browser
+      result = await (async () => {
+        if (BLOB_SUPPORTED_IN_SQLJS) {
+          const text = await blobToText(binaryFormat as any);
+          return text;
+        }
+        return binaryFormat as any;
+      })();
+      //#endregion
+
+      //#region @backend
+      result = await (async () => {
+        const text = await bufferToText(binaryFormat as any);
+        return text;
+      })();
+      //#endregion
+      return result;
+    }
+    //#endregion
+
+
+
+
+
+    //#region binay utils / base64 string to nodejs buffer
+    //#region @backend
+    export async function base64toBuffer(base64Data: string, contentTypeOverride?: ContentType): Promise<Buffer> {
+      const blob = await base64toBlob(base64Data, contentTypeOverride);
+      const buffer = await blobToBuffer(blob);
+      return buffer;
+    }
+    //#endregion
+    //#endregion
+
+    //#region binay utils / nodejs buffer to base64 string
+    //#region @backend
+    export async function bufferToBase64(bufferData: Buffer): Promise<string> {
+      const blob = await bufferToBlob(bufferData);
+      const text = await blobToBase64(blob);
+      return text;
+    }
+    //#endregion
+    //#endregion
+
     //#region binay utils / file to blob
     export async function fileToBlob(file: File) {
       return new Blob([new Uint8Array(await file.arrayBuffer())], { type: file.type })
@@ -171,17 +268,7 @@ export namespace Utils {
     }
     //#endregion
 
-    //#region binay utils / get blob from url
-    export async function getBlobFrom(url: string): Promise<Blob> {
-      const response: AxiosResponse<Blob> = await axios({
-        url,
-        method: 'get',
-        responseType: 'blob'
-      });
-      return response.data;
-    }
-    //#endregion
-
+    //#region binay utils / nodejs blob to nodejs buffer
     //#region @backend
     export async function blobToBuffer(blob: Blob): Promise<Buffer> {
       const arrayBuffer = await blob.arrayBuffer();
@@ -189,16 +276,18 @@ export namespace Utils {
       return buffer;
     }
     //#endregion
+    //#endregion
 
+    //#region binay utils / nodejs buffer to nodejs blob
     //#region @backend
     export async function bufferToBlob(buffer: Buffer): Promise<Blob> {
       const blob = new Blob([buffer]); // JavaScript Blob
       return blob;
     }
     //#endregion
+    //#endregion
 
-
-
+    //#region binay utils / text to nodejs buffer
     //#region @backend
     export async function textToBuffer(text: string, type: ContentType = 'text/plain'): Promise<Buffer> {
       const blob = await textToBlob(text, type);
@@ -206,7 +295,9 @@ export namespace Utils {
       return buffer;
     }
     //#endregion
+    //#endregion
 
+    //#region binay utils / nodejs buffer to text
     //#region @backend
     export async function bufferToText(buffer: Buffer): Promise<string> {
       const blob = await bufferToBlob(buffer);
@@ -214,12 +305,22 @@ export namespace Utils {
       return text;
     }
     //#endregion
+    //#endregion
 
+    //#region binay utils / text to blob
     export async function textToBlob(text: string, type: ContentType = 'text/plain'): Promise<Blob> {
       const blob = new Blob([text], { type });
       return blob;
     }
+    //#endregion
 
+    //#region binay utils / blob to text
+    export async function blobToText(blob: Blob): Promise<string> {
+      return await blob.text()
+    }
+    //#endregion
+
+    //#region binay utils / text to file
     export async function textToFile(text: string, fileRelativePathOrName: string): Promise<File> {
       // console.log({ path })
       const ext = path.extname(fileRelativePathOrName);
@@ -234,26 +335,42 @@ export namespace Utils {
       // debugger
       return file;
     }
+    //#endregion
 
+    //#region binay utils / file to text
     export async function fileToText(file: File): Promise<string> {
       return await file.text();
     }
+    //#endregion
 
-    export async function blobToText(blob: Blob): Promise<string> {
-      return await blob.text()
-    }
-
+    //#region binay utils / json to blob
     export async function jsonToBlob(jsonObj: object): Promise<Blob> {
       const blob = new Blob([JSON.stringify(jsonObj, null, 2)], { type: 'application/json' });
       return blob;
     }
+    //#endregion
 
+    //#region binay utils / blob to json
     /**
      * TODO NOT TESTED
      */
     export async function blobToJson(blob: Blob): Promise<string> {
       return JSON.parse(await blob.text())
     }
+    //#endregion
+
+
+
+    //#region binay utils / get blob from url
+    export async function getBlobFrom(url: string): Promise<Blob> {
+      const response: AxiosResponse<Blob> = await axios({
+        url,
+        method: 'get',
+        responseType: 'blob'
+      });
+      return response.data;
+    }
+    //#endregion
 
   }
 
