@@ -136,7 +136,10 @@ export type ContentType = typeof mimeTypes[ContentTypeKeys] | 'multipart/form-da
 /**
  * https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
  */
-export type MediaType = 'text' | 'image' | 'audio' | 'font' | 'video' | 'application' | 'multipart' | 'message' | 'model';
+export type MediaType =
+'text' | 'image' | 'audio' | 'font'
+| 'video' | 'application' | 'multipart' | 'message' | 'model';
+
 export const MediaTypeAllArr = [
   'text', 'image', 'audio', 'video', 'font',
   'application', 'multipart', 'message', 'model'
