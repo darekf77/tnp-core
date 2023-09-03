@@ -136,7 +136,7 @@ export class HelpersCore extends HelpersMessages {
    * @param maybeBlob
    * @returns
    */
-  public isBlob(maybeBlob): boolean {
+  public isBlob(maybeBlob): maybeBlob is Blob {
     // TODO is this needed hmmmm
     return maybeBlob instanceof Blob; // || toString.call(maybeBlob) === '[object Blob]';
   }
@@ -150,7 +150,7 @@ export class HelpersCore extends HelpersMessages {
    * @returns
    */
   //#region @backend
-  public isBuffer(maybeNodejsBuffer): boolean {
+  public isBuffer(maybeNodejsBuffer): maybeNodejsBuffer is Buffer {
     return Buffer.isBuffer(maybeNodejsBuffer);
   }
   //#endregion
@@ -1602,7 +1602,11 @@ command: ${command}
   /**
    * wrapper for fs.writeFileSync
    */
-  writeFile(absoluteFilePath: string | (string[]), input: string | object,
+  writeFile(absoluteFilePath: string | (string[]), input: string | object
+    //#region @backend
+    | Buffer
+    //#endregion
+    ,
     options?: { overrideSameFile?: boolean; preventParentFile?: boolean; }): boolean {
 
     if (_.isArray(absoluteFilePath)) {
@@ -1629,6 +1633,11 @@ command: ${command}
 
     if (!fse.existsSync(path.dirname(absoluteFilePath))) {
       Helpers.mkdirp(path.dirname(absoluteFilePath));
+    }
+
+    if (Helpers.isBuffer(input)) {
+      fse.writeFileSync(absoluteFilePath,input);
+      return true;
     }
 
     if (_.isObject(input)) {
