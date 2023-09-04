@@ -92,6 +92,7 @@ export const mimeTypes = {
   ".ods": "application/vnd.oasis.opendocument.spreadsheet",
   ".odt": "application/vnd.oasis.opendocument.text",
   ".oga": "audio/ogg",
+  ".ogg": "audio/ogg",
   ".ogv": "video/ogg",
   ".ogx": "application/ogg",
   ".opus": "audio/opus",
@@ -137,8 +138,8 @@ export type ContentType = typeof mimeTypes[ContentTypeKeys] | 'multipart/form-da
  * https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
  */
 export type MediaType =
-'text' | 'image' | 'audio' | 'font'
-| 'video' | 'application' | 'multipart' | 'message' | 'model';
+  'text' | 'image' | 'audio' | 'font'
+  | 'video' | 'application' | 'multipart' | 'message' | 'model';
 
 export const MediaTypeAllArr = [
   'text', 'image', 'audio', 'video', 'font',

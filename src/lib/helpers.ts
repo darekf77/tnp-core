@@ -1,8 +1,8 @@
 //#region import
 import {
   _,
-  //#region @backend
   path,
+  //#region @backend
   fse,
   os,
   rimraf,
@@ -22,7 +22,7 @@ import { Blob } from 'buffer';
 
 import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
-import { ExecuteOptions, RunOptions } from './core-models';
+import { ExecuteOptions, MediaType, RunOptions, mimeTypes } from './core-models';
 import { frameworkName } from './framework-name';
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
@@ -98,6 +98,12 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods
+
+  mediaTypeFromSrc(src: string): MediaType {
+    const ext = path.extname(src);
+    const media = mimeTypes[ext];
+    return _.first(media?.split('/'));
+  }
 
   //#region methods / remove file or folder
   //#region @backend
@@ -1636,7 +1642,7 @@ command: ${command}
     }
 
     if (Helpers.isBuffer(input)) {
-      fse.writeFileSync(absoluteFilePath,input);
+      fse.writeFileSync(absoluteFilePath, input);
       return true;
     }
 
