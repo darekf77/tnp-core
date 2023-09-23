@@ -2,7 +2,12 @@
 declare const global: any;
 import { chalk } from './core-imports';
 //#endregion
-import { _ } from './core-imports';
+import {
+  _
+  //#region @backend
+  , createCallsiteRecord
+  //#endregion
+} from './core-imports';
 // import { config } from 'tnp-config';
 // import { PROGRESS_DATA } from 'tnp-models';
 import { Helpers } from './index';
@@ -109,6 +114,16 @@ export class HelpersMessages extends HelpersIsomorphic {
     global[KEY.LAST_ERROR] = void 0;
     global[KEY.LAST_INFO] = void 0;
     //#endregion
+  }
+
+  renderError(err: Error) {
+    //#region @backend
+    console.log(createCallsiteRecord)
+    // console.log(createCallsiteRecord({ forError: err }).renderSync({}))
+    return;
+    //#endregion
+    // TODO for FE
+    console.error(err)
   }
 
   error(details: any, noExit = false, noTrace = false) {

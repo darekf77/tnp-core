@@ -5,6 +5,8 @@ import * as dateformat from 'dateformat';
 import { Chalk } from 'chalk';
 
 //#region @backend
+// @ts-ignore
+import createCallsiteRecord from 'callsite-record';
 import * as pathBase from 'path';
 import * as os from 'os';
 import * as child_process from 'child_process';
@@ -77,13 +79,16 @@ function win32Path(p: string) {
   return path.win32.normalize(p);
 }
 
-function crossPlatformPath(pathStringOrPathParts: string | string[]) {
+/**
+ * This funciton will replace // to /
+ */
+const crossPlatformPath = (pathStringOrPathParts: string | string[]) => {
   if (Array.isArray(pathStringOrPathParts)) {
     pathStringOrPathParts = pathStringOrPathParts.join('/')
   }
   //#region @backend
   if (process.platform !== 'win32') {
-    return pathStringOrPathParts;
+    return pathStringOrPathParts?.replace(/\/\//g, '/');
   }
   //#endregion
   if (typeof pathStringOrPathParts !== 'string') {
@@ -94,10 +99,10 @@ function crossPlatformPath(pathStringOrPathParts: string | string[]) {
   const hasNonAscii = /[^\u0000-\u0080]+/.test(pathStringOrPathParts); // eslint-disable-line no-control-regex
 
   if (isExtendedLengthPath || hasNonAscii) {
-    return pathStringOrPathParts;
+    return pathStringOrPathParts?.replace(/\/\//g, '/');
   }
 
-  return pathStringOrPathParts.replace(/\\/g, '/');
+  return pathStringOrPathParts.replace(/\\/g, '/').replace(/\/\//g, '/');
 }
 
 
@@ -115,6 +120,7 @@ export {
 
 //#region @backend
 export {
+  createCallsiteRecord,
   spawn,
   glob,
   isElevated,
