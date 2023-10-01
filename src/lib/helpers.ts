@@ -33,7 +33,7 @@ import { Subject, Subscription } from 'rxjs';
 declare const global: any;
 const encoding = 'utf8';
 //#region @backend
-const trace = !global.hideLog;
+const forceTrace = !global.hideLog;
 //#endregion
 const WEBSQL_PROC_MOCK_PROCESSES_PID = {};
 const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
@@ -378,7 +378,12 @@ export class HelpersCore extends HelpersMessages {
             fse.linkSync(targetExisted, linkDest)
           } else {
             const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${linkDest}" "${targetExisted}"`;
-            Helpers.run(winLinkCommand, { biggerBuffer: false, output: (frameworkName === 'tnp'), silence: (frameworkName !== 'tnp'), }).sync();
+            const showSymlinkOutputOnWindows = forceTrace;
+            Helpers.run(winLinkCommand, {
+              biggerBuffer: false,
+              output: showSymlinkOutputOnWindows,
+              silence: !showSymlinkOutputOnWindows,
+            }).sync();
           }
         } else {
           fse.symlinkSync(targetExisted, linkDest, 'junction')
@@ -1625,7 +1630,7 @@ command: ${command}
       Helpers.warn(`[firedev-core] WRITTING JSON into real path:
       original: ${beforePath}
       real    : ${absoluteFilePath}
-      `, trace);
+      `, forceTrace);
     }
 
     const { preventParentFile, overrideSameFile } = options || {};
