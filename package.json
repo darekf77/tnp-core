@@ -316,7 +316,7 @@
     "threads": "1.7.0",
     "tnp-cli": "~16.0.8",
     "tnp-config": "~16.0.20",
-    "tnp-core": "~16.0.24",
+    "tnp-core": "~16.0.26",
     "tnp-db": "~16.0.29",
     "tnp-helpers": "~16.0.11",
     "tnp-models": "~16.0.38",
@@ -343,5 +343,5 @@
   "private": false,
   "name": "tnp-core",
   "version": "16.0.26",
-  "lastBuildTagHash": "23addee3c93fc2936f19e9bf2e5f73c4425a0251"
+  "lastBuildTagHash": "02339e8271689718fd971192665ad8bee7593c3f"
 }
