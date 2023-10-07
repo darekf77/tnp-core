@@ -8,6 +8,7 @@
     "includeAsDev": [],
 
     "includeOnly": [
+      "axios",
       "glob",
       'moment',
       "fkill",
