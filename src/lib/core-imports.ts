@@ -3,6 +3,7 @@ import * as q from 'q';
 import * as moment from 'moment';
 import * as dateformat from 'dateformat';
 import { Chalk } from 'chalk';
+import * as json5 from 'json5';
 
 //#region @backend
 // @ts-ignore
@@ -20,7 +21,6 @@ import * as fse from 'fs-extra';
 import * as rimraf from 'rimraf';
 import * as chokidar from 'chokidar';
 import * as mkdirp from 'mkdirp';
-import * as json5 from 'json5';
 import * as ncp from 'copy-paste';
 import * as ps from 'ps-node';
 import * as  psList from 'ps-list';
@@ -116,6 +116,7 @@ export {
   win32Path,
   path,
   chalk,
+  json5,
 }
 
 //#region @backend
@@ -127,7 +128,6 @@ export {
   chokidar,
   mkdirp,
   ncp,
-  json5,
   fse,
   os,
   child_process,
