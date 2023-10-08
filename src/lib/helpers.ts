@@ -1504,6 +1504,27 @@ command: ${command}
 
   //#region methods / read file
   //#region @backend
+
+  async tryReadFile(absoluteFilePath: string | string[], // @ts-ignore
+    defaultValueWhenNotExists = void 0 as string,
+    notTrim = false,
+  ): Promise<string | undefined>  {
+
+    if (process.platform === 'win32') {
+      while (true) {
+        try {
+          const fileContent = Helpers.readFile(absoluteFilePath, defaultValueWhenNotExists, notTrim);
+          return fileContent;
+        } catch (error) {
+          Helpers.error(`Not able to read locked file: ${absoluteFilePath}`, true, true);
+          await Helpers.wait(2);
+        }
+      }
+
+    }
+    return Helpers.readFile(absoluteFilePath, defaultValueWhenNotExists, notTrim);
+  }
+
   /**
   * wrapper for fs.readFileSync
   */
