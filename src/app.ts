@@ -1,5 +1,5 @@
 // #region @notForNpm
-import { Firedev } from 'firedev';
+import { Firedev } from 'firedev/src';
 import { map, Observable, share, Subject, takeUntil, tap } from 'rxjs';
 const host = `http://localhost:3232`;
 
