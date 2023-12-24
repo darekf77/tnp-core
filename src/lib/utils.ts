@@ -381,10 +381,9 @@ export namespace Utils {
      * @param pixelsCss pixels ex. 100px
      * @returns
      */
-    export function numValue(pixelsCss: string) {
+    export function numValue(pixelsCss: string | number): number {
       // tslint:disable-next-line:radix
-      return parseInt(pixelsCss
-        .replace('px', '')
+      return parseInt(pixelsCss?.toString()?.replace('px', '')
         // .replace('pt', '') TOOD handle other types
         // .replace('1rem', '') // to
       );
