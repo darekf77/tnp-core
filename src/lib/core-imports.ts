@@ -87,7 +87,11 @@ const crossPlatformPath = (pathStringOrPathParts: string | string[]) => {
     pathStringOrPathParts = pathStringOrPathParts.join('/')
   }
   //#region @backend
-  if (process.platform !== 'win32') {
+  if (process.platform === 'win32') {
+    if (pathStringOrPathParts && /^[A-Z]\:/.test(pathStringOrPathParts)) {
+      pathStringOrPathParts = _.lowerFirst(pathStringOrPathParts);
+    }
+  } else {
     return pathStringOrPathParts?.replace(/\/\//g, '/');
   }
   //#endregion
