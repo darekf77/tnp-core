@@ -261,7 +261,7 @@
     "ng-lock": "16.0.1",
     "ng-packagr": "16.0.1",
     "ng-talkback": "~16.5.6",
-    "ng2-logger": "~16.5.6",
+    "ng2-logger": "~16.5.8",
     "ng2-rest": "~16.5.6",
     "ngx-ace-wrapper": "14.0.0",
     "ngx-editor": "15.3.0",
@@ -317,7 +317,7 @@
     "task.js": "0.1.5",
     "threads": "1.7.0",
     "tnp-cli": "~16.5.6",
-    "tnp-config": "~16.5.6",
+    "tnp-config": "~16.5.7",
     "tnp-core": "~16.5.12",
     "tnp-db": "~16.5.6",
     "tnp-helpers": "~16.5.7",
@@ -344,6 +344,6 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "16.5.12",
+  "version": "16.5.13",
   "lastBuildTagHash": "3ff5546f797ef9e29b163bc08d9eef7f815116d7"
 }
