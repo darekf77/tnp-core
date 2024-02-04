@@ -4,10 +4,14 @@ import * as moment from 'moment';
 import * as dateformat from 'dateformat';
 import { Chalk } from 'chalk';
 import * as json5 from 'json5';
+//#region @browser
+import jQuery from 'jquery';
+//#endregion
 
 //#region @backend
 // @ts-ignore
 import createCallsiteRecord from 'callsite-record';
+import * as cheerio from 'cheerio';
 import * as pathBase from 'path';
 import * as os from 'os';
 import * as child_process from 'child_process';
@@ -33,6 +37,14 @@ async function isElevated() {
   return (process.platform === 'win32' ? isAdmin() : isRoot())
 };
 
+//#endregion
+
+let $;
+//#region @browser
+$ = jQuery
+//#endregion
+//#region @backend
+$ = cheerio;
 //#endregion
 
 //#region mock path
@@ -121,6 +133,7 @@ export {
   path,
   chalk,
   json5,
+  $
 }
 
 //#region @backend
