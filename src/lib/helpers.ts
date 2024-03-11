@@ -135,6 +135,14 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
   //#endregion
 
+  /**
+   * check if function is class
+   */
+  isClass(func: any): boolean {
+    return typeof func === 'function' && /^class\s/.test(Function.prototype.toString.call(func));
+  }
+
+
   //#region methods / is blob
   /**
    * check if data is nodejs/browser blob
@@ -1508,7 +1516,7 @@ command: ${command}
   async tryReadFile(absoluteFilePath: string | string[], // @ts-ignore
     defaultValueWhenNotExists = void 0 as string,
     notTrim = false,
-  ): Promise<string | undefined>  {
+  ): Promise<string | undefined> {
 
     if (process.platform === 'win32') {
       while (true) {
