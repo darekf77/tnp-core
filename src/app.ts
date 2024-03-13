@@ -32,7 +32,7 @@ class Task extends Firedev.Base.Entity {
 @Firedev.Controller({ className: 'TaskController', entity: Task })
 class TaskController extends Firedev.Base.Controller<Task> {
   //#region @websql
-  async initExampleDbData() {
+  async initExampleDbData() { // @ts-ignore
     const db = await this.connection.getRepository(Task);
     await db.save(Task.from({ name: 'my first tasks todo' }));
     await db.save(Task.from({ name: 'my second tasks todo' }));
@@ -44,7 +44,7 @@ class TaskController extends Firedev.Base.Controller<Task> {
   @Firedev.Http.GET()
   count(): Firedev.Response<number> {
     //#region @websqlFunc
-    return async () => {
+    return async () => { // @ts-ignore
       const db = await this.connection.getRepository(Task);
       const [__, b] = await db.findAndCount();
       return b;
