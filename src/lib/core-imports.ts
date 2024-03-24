@@ -9,8 +9,6 @@ import jQuery from 'jquery';
 //#endregion
 
 //#region @backend
-// @ts-ignore
-import createCallsiteRecord from 'callsite-record';
 import * as cheerio from 'cheerio';
 import * as pathBase from 'path';
 import * as os from 'os';
@@ -138,7 +136,6 @@ export {
 
 //#region @backend
 export {
-  createCallsiteRecord,
   spawn,
   glob,
   isElevated,
