@@ -22,7 +22,7 @@ import { Blob } from 'buffer';
 
 import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
-import { ExecuteOptions, MediaType, RunOptions, mimeTypes } from './core-models';
+import { CoreModels } from './core-models';
 import { frameworkName } from './framework-name';
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
@@ -99,9 +99,9 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods
 
-  mediaTypeFromSrc(src: string): MediaType {
+  mediaTypeFromSrc(src: string): CoreModels.MediaType {
     const ext = path.extname(src);
-    const media = mimeTypes[ext];
+    const media = CoreModels.mimeTypes[ext];
     return _.first(media?.split('/'));
   }
 
@@ -823,7 +823,7 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / run
   public run(command: string,
-    options?: RunOptions) {
+    options?: CoreModels.RunOptions) {
     command = Helpers._fixCommand(command);
 
     // console.log({ command })
@@ -1076,7 +1076,7 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / get stdio
   //#region @backend
-  public getStdio(options?: RunOptions) {
+  public getStdio(options?: CoreModels.RunOptions) {
     const { // @ts-ignore
       output, silence, stdio
       // pipeToParentProcerss = false,
@@ -1099,7 +1099,7 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / run sync in
   //#region @backend
-  public runSyncIn(command: string, options?: RunOptions) {
+  public runSyncIn(command: string, options?: CoreModels.RunOptions) {
     // @ts-ignore
     const { cwd, biggerBuffer } = options;
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
@@ -1112,7 +1112,7 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / run async in
   //#region @backend
-  public runAsyncIn(command: string, options?: RunOptions) {
+  public runAsyncIn(command: string, options?: CoreModels.RunOptions) {
     // @ts-ignore
     const { output, cwd, biggerBuffer, outputLineReplace, extractFromLine, detach } = options;
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
@@ -1234,7 +1234,7 @@ export class HelpersCore extends HelpersMessages {
   execute(
     command: string,
     cwd: string,
-    options?: ExecuteOptions
+    options?: CoreModels.ExecuteOptions
   ) {
     let {
       hideOutput,
