@@ -202,26 +202,24 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / run sync or async
   public async runSyncOrAsync<FUNCTION_RETURN_TYPE = any>(
-    fnOrOptions: Function | [string, object] | RunSyncOrAsyncOptions,
-    ...firstArg: any[]
-  ): Promise<FUNCTION_RETURN_TYPE> {
+    fnOrOptions: RunSyncOrAsyncOptions): Promise<FUNCTION_RETURN_TYPE> {
     if (_.isUndefined(fnOrOptions)) {
       return void 0 as any;
     }
     let promisOrValue: any;
-    const optionsMode = _.isObject(fnOrOptions)
-      && !_.isArray(fnOrOptions)
-      && !_.isFunction(fnOrOptions)
-      && !_.isNil(fnOrOptions)
-      ;
+    // const optionsMode = _.isObject(fnOrOptions)
+    //   && !_.isArray(fnOrOptions)
+    //   && !_.isFunction(fnOrOptions)
+    //   && !_.isNil(fnOrOptions)
+    //   ;
 
-    if (optionsMode) {
-      const { functionFn, context, arrayOfParams } = fnOrOptions as RunSyncOrAsyncOptions;
-      promisOrValue = functionFn.apply(context, arrayOfParams);
-    } else {
-      // @ts-ignore
-      promisOrValue = _.isArray(fnOrOptions) ? fnOrOptions[1][fnOrOptions[0]](...firstArg) : fnOrOptions(...firstArg);
-    }
+    // if (optionsMode) {
+    const { functionFn, context, arrayOfParams } = fnOrOptions;
+    promisOrValue = functionFn.apply(context, arrayOfParams);
+    // } else {
+    //   // @ts-ignore
+    //   promisOrValue = _.isArray(fnOrOptions) ? fnOrOptions[1][fnOrOptions[0]](...firstArg) : fnOrOptions(...firstArg);
+    // }
     // let wasPromise = false;
 
     if (promisOrValue instanceof Promise) {
@@ -934,19 +932,23 @@ export class HelpersCore extends HelpersMessages {
             return _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PID[procDummy.pid]) || _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid])
           };
 
-          const f = Helpers.runSyncOrAsync(mockFun,
-            (d) => {
-              setTimeout(() => {
-                subStdoutSub.next(d);
-              });
-            }, (d) => {
-              setTimeout(() => {
-                subStderSub.next(d);
-              });
-            }, () => {
-              const shouldBeDead = checkIfProcessShouldBeDead();
-              return shouldBeDead;
-            });
+          const f = Helpers.runSyncOrAsync({
+            functionFn: mockFun,
+            arrayOfParams: [
+              (d) => {
+                setTimeout(() => {
+                  subStdoutSub.next(d);
+                });
+              }, (d) => {
+                setTimeout(() => {
+                  subStderSub.next(d);
+                });
+              }, () => {
+                const shouldBeDead = checkIfProcessShouldBeDead();
+                return shouldBeDead;
+              }
+            ]
+          });
           f.then(exitCode => {
             if (_.isNil(exitCode)) {
               exitCode = 0;
@@ -1324,7 +1326,10 @@ export class HelpersCore extends HelpersMessages {
         if (exitOnError && code !== 0) {
           if (_.isFunction(exitOnErrorCallback)) {
             try {
-              await this.runSyncOrAsync(exitOnErrorCallback, code);
+              await this.runSyncOrAsync({
+                functionFn: exitOnErrorCallback,
+                arrayOfParams: [code],
+              });
             } catch (error) { }
           }
           // @ts-ignore
@@ -1625,7 +1630,7 @@ command: ${command}
 
     try {
       Helpers.log(`${currentDate()} ${executionType} "${taskName}" Started..`)
-      await Helpers.runSyncOrAsync(fn)
+      await Helpers.runSyncOrAsync({ functionFn: fn });
       Helpers.log(`${currentDate()} ${executionType} "${taskName}" Done\u2713`)
     } catch (error) {
       Helpers.error(chalk.red(error), false, true);
