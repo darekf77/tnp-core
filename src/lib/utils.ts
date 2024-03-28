@@ -1,4 +1,4 @@
-import { ContentType, mimeTypes } from "./core-models";
+import { CoreModels } from "./core-models";
 import axios, { AxiosResponse } from 'axios';
 import { path } from "./core-imports";
 import { Helpers } from "./index";
@@ -48,7 +48,7 @@ export namespace Utils {
      * @param contentType
      * @returns
      */
-    export async function arrayBufferToBlob(buffer: ArrayBuffer, contentType: ContentType): Promise<Blob> {
+    export async function arrayBufferToBlob(buffer: ArrayBuffer, contentType: CoreModels.ContentType): Promise<Blob> {
       // @ts-ignore
       return new Blob([buffer], { type: contentType });
     }
@@ -94,8 +94,8 @@ export namespace Utils {
      * @param base64Data
      * @returns
      */
-    export async function base64toBlob(base64Data: string, contentTypeOverride?: ContentType): Promise<Blob> {
-      let content_type: ContentType = void 0 as any;
+    export async function base64toBlob(base64Data: string, contentTypeOverride?: CoreModels.ContentType): Promise<Blob> {
+      let content_type: CoreModels.ContentType = void 0 as any;
       let file_base64: string = void 0 as any;
       if (!contentTypeOverride) {
         const m = /^data:(.+?);base64,(.+)$/.exec(base64Data);
@@ -234,7 +234,7 @@ export namespace Utils {
 
     //#region binay utils / base64 string to nodejs buffer
     //#region @backend
-    export async function base64toBuffer(base64Data: string, contentTypeOverride?: ContentType): Promise<Buffer> {
+    export async function base64toBuffer(base64Data: string, contentTypeOverride?: CoreModels.ContentType): Promise<Buffer> {
       const blob = await base64toBlob(base64Data, contentTypeOverride);
       const buffer = await blobToBuffer(blob);
       return buffer;
@@ -289,7 +289,7 @@ export namespace Utils {
 
     //#region binay utils / text to nodejs buffer
     //#region @backend
-    export async function textToBuffer(text: string, type: ContentType = 'text/plain'): Promise<Buffer> {
+    export async function textToBuffer(text: string, type: CoreModels.ContentType = 'text/plain'): Promise<Buffer> {
       const blob = await textToBlob(text, type);
       const buffer = await blobToBuffer(blob);
       return buffer;
@@ -308,7 +308,7 @@ export namespace Utils {
     //#endregion
 
     //#region binay utils / text to blob
-    export async function textToBlob(text: string, type: ContentType = 'text/plain'): Promise<Blob> {
+    export async function textToBlob(text: string, type: CoreModels.ContentType = 'text/plain'): Promise<Blob> {
       const blob = new Blob([text], { type });
       return blob;
     }
@@ -325,7 +325,7 @@ export namespace Utils {
       // console.log({ path })
       const ext = path.extname(fileRelativePathOrName);
 
-      const type = mimeTypes[ext];
+      const type = CoreModels.mimeTypes[ext];
       const blob = new Blob([text], { type });
       const file = await blobToFile(blob, fileRelativePathOrName);
       // console.log({

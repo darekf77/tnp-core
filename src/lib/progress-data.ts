@@ -1,6 +1,6 @@
 import { Helpers } from '.';
 import { _ } from './core-imports';
-import { PROGRESS_DATA_TYPE } from './core-models';
+import { CoreModels } from './core-models';
 
 //#region @backend
 declare const global: any;
@@ -12,7 +12,7 @@ export interface IPROGRESS_DATA {
    */
   value?: number;
   msg?: string;
-  type?: PROGRESS_DATA_TYPE;
+  type?: CoreModels.PROGRESS_DATA_TYPE;
   date?: Date;
 }
 
@@ -71,7 +71,7 @@ export class PROGRESS_DATA implements IPROGRESS_DATA {
   public value?: number;
   public msg?: string;
 
-  public type: PROGRESS_DATA_TYPE = 'event'
+  public type: CoreModels.PROGRESS_DATA_TYPE = 'event'
 
   public date?: Date;
 

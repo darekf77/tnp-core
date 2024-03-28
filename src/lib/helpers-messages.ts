@@ -2,12 +2,7 @@
 declare const global: any;
 import { chalk } from './core-imports';
 //#endregion
-import {
-  _
-  //#region @backend
-  , createCallsiteRecord
-  //#endregion
-} from './core-imports';
+import { _ } from './core-imports';
 // import { config } from 'tnp-config';
 // import { PROGRESS_DATA } from 'tnp-models';
 import { Helpers } from './index';
@@ -73,38 +68,6 @@ const forceTrace = !global.hideLog;
 
 const LIMIT = 10;
 
-// export class Log {
-//   private static _instance: Log;
-//   public Instance() {
-//     if (!Log._instance) {
-//       Log._instance = new Log();
-//     }
-//     return Log._instance;
-//   }
-
-//   create(name: string, level?: Level) {
-//     if (level === void 0) {
-//       level = Level.DATA;
-//     }
-//     return {
-//       d(details: string, debugLevel?: number) {
-//         return Helpers.log(`[${name}] ${details}`, debugLevel)
-//       },
-//       i(details: string) {
-//         return Helpers.info(`[${name}] ${details}`)
-//       },
-
-//       w(details: string, noExit = false, noTrace = false) {
-//         return Helpers.error(`[${name}] ${details}`, noExit, noTrace);
-//       },
-//       er(details: string, ) {
-//         return Helpers.info(`[${name}] ${details}`)
-//       },
-//     }
-//   }
-
-// }
-
 export class HelpersMessages extends HelpersIsomorphic {
 
   msgCacheClear() {
@@ -117,13 +80,17 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
 
   renderError(err: Error) {
-    //#region @backend
-    console.log(createCallsiteRecord)
-    // console.log(createCallsiteRecord({ forError: err }).renderSync({}))
-    return;
-    //#endregion
-    // TODO for FE
-    console.error(err)
+    if (this.isBrowser) {
+      // TODO for FE
+      console.error(err)
+    } else {
+      //#region @backend
+      const createCallsiteRecord = require('callsite-record');
+      // console.log(createCallsiteRecord)
+      console.log(createCallsiteRecord && createCallsiteRecord({ forError: err })?.renderSync({}))
+      return;
+      //#endregion
+    }
   }
 
   error(details: any, noExit = false, noTrace = false) {
