@@ -138,8 +138,15 @@ export class HelpersCore extends HelpersMessages {
   /**
    * check if function is class
    */
-  isClass(func: any): boolean {
-    return typeof func === 'function' && /^class\s/.test(Function.prototype.toString.call(func));
+  isClass(funcOrClass: any): boolean {
+    let isClass = false;
+    if (typeof funcOrClass === 'function') {
+      // Check if it has a prototype property
+      // console.log('Object.getOwnPropertyNames(funcOrClass.prototype)', Object.getOwnPropertyNames(funcOrClass.prototype).filter(f => f !== 'constructor'))
+      isClass = !!funcOrClass.prototype && Object.getOwnPropertyNames(funcOrClass.prototype).filter(f => f !== 'constructor').length > 0;
+    }
+    // console.log('is class: ' + isClass, funcOrClass)
+    return isClass;
   }
 
 
