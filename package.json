@@ -223,7 +223,7 @@
     "helmet": "7.0.0",
     "hostile": "1.3.3",
     "howler": "2.2.3",
-    "http-proxy": "1.16.2",
+    "http-proxy": "1.18.1",
     "http-proxy-middleware": "0.19.1",
     "http-server": "0.11.1",
     "image-focus": "1.2.1",
@@ -347,6 +347,6 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "16.6.0",
+  "version": "16.6.1",
   "lastBuildTagHash": "4b63c232e4de83ac637d72bc7ebdede522a0fce5"
 }
