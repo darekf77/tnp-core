@@ -1,4 +1,5 @@
 export namespace CoreModels {
+  export type ReleaseType = 'major' | 'minor' | 'patch';
   export type PROGRESS_DATA_TYPE = 'info' | 'error' | 'warning' | 'event';
   export type EnvironmentName = 'local' | 'static' | 'dev' | 'stage' | 'prod' | 'online' | 'test' | 'qa' | 'custom';
   export type PUSHTYPE =

@@ -1131,6 +1131,7 @@ export class HelpersCore extends HelpersMessages {
 
     let proc: child_process.ChildProcess;
     if (detach) {
+      //#region detached
       const cmd = _.first(command.split(' '));
       const argsForCmd = command.split(' ').slice(1);
       Helpers.log(`cmd: "${cmd}",  args: "${argsForCmd.join(' ')}"`)
@@ -1157,17 +1158,21 @@ export class HelpersCore extends HelpersMessages {
 
       `)
       // proc = child.exec(`${command} &`, { cwd, maxBuffer, });
+      //#endregion
     } else {
       // Helpers.log(`Command to execture: ${command}`)
       const env = { ...process.env, FORCE_COLOR: '1' };
       proc = child_process.exec(command, { cwd, maxBuffer, env });
-      if (global.globalSystemToolMode) {
-        proc.on('exit', (code) => {
-          Helpers.log('EXITING BIG PROCESS')
-          // @ts-ignore
-          process.exit(code);
-        });
-      }
+      // if (global.globalSystemToolMode) {
+      //   proc.on('exit', (code) => {
+      //     Helpers.log('EXITING BIG PROCESS');
+      //     debugger
+      //     if (options?.exitOnError && code !== 0) {
+      //       // @ts-ignore
+      //       process.exit(code);
+      //     }
+      //   });
+      // }
     }
     return Helpers.logProc(proc,
       detach ? true : output,
