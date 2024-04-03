@@ -320,8 +320,8 @@
     "task.js": "0.1.5",
     "threads": "1.7.0",
     "tnp-cli": "~16.5.13",
-    "tnp-config": "~16.5.24",
-    "tnp-core": "~16.6.19",
+    "tnp-config": "~16.5.26",
+    "tnp-core": "~16.6.21",
     "tnp-db": "~16.5.13",
     "tnp-helpers": "~16.5.16",
     "tnp-models": "~16.5.15",
@@ -347,6 +347,6 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "16.6.19",
-  "lastBuildTagHash": "f7728d70cb5384af49d019092bb6c6fec059f5be"
+  "version": "16.6.21",
+  "lastBuildTagHash": "075b3853d19b4e6a1d98069b8e41f0e28b9bb912"
 }
