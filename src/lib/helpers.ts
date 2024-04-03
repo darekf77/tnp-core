@@ -1163,9 +1163,11 @@ export class HelpersCore extends HelpersMessages {
       proc = child_process.exec(command, { cwd, maxBuffer, env });
       if (global.globalSystemToolMode) {
         proc.on('exit', (code) => {
-          Helpers.log('EXITING BIG PROCESS')
-          // @ts-ignore
-          process.exit(code);
+          Helpers.log('EXITING BIG PROCESS');
+          if (options?.exitOnError && code !== 0) {
+            // @ts-ignore
+            process.exit(code);
+          }
         });
       }
     }
