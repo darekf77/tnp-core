@@ -1086,12 +1086,18 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   async questionYesNo(message: string,
-    callbackTrue?: () => any, callbackFalse?: () => any, defaultValue = true) {
+    callbackTrue?: () => any,
+    callbackFalse?: () => any,
+    defaultValue = true,
+    /**
+     * in non interactive mode
+     */
+    mustAnswerQuestion = false) {
     //#region @backendFunc
     let response = {
       value: defaultValue
     };
-    if (global.tnpNonInteractive) {
+    if (global.tnpNonInteractive && !mustAnswerQuestion) {
       Helpers.info(`${message} - AUTORESPONSE: ${defaultValue ? 'YES' : 'NO'}`);
     } else {
       response = await prompts({
