@@ -34,9 +34,11 @@ declare const global: any;
 const encoding = 'utf8';
 //#region @backend
 const forceTrace = !global.hideLog;
+const prompts = require('prompts');
 //#endregion
 const WEBSQL_PROC_MOCK_PROCESSES_PID = {};
 const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
+
 //#endregion
 
 //#region models
@@ -1083,6 +1085,37 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
+  async questionYesNo(message: string,
+    callbackTrue?: () => any, callbackFalse?: () => any, defaultValue = true) {
+    //#region @backendFunc
+    let response = {
+      value: defaultValue
+    };
+    if (global.tnpNonInteractive) {
+      Helpers.info(`${message} - AUTORESPONSE: ${defaultValue ? 'YES' : 'NO'}`);
+    } else {
+      response = await prompts({
+        type: 'toggle',
+        name: 'value',
+        message,
+        initial: defaultValue,
+        active: 'yes',
+        inactive: 'no'
+      });
+    }
+    if (response.value) {
+      if (callbackTrue) {
+        await Helpers.runSyncOrAsync({ functionFn: callbackTrue });
+      }
+    } else {
+      if (callbackFalse) {
+        await Helpers.runSyncOrAsync({ functionFn: callbackFalse });
+      }
+    }
+    return response.value;
+    //#endregion
+  }
+
   //#region methods / get stdio
   //#region @backend
   public getStdio(options?: CoreModels.RunOptions) {
@@ -1245,24 +1278,26 @@ export class HelpersCore extends HelpersMessages {
     return proc;
   }
 
-  execute(
+  async execute(
     command: string,
     cwd: string,
-    options?: CoreModels.ExecuteOptions
+    options?: Omit<CoreModels.ExecuteOptions, 'tryAgainWhenFailAfter'>
   ) {
+    //#region options
     let {
       hideOutput,
       resolvePromiseMsg,
       outputLineReplace,
       prefix,
       extractFromLine,
-      exitOnError,
       exitOnErrorCallback,
+      askToTryAgainOnError,
     } = options || {};
+    //#endregion
 
     command = Helpers._fixCommand(command);
 
-    const childProcess = child_process.exec(command, { cwd })
+    let childProcess: child_process.ChildProcess;
     // let {
     //   stderMsgForPromiseResolve,
     //   stdoutMsgForPromiseResolve
@@ -1285,140 +1320,173 @@ export class HelpersCore extends HelpersMessages {
       resolvePromiseMsg.stderr = [resolvePromiseMsg.stderr];
     }
 
-    return new Promise((resolve, reject) => {
+    const handlProc = (proc: child_process.ChildProcess) => {
+      return new Promise((resolve, reject) => {
 
-      // let stdio = [0,1,2]
-      // @ts-ignore
-      childProcess.stdout.on('data', (rawData) => {
-        let data = (rawData?.toString() || '');
+        //#region handle stdout data
+        proc.stdout.on('data', (rawData) => {
+          let data = (rawData?.toString() || '');
 
-        data = Helpers.modifyLineByLine(
-          data, // @ts-ignore
-          outputLineReplace,
-          prefix,
-          extractFromLine
-        );
+          data = Helpers.modifyLineByLine(
+            data, // @ts-ignore
+            outputLineReplace,
+            prefix,
+            extractFromLine
+          );
 
-        // @ts-ignore
-        if (!hideOutput.stdout) {
-          process.stdout.write(data);
-        }
+          if (!hideOutput.stdout) {
+            process.stdout.write(data);
+          }
 
-        // @ts-ignore
-        if (!isResolved && _.isArray(resolvePromiseMsg.stdout)) { // @ts-ignore
-          for (let index = 0; index < resolvePromiseMsg.stdout.length; index++) { // @ts-ignore
-            const m = resolvePromiseMsg.stdout[index];
-            if ((data.search(m) !== -1)) {
-              // Helpers.info(`[unitlOutputContains] Move to next step...`)
-              isResolved = true;
+
+          if (!isResolved && _.isArray(resolvePromiseMsg.stdout)) { // @ts-ignore
+            for (let index = 0; index < resolvePromiseMsg.stdout.length; index++) { // @ts-ignore
+              const m = resolvePromiseMsg.stdout[index];
+              if ((data.search(m) !== -1)) {
+                // Helpers.info(`[unitlOutputContains] Move to next step...`)
+                isResolved = true;
+                resolve(void 0);
+                break;
+              }
+            }
+          }
+
+          if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) { // @ts-ignore
+            for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) { // @ts-ignore
+              const rejectm = resolvePromiseMsg.stderr[index];
+              if ((data.search(rejectm) !== -1)) {
+                // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
+                isResolved = true;
+                reject();
+                proc.kill('SIGINT');
+                break;
+              }
+            }
+          }
+
+        });
+        //#endregion
+
+        //#region handle exit process
+        proc.on('exit', async (code) => {
+          // console.log(`Command exit code: ${code}`)
+          if (hideOutput.acceptAllExitCodeAsSuccess) {
+            resolve(void 0);
+          } else {
+
+            if (code !== 0) {
+              if (_.isFunction(exitOnErrorCallback)) {
+                try {
+                  await this.runSyncOrAsync({
+                    functionFn: exitOnErrorCallback,
+                    arrayOfParams: [code],
+                  });
+                  reject(`Command failed with code=${code}`);
+                } catch (error) {
+                  reject(error);
+                }
+              } else {
+                reject(`Command failed with code=${code}`);
+              }
+            } else {
               resolve(void 0);
-              break;
             }
           }
-        }
 
-        // @ts-ignore
-        if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) { // @ts-ignore
-          for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) { // @ts-ignore
-            const rejectm = resolvePromiseMsg.stderr[index];
-            if ((data.search(rejectm) !== -1)) {
-              // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
-              isResolved = true;
-              reject();
-              childProcess.kill('SIGINT');
-              break;
+
+        });
+        //#endregion
+
+        //#region handle stdout error
+        proc.stdout.on('error', (rawData) => {
+          let data = (rawData?.toString() || '');
+          data = Helpers.modifyLineByLine(
+            data, // @ts-ignore
+            outputLineReplace,
+            prefix,
+            extractFromLine
+          );
+
+          if (!hideOutput.stdout) {
+            process.stdout.write(JSON.stringify(data))
+          }
+
+          // console.log(data);
+        })
+        //#endregion
+
+        //#region handle stder data
+        proc.stderr.on('data', (rawData) => {
+          let data = (rawData?.toString() || '');
+          data = Helpers.modifyLineByLine(
+            data, // @ts-ignore
+            outputLineReplace,
+            prefix,
+            extractFromLine
+          );
+
+          if (!hideOutput.stderr) {
+            process.stderr.write(data);
+          }
+
+          if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) { // @ts-ignore
+            for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) { // @ts-ignore
+              const rejectm = resolvePromiseMsg.stderr[index];
+              if ((data.search(rejectm) !== -1)) {
+                // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
+                isResolved = true;
+                reject();
+                proc.kill('SIGINT');
+                break;
+              }
             }
           }
-        }
 
-        // console.log(data.toString());
-      });
+        });
+        //#endregion
 
-      childProcess.on('exit', async (code) => {
-        if (exitOnError && code !== 0) {
-          if (_.isFunction(exitOnErrorCallback)) {
-            try {
-              await this.runSyncOrAsync({
-                functionFn: exitOnErrorCallback,
-                arrayOfParams: [code],
-              });
-            } catch (error) { }
-          }
+        //#region handle stder error
+        proc.stderr.on('error', (rawData) => {
+          let data = (rawData?.toString() || '');
+          data = Helpers.modifyLineByLine(
+            data, // @ts-ignore
+            outputLineReplace,
+            prefix,
+            extractFromLine
+          );
+
           // @ts-ignore
-          process.exit(code);
-        }
-        resolve(void 0);
-      });
-
-      // @ts-ignore
-      childProcess.stdout.on('error', (rawData) => {
-        let data = (rawData?.toString() || '');
-        data = Helpers.modifyLineByLine(
-          data, // @ts-ignore
-          outputLineReplace,
-          prefix,
-          extractFromLine
-        );
-
-        // @ts-ignore
-        if (!hideOutput.stdout) {
-          process.stdout.write(JSON.stringify(data))
-        }
-
-        // console.log(data);
-      })
-
-      // @ts-ignore
-      childProcess.stderr.on('data', (rawData) => {
-        let data = (rawData?.toString() || '');
-        data = Helpers.modifyLineByLine(
-          data, // @ts-ignore
-          outputLineReplace,
-          prefix,
-          extractFromLine
-        );
-
-        // @ts-ignore
-        if (!hideOutput.stderr) {
-          process.stderr.write(data);
-        }
-
-        // @ts-ignore
-        if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) { // @ts-ignore
-          for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) { // @ts-ignore
-            const rejectm = resolvePromiseMsg.stderr[index];
-            if ((data.search(rejectm) !== -1)) {
-              // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
-              isResolved = true;
-              reject();
-              childProcess.kill('SIGINT');
-              break;
-            }
+          if (!hideOutput.stderr) {
+            process.stderr.write(JSON.stringify(data))
           }
-        }
-
-      })
-
-      // @ts-ignore
-      childProcess.stderr.on('error', (rawData) => {
-        let data = (rawData?.toString() || '');
-        data = Helpers.modifyLineByLine(
-          data, // @ts-ignore
-          outputLineReplace,
-          prefix,
-          extractFromLine
-        );
-
-        // @ts-ignore
-        if (!hideOutput.stderr) {
-          process.stderr.write(JSON.stringify(data))
-        }
-        // console.log(data);
+          // console.log(data);
+        });
+        //#endregion
       });
+    };
 
+    while (true) {
+      childProcess = child_process.exec(command, { cwd });
+      try {
+        await handlProc(childProcess);
+        break;
+      } catch (error) {
+        Helpers.error(`Command failed:
 
-    });
+${command}
 
+in location: ${cwd}
+
+        `, true, true);
+        if (askToTryAgainOnError) {
+          if (!(await Helpers.questionYesNo(`Try again this command ?`))) {
+            throw error;
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
   }
   //#endregion
   //#endregion
@@ -1640,15 +1708,10 @@ command: ${command}
       process.exit(1)
     }
 
-    try {
-      Helpers.log(`${currentDate()} ${executionType} "${taskName}" Started..`)
-      await Helpers.runSyncOrAsync({ functionFn: fn });
-      Helpers.log(`${currentDate()} ${executionType} "${taskName}" Done\u2713`)
-    } catch (error) {
-      Helpers.error(chalk.red(error), false, true);
-      Helpers.log(`${currentDate()} ${executionType} ${taskName} ERROR`);
-      process.exit(1);
-    }
+    Helpers.log(`${currentDate()} ${executionType} "${taskName}" Started..`)
+    await Helpers.runSyncOrAsync({ functionFn: fn });
+    Helpers.log(`${currentDate()} ${executionType} "${taskName}" Done\u2713`)
+
     // global?.spinner?.stop();
   }
   //#endregion

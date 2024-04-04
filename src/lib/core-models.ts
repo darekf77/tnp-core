@@ -92,7 +92,7 @@ export namespace CoreModels {
      * Use big buffer for big webpack logs
      */
     biggerBuffer?: boolean;
-    exitOnError?: boolean;
+    askToTryAgainOnError?: boolean;
     exitOnErrorCallback?: (code: number) => void;
     /**
      * From displaying in console
@@ -100,6 +100,7 @@ export namespace CoreModels {
     hideOutput?: {
       stdout?: boolean;
       stderr?: boolean;
+      acceptAllExitCodeAsSuccess?: boolean;
     }
   }
   //#endregion
