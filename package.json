@@ -323,7 +323,7 @@
     "threads": "1.7.0",
     "tnp-cli": "~16.5.16",
     "tnp-config": "~16.5.34",
-    "tnp-core": "~16.6.30",
+    "tnp-core": "~16.6.31",
     "tnp-db": "~16.5.16",
     "tnp-helpers": "~16.5.25",
     "tnp-models": "~16.5.23",
@@ -343,13 +343,16 @@
     "video.js": "8.3.0",
     "vpn-split": "~16.5.19",
     "watch": "1.0.2",
+    "webpack": "~5.80",
+    "webpack-dev-middleware": "~6.0.2",
+    "webpack-dev-server": "~4.13.2",
     "yup": "1.1.1",
     "zone.js": "~0.13.0"
   },
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "16.6.30",
-  "lastBuildTagHash": "7c019f97bff2983374e78bb7d7d7831c39405882",
+  "version": "16.6.31",
+  "lastBuildTagHash": "24d2984a2742341123b885c5b43d96ace4516b2d",
   "main": "index.js"
 }
