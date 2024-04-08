@@ -89,6 +89,7 @@
     "rimraf": "2.6.2"
   },
   "devDependencies": {
+    "@angular-builders/custom-webpack": "~16.0.2-beta.2",
     "@angular-devkit/build-angular": "~16.0.5",
     "@angular-devkit/core": "~16.0.5",
     "@angular-material-extensions/password-strength": "~12.1.0",
@@ -322,7 +323,7 @@
     "threads": "1.7.0",
     "tnp-cli": "~16.5.15",
     "tnp-config": "~16.5.33",
-    "tnp-core": "~16.6.29",
+    "tnp-core": "~16.6.30",
     "tnp-db": "~16.5.15",
     "tnp-helpers": "~16.5.24",
     "tnp-models": "~16.5.22",
@@ -348,7 +349,7 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "16.6.29",
-  "lastBuildTagHash": "e2554cd5e5886b8e5f3c66152366269c80e58760",
+  "version": "16.6.30",
+  "lastBuildTagHash": "7c019f97bff2983374e78bb7d7d7831c39405882",
   "main": "index.js"
 }
