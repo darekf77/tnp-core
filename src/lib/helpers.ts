@@ -1969,21 +1969,18 @@ command: ${command}
       folderPath = win32Path(folderPath)
     }
     try {
-      Helpers.info(`Opening path in file explorer: "${folderPath}"`)
+      Helpers.info(`Opening path.. "${folderPath}"`)
       if (process.platform === 'win32') {
-        Helpers.run(`explorer ${folderPath}`).sync();
+        Helpers.run(`explorer .`, { cwd: folderPath }).sync();
         return;
       }
       if (process.platform === 'darwin') {
-        Helpers.run(`open ${folderPath}`).sync();
+        Helpers.run(`open .`, { cwd: folderPath }).sync();
         return;
       }
-      Helpers.run(`xdg-open ${folderPath}`).sync();
+      Helpers.run(`xdg-open .`, { cwd: folderPath }).sync();
     } catch (error) {
-      if (process.platform !== 'win32') { // TODO QUICK fix explorer with path is triggering errro
-        Helpers.error(`Not able to open in file explorer: "${folderPath}"`, false, true);
-      }
-
+      Helpers.warn(`Not able to open in file explorer: "${folderPath}"`,false);
     }
 
   }
