@@ -16,16 +16,16 @@ import {
   glob,
   //#endregion
 } from './core-imports';
-//#region @backend
-import { Blob } from 'buffer';
-//#endregion
-
 import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
-import { frameworkName } from './framework-name';
+import { ipcRenderer, webFrame } from 'electron';
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
+//#endregion
+//#region @backend
+import { Blob } from 'buffer';
+import { ipcMain, screen } from 'electron';
 //#endregion
 //#endregion
 
@@ -99,13 +99,83 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
-  //#region methods
+  //#region methods / electron ipc renderer
+  /**
+   * get electron browser ipc renderer
+   */
+  get ipcRenderer(): typeof ipcRenderer {
+    //#region @backend
+    return;
+    //#endregion
+    //#region @browser
+    if (!this.isElectron) {
+      return;
+    }
+    return (window as any).require('electron').ipcRenderer as typeof ipcRenderer;
+    //#endregion
+  }
+  //#endregion
 
+  //#region methods / electron webframe
+  /**
+   * get electron web frame
+   */
+  get webFrame(): typeof webFrame {
+    //#region @backend
+    return;
+    //#endregion
+    //#region @browser
+    if (!this.isElectron) {
+      return;
+    }
+    return (window as any).require('electron').webFrame as typeof webFrame;
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / electron ipc renderer
+  /**
+   * get electron backend ipc main proces
+   */
+  get ipcMain() {
+    //#region @backendFunc
+    if (!this.isElectron) {
+      return;
+    }
+    return ipcMain;
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / get electron window
+  getElectronWindow({ allowRunningInsecureContent = true }: { allowRunningInsecureContent?: boolean; } = {}) {
+    //#region @backendFunc
+    // const size = screen.getPrimaryDisplay().workAreaSize;
+
+    // // Create the browser window.
+    // const win = new BrowserWindow({
+    //   x: 0,
+    //   y: 0,
+    //   width: size.width,
+    //   height: size.height,
+    //   webPreferences: {
+    //     nodeIntegration: true,
+    //     allowRunningInsecureContent,
+    //     contextIsolation: false,
+    //   },
+    // });
+    // return win
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / media from type
   mediaTypeFromSrc(src: string): CoreModels.MediaType {
     const ext = path.extname(src);
     const media = CoreModels.mimeTypes[ext];
     return _.first(media?.split('/'));
   }
+  //#endregion
 
   //#region methods / remove file or folder
   //#region @backend
@@ -137,6 +207,7 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
   //#endregion
 
+  //#region methods / check if function is class
   /**
    * check if function is class
    */
@@ -150,7 +221,7 @@ export class HelpersCore extends HelpersMessages {
     // console.log('is class: ' + isClass, funcOrClass)
     return isClass;
   }
-
+  //#endregion
 
   //#region methods / is blob
   /**
@@ -1085,6 +1156,7 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
+  //#region methods / question yest no
   async questionYesNo(message: string,
     callbackTrue?: () => any,
     callbackFalse?: () => any,
@@ -1121,6 +1193,7 @@ export class HelpersCore extends HelpersMessages {
     return response.value;
     //#endregion
   }
+  //#endregion
 
   //#region methods / get stdio
   //#region @backend
@@ -1980,12 +2053,20 @@ command: ${command}
       }
       Helpers.run(`xdg-open .`, { cwd: folderPath }).sync();
     } catch (error) {
-      Helpers.warn(`Not able to open in file explorer: "${folderPath}"`,false);
+      Helpers.warn(`Not able to open in file explorer: "${folderPath}"`, false);
     }
 
   }
   //#endregion
   //#endregion
 
+  //#region methods / hide node warnings
+  hideNodeWarnings() {
+    //#region @backend
+    const process = require('process');
+    process.removeAllListeners('warning');
+    //#endregion
+  }
   //#endregion
+
 }
