@@ -99,6 +99,19 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
+  //#region methods / is runnning in docker
+  isRunningInDocker() {
+    //#region @backendFunc
+    try {
+      const cgroup = fse.readFileSync('/proc/1/cgroup', 'utf8');
+      return /docker|kubepods|containerd/.test(cgroup);
+    } catch (e) {
+      return false; // If the file does not exist or cannot be read, assume not running in Docker
+    }
+    //#endregion
+  }
+  //#endregion
+
   //#region methods / electron ipc renderer
   /**
    * get electron browser ipc renderer
@@ -1794,6 +1807,15 @@ command: ${command}
     // global?.spinner?.stop();
   }
   //#endregion
+  //#endregion
+
+  //#region methods / replace in line
+  replaceLinesInFile(absoluteFilePath: string | (string[]), lineReplaceFn: (line: string) => string) {
+    //#region @backend
+    const file = Helpers.readFile(absoluteFilePath) || '';
+    Helpers.writeFile(absoluteFilePath, file.split('\n').map(lineReplaceFn).join('\n'));
+    //#endregion
+  }
   //#endregion
 
   //#region methods / write file

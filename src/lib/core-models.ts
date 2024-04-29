@@ -23,7 +23,6 @@ export namespace CoreModels {
   export type ImageFileExtension = 'jpg' | 'jpeg' | 'png' | 'svg';
   export type FileExtension = 'ts' | 'js' | 'json' | 'html' | ImageFileExtension | 'txt' | CutableFileExt;
 
-
   export type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch' | 'head' | 'jsonp';
   export type ParamType = 'Path' | 'Query' | 'Cookie' | 'Header' | 'Body';
   export type TsUsage = 'import' | 'export';
@@ -47,7 +46,7 @@ export namespace CoreModels {
    */
   export type OutFolder = 'dist' | 'browser';
 
-  export type DatabaseType = 'better-sqlite3' | 'mysql';
+  export type DatabaseType = 'better-sqlite3' | 'mysql' | 'sqljs';
 
 
   //#region uploaded backend file
