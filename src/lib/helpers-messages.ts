@@ -62,7 +62,7 @@ global[KEY_IMPORTANTCE.LAST_TASK_DONE] = 0;
 
 const useSpinner = global['spinnerInParentProcess'];
 
-const forceTrace = !global.hideLog;
+const forceTrace = global.hideLog === false;
 
 //#endregion
 
@@ -506,7 +506,6 @@ export class HelpersMessages extends HelpersIsomorphic {
     if (forceTrace) {
       trace = true;
     }
-
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
         PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'warning' })

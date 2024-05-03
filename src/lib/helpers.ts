@@ -14,6 +14,7 @@ import {
   spawn,
   win32Path,
   glob,
+  fkill,
   //#endregion
 } from './core-imports';
 import { Helpers } from './index';
@@ -880,6 +881,56 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
   //#endregion
+
+
+  async killProcessByPort(portOrPortsToKill: number | number[], options?: {
+    silent?: boolean
+  }) {
+    //#region @backendFunc
+    const showOutoput = (!options || !options.silent);
+    if (!_.isArray(portOrPortsToKill)) {
+      portOrPortsToKill = [portOrPortsToKill];
+    }
+    for (let index = 0; index < portOrPortsToKill.length; index++) {
+      let port = portOrPortsToKill[index];
+      Helpers.info(`[firedev-helpers] Killing process on port: ${port}`);
+      const org = port;
+      port = Number(port);
+      if (!_.isNumber(port)) {
+        showOutoput && Helpers.warn(`[firedev-helpers] Can't kill on port: "${org}"`);
+        return;
+      }
+      try {
+        await fkill(`:${port}`, { force: true });
+        // run(`fkill -f :${port} &> /dev/null`, { output: false }).sync()
+        showOutoput && Helpers.info(`[firedev-helpers] Processs killed successfully on port: ${port}`);
+      } catch (e) {
+        showOutoput && Helpers.warn(`[firedev-helpers] No process to kill  on port: ${port}... `, false);
+      }
+
+
+      // console.log(`Killing process on port ${port} in progress`);
+      // try {
+      //   if (os.platform() === 'linux') {
+      //     run(`lsof -i:${port}`, { output: false }).sync()
+      //   } else if (os.platform() === 'darwin') {
+      //     run(`lsof -P | grep ':${port}' | awk '{print $2}' | xargs kill -9 `, { output: false }).sync()
+      //   }
+      //   info(`Process killed on port: ${port}`)
+      // } catch (e) {
+      //   error(`Problem with killing process on port ${port}:
+      //   ${e}
+      //   `, true)
+      // }
+    }
+    //#endregion
+  }
+
+  async killOnPort(portOrPortsToKill: number | number[], options?: {
+    silent?: boolean
+  }) {
+    return await Helpers.killProcessByPort(portOrPortsToKill, options);
+  }
 
   //#region methods / kill process
   public killProcess(byPid: number) {
