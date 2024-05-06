@@ -1144,7 +1144,8 @@ export class HelpersCore extends HelpersMessages {
       //#endregion
 
       //#region @backend
-      unitlOutputContains(stdoutMsg: string | string[], stderMsg?: string | string[], timeout = 0) {
+      unitlOutputContains(stdoutMsg: string | string[], stderMsg?: string | string[], timeout = 0,
+        stdoutOutputContainsCallback?: () => any) {
 
         let isResolved = false;
         return new Promise<any>((resolve, reject) => {
@@ -1182,12 +1183,20 @@ export class HelpersCore extends HelpersMessages {
           // @ts-ignore
           proc.stdout.on('data', (message) => {
             const data: string = message.toString().trim();
-
-            if (!isResolved) {
+            if (isResolved) {
               for (let index = 0; index < stdoutMsg.length; index++) {
                 const m = stdoutMsg[index];
                 if ((data.search(m) !== -1)) {
-                  Helpers.info(`[unitlOutputContains] Move to next step...`)
+                  stdoutOutputContainsCallback && stdoutOutputContainsCallback();
+                  break;
+                }
+              }
+            } else {
+              for (let index = 0; index < stdoutMsg.length; index++) {
+                const m = stdoutMsg[index];
+                if ((data.search(m) !== -1)) {
+                  Helpers.info(`[unitlOutputContains] Move to next step...`);
+                  stdoutOutputContainsCallback && stdoutOutputContainsCallback();
                   isResolved = true;
                   setTimeout(() => {
                     resolve(void 0);
