@@ -39,7 +39,6 @@
     'npmFixes': [],
   },
 
-  "linkedProjects": [],
   'smartContainerBuildTarget': '',
   'linkedRepos': [],
 

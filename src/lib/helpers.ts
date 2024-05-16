@@ -1983,18 +1983,42 @@ command: ${command}
    * return absolute paths for folders inside folders
    * @returns absoulte pathes to folders from path
    */
-  public foldersFrom(pathToFolder: string | string[]): string[] {
+  public foldersFrom(pathToFolder: string | string[], options?: {
+    recursive?: boolean;
+  }): string[] {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
     if (!Helpers.exists(pathToFolder)) {
       return [];
     }
-    return fse.readdirSync(pathToFolder)
-      .map(f => crossPlatformPath(path.join(pathToFolder as string, f)))
-      .filter(f => fse.lstatSync(f).isDirectory())
-      ;
+    const { recursive } = options || {};
+    let directories: string[] = [];
+
+    // Helper function to read a directory
+    const readDirectory = (folderPath: string) => {
+      try {
+        const files = fse.readdirSync(folderPath, { withFileTypes: true });
+        for (const file of files) {
+          if (file.isDirectory()) {
+            const dirPath = crossPlatformPath([folderPath, file.name]);
+            directories.push(dirPath);
+            // If recursive, read the directory found
+            if (recursive) {
+              readDirectory(dirPath);
+            }
+          }
+        }
+      } catch (err) {
+        Helpers.error(`Error reading directory ${folderPath}: ${err}`);
+      }
+    }
+
+    // Start reading from the initial folder
+    readDirectory(pathToFolder);
+    return directories;
   }
+
   //#endregion
   //#endregion
 
