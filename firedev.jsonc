@@ -10,7 +10,7 @@
     "includeOnly": [
       "axios",
       "glob",
-      'moment',
+      "moment",
       "fkill",
       "copy-paste",
       "chokidar",
@@ -36,24 +36,24 @@
 
     "dependencies": {},
     "linkedFolders": [],
-    'npmFixes': [],
+    "npmFixes": [],
   },
 
-  'smartContainerBuildTarget': '',
-  'linkedRepos': [],
+  "smartContainerBuildTarget": "",
+  "linkedRepos": [],
 
   "libReleaseOptions": {
     "nodts": false,
     "obscure": false,
     "ugly": false,
-    'includeNodeModules': false,
-    'cliBuildNoDts': false,
-    'cliBuildObscure': false,
-    'cliBuildIncludeNodeModules': false,
-    'cliBuildUglify': false,
+    "includeNodeModules": false,
+    "cliBuildNoDts": false,
+    "cliBuildObscure": false,
+    "cliBuildIncludeNodeModules": false,
+    "cliBuildUglify": false,
   },
 
-  'smartContainerTarget': '',
+  "smartContainerTarget": "",
   "type": "isomorphic-lib",
   "isCoreProject": false,
   "useFramework": false,

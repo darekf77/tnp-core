@@ -25,6 +25,7 @@ import { ipcRenderer, webFrame } from 'electron';
 import { Subject, Subscription } from 'rxjs';
 //#endregion
 //#region @backend
+import * as json5Write from 'json10-writer/src';
 import { Blob } from 'buffer';
 import { ipcMain, screen } from 'electron';
 //#endregion
@@ -57,6 +58,7 @@ export interface CommandOutputOptions {
   showErrorWarning?: boolean,
 }
 //#endregion
+
 
 export class HelpersCore extends HelpersMessages {
 
@@ -191,9 +193,137 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
+  sleep(seconds = 1) {
+    //#region @backendFunc
+    return Helpers.run(`sleep ${seconds}`).sync();
+    //#endregion
+  }
+
+  removeIfExists(absoluteFileOrFolderPath: string | string[]) {
+    //#region  @backendFunc
+    if (Array.isArray(absoluteFileOrFolderPath)) {
+      absoluteFileOrFolderPath = crossPlatformPath(absoluteFileOrFolderPath);
+    }
+    if (process.platform === 'win32') {
+      rimraf.sync(absoluteFileOrFolderPath);
+      return;
+    }
+    try {
+      fse.unlinkSync(absoluteFileOrFolderPath);
+    } catch (error) { }
+    if (fse.existsSync(absoluteFileOrFolderPath)) {
+      if (fse.lstatSync(absoluteFileOrFolderPath).isDirectory()) {
+        fse.removeSync(absoluteFileOrFolderPath);
+      } else {
+        fse.unlinkSync(absoluteFileOrFolderPath);
+      }
+    }
+    //#endregion
+  }
+
+  removeFileIfExists(absoluteFilePath: string | string[]) {
+    //#region @backendFunc
+    if (Array.isArray(absoluteFilePath)) {
+      absoluteFilePath = crossPlatformPath(absoluteFilePath);
+    }
+    if (process.platform === 'win32') {
+      rimraf.sync(absoluteFilePath);
+      return;
+    }
+    // console.log(`removeFileIfExists: ${absoluteFilePath}`)
+
+    if (fse.existsSync(absoluteFilePath)) {
+      fse.unlinkSync(absoluteFilePath);
+    }
+    //#endregion
+  }
+
+  removeFolderIfExists(absoluteFolderPath: string | string[]) {
+    //#region @backendFunc
+    if (Array.isArray(absoluteFolderPath)) {
+      absoluteFolderPath = crossPlatformPath(absoluteFolderPath);
+    }
+    Helpers.log(`[helpers] Remove folder: ${absoluteFolderPath}`)
+    if (process.platform === 'win32') {
+      // rimraf.sync(absoluteFolderPath);
+      this.tryRemoveDir(absoluteFolderPath, false, true)
+      return;
+    }
+
+    if (fse.existsSync(absoluteFolderPath)) {
+      fse.removeSync(absoluteFolderPath);
+    }
+    //#endregion
+  }
+
+  /**
+   * leave max 1 empty line
+   */
+  removeEmptyLineFromString(str: string) {
+    const lines = (str || '').split('\n');
+    let previousWasEmpty = false;
+
+    return lines.filter(line => {
+      if (line.trim() === '') {
+        if (previousWasEmpty) {
+          // Skip this line because the previous line was also empty
+          return false;
+        } else {
+          // Allow this line, but set flag that next empty line should be skipped
+          previousWasEmpty = true;
+          return true;
+        }
+      } else {
+        // Reset flag if the line is not empty
+        previousWasEmpty = false;
+        return true;
+      }
+    }).join('\n');
+  };
+
+  /**
+   * @deprecated
+   */
+  tryRemoveDir(dirpath: string, contentOnly = false, omitWarningNotExisted = false) {
+    //#region @backendFunc
+    if (!fse.existsSync(dirpath)) {
+      if (!omitWarningNotExisted) {
+        Helpers.warn(`[firedev-helper][tryRemoveDir] Folder ${path.basename(dirpath)} doesn't exist.`)
+      }
+      return;
+    }
+    Helpers.log(`[firedev-helpers][tryRemoveDir]: ${dirpath}`);
+
+    try {
+      if (contentOnly) {
+        rimraf.sync(`${dirpath}/*`)
+      } else {
+        rimraf.sync(dirpath)
+      }
+      Helpers.log(`Remove done: ${dirpath}`)
+      return;
+    } catch (e) {
+      Helpers.warn(`
+
+      Trying to remove directory: ${dirpath}
+
+
+      (USER ACTION REQUIRED!!!)
+      Please check if you did't open
+      ${dirpath}
+      in windows explorer
+
+
+      `)
+      Helpers.sleep(1);
+      Helpers.tryRemoveDir(dirpath, contentOnly);
+    }
+    //#endregion
+  }
+
   //#region methods / remove file or folder
-  //#region @backend
   remove(fileOrFolderPathOrPatter: string | string[], exactFolder = false) {
+    //#region @backendFunc
     if (Array.isArray(fileOrFolderPathOrPatter)) {
       fileOrFolderPathOrPatter = path.join(...fileOrFolderPathOrPatter);
     }
@@ -203,8 +333,8 @@ export class HelpersCore extends HelpersMessages {
       return;
     }
     rimraf.sync(fileOrFolderPathOrPatter);
+    //#endregion
   }
-  //#endregion
   //#endregion
 
   //#region methods / clean exit proces
@@ -600,8 +730,11 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / is symlink file existed or unexisted
-  public isSymlinkFileExitedOrUnexisted(filePath: string): boolean {
+  public isSymlinkFileExitedOrUnexisted(filePath: string | string[]): boolean {
     //#region @backendFunc
+    if (_.isArray(filePath)) {
+      filePath = crossPlatformPath(path.join(...filePath));
+    }
     try {
       const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
       return linkToUnexitedLink;
@@ -616,8 +749,11 @@ export class HelpersCore extends HelpersMessages {
   /**
    * If symbolnk link that target file does not exits
    */
-  isUnexistedLink(filePath: string): boolean {
+  isUnexistedLink(filePath: string | string[]): boolean {
     //#region @backendFunc
+    if (_.isArray(filePath)) {
+      filePath = crossPlatformPath(path.join(...filePath));
+    }
     filePath = Helpers.removeSlashAtEnd(filePath);
     if (process.platform === 'win32') {
       filePath = path.win32.normalize(filePath);
@@ -637,9 +773,11 @@ export class HelpersCore extends HelpersMessages {
   /**
    * @param existedLink check if source of link exists
    */
-  isExistedSymlink(filePath: string): boolean {
-
+  isExistedSymlink(filePath: string | string[]): boolean {
     //#region @backendFunc
+    if (_.isArray(filePath)) {
+      filePath = crossPlatformPath(path.join(...filePath));
+    }
     filePath = Helpers.removeSlashAtEnd(filePath);
     if (process.platform === 'win32') {
       filePath = path.win32.normalize(filePath);
@@ -1826,6 +1964,9 @@ command: ${command}
       return defaultValue;
     }
   }
+  public readJson5(absoluteFilePath: string | string[], defaultValue = {}): any {
+    return Helpers.readJson(absoluteFilePath, defaultValue, true);
+  }
   //#endregion
   //#endregion
 
@@ -1894,6 +2035,8 @@ command: ${command}
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
+    // Helpers.info(`[firedev-core] writeFile: ${absoluteFilePath}`);
+    // debugger
     if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
       const beforePath = absoluteFilePath;
       absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
@@ -1950,13 +2093,13 @@ command: ${command}
    * wrapper for fs.writeFileSync
    */
   writeJson(absoluteFilePath: string | (string[]), input: object,
-    optoins?: { preventParentFile?: boolean }): boolean {
+    optoins?: { preventParentFile?: boolean, writeJson5?: boolean }): boolean {
 
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
-    const { preventParentFile } = optoins || {};
+    const { preventParentFile, writeJson5 } = optoins || {};
 
     if (preventParentFile) {
       if (Helpers.isFile(path.dirname(absoluteFilePath)) && fse.existsSync(path.dirname(absoluteFilePath))) {
@@ -1968,11 +2111,25 @@ command: ${command}
       Helpers.mkdirp(path.dirname(absoluteFilePath));
     }
 
-    fse.writeJSONSync(absoluteFilePath, input, {
-      encoding,
-      spaces: 2
-    });
+    if (writeJson5) {
+      const existedContent = Helpers.readFile(absoluteFilePath) || '{}';
+      const writer = json5Write.load(existedContent);
+      writer.write(input);
+      Helpers.writeFile(absoluteFilePath, this.removeEmptyLineFromString(writer.toSource({
+        quote: 'double',
+        trailingComma: false,
+        quoteKeys: true
+      })));
+    } else {
+      fse.writeJSONSync(absoluteFilePath, input, {
+        encoding,
+        spaces: 2
+      });
+    }
     return true;
+  }
+  writeJson5(absoluteFilePath: string | (string[]), input: object) {
+    return Helpers.writeJson(absoluteFilePath, input, { writeJson5: true });
   }
   //#endregion
   //#endregion
@@ -2000,8 +2157,11 @@ command: ${command}
       try {
         const files = fse.readdirSync(folderPath, { withFileTypes: true });
         for (const file of files) {
-          if (file.isDirectory()) {
+          if (file.isDirectory()
+            && !Helpers.isSymlinkFileExitedOrUnexisted([folderPath, file.name])
+          ) {
             const dirPath = crossPlatformPath([folderPath, file.name]);
+            // console.log('dirPath', dirPath)
             directories.push(dirPath);
             // If recursive, read the directory found
             if (recursive) {
