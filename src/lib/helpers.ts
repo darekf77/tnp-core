@@ -2113,7 +2113,14 @@ command: ${command}
 
     if (writeJson5) {
       const existedContent = Helpers.readFile(absoluteFilePath) || '{}';
-      const writer = json5Write.load(existedContent);
+      try {
+        var writer = json5Write.load(existedContent);
+      } catch (error) {
+        console.error(error?.message);
+        Helpers.error(`Pleas fix your jsonc file (json with comments) in
+        ${absoluteFilePath}`, false, true);
+      }
+
       writer.write(input);
       Helpers.writeFile(absoluteFilePath, this.removeEmptyLineFromString(writer.toSource({
         quote: 'double',
