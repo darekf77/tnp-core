@@ -887,10 +887,10 @@ export class HelpersCore extends HelpersMessages {
 
           const env = gatherColors ? { ...process.env, FORCE_COLOR: '1' } : {};
           const proc = child_process.exec(command, {
-            cwd,
+            cwd,// @ts-ignore
             maxBuffer,
             env: env as any,
-          });
+          } as any);
           let gatheredData = '';
 
           proc.on('exit', (code) => {
@@ -995,7 +995,7 @@ export class HelpersCore extends HelpersMessages {
         cwd, // @ts-ignore
         stdio: ['ignore', 'pipe', opt.showStder ? 'pipe' : 'ignore'], // @ts-ignore
         maxBuffer: opt.biggerBuffer ? Helpers.bigMaxBuffer : void 0,
-        env,
+        env: env as any,
       })?.toString() || '').trim();
       // console.log({
       //   output
