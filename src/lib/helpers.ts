@@ -889,7 +889,7 @@ export class HelpersCore extends HelpersMessages {
           const proc = child_process.exec(command, {
             cwd,
             maxBuffer,
-            env
+            env: env as any,
           });
           let gatheredData = '';
 
