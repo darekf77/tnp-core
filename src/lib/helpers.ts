@@ -2040,7 +2040,7 @@ command: ${command}
     if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
       const beforePath = absoluteFilePath;
       absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
-      Helpers.warn(`[firedev-core] WRITTING JSON into real path:
+      Helpers.logWarn(`[firedev-core] WRITTING JSON into real path:
       original: ${beforePath}
       real    : ${absoluteFilePath}
       `, forceTrace);
