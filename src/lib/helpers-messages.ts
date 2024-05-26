@@ -1,6 +1,6 @@
 //#region @backend
 declare const global: any;
-import { chalk } from './core-imports';
+import { chalk, dateformat } from './core-imports';
 //#endregion
 import { _ } from './core-imports';
 // import { config } from 'tnp-config';
@@ -273,7 +273,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#region @backend
 
-    details = transformData(details);
+    details = `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}] ` + transformData(details);
 
     const display = (dot = false) => {
       if (global.hideLog && isLogTask) {
@@ -337,7 +337,7 @@ export class HelpersMessages extends HelpersIsomorphic {
       details = lastStatedTask;
     }
 
-    details = transformData(details);
+    details = `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}] ` + transformData(details);
 
     const display = (dot = false) => {
       // if(!details) {
