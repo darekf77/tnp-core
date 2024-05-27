@@ -26,8 +26,10 @@ export namespace CoreModels {
   export type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch' | 'head' | 'jsonp';
   export type ParamType = 'Path' | 'Query' | 'Cookie' | 'Header' | 'Body';
   export type TsUsage = 'import' | 'export';
+  export type BaseProjectType = 'typescript' | 'angular' | 'angular-lib' | 'unknow' | 'unknow-npm-project';
+  export const BaseProjectTypeArr = ['typescript', 'angular', 'angular-lib', 'unknow', 'unknow-npm-project'];
 
-  export type LibType = 'unknow'
+  export type LibType = BaseProjectType
     | 'isomorphic-lib' // + https://github.com/maximegris/angular-electron
     | 'container'
     | 'docker'

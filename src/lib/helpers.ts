@@ -1118,10 +1118,12 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
     return {
+      /**
+       * start command as synchronous nodej proces
+       */
 
-      //#region @backend
       sync() { // TODO buffer
-
+        //#region @backendFunc
         // @ts-ignore
         if (_.isArray(options.extractFromLine)) {
           Helpers.error(`[tnp-helper] extractFromLine only for:
@@ -1145,15 +1147,19 @@ export class HelpersCore extends HelpersMessages {
           // }
         }
         return Helpers.runSyncIn(command, options);
+        //#endregion
       },
-      //#endregion
 
-      //#region websql
+      /**
+       * start command as asynchronous nodej proces
+       * @param detach (default: false) - if true process will be detached
+       */
       async(detach = false,
         //#region @browser
         mockFun?: (stdoutCallback: (dataForStdout: any) => any, stdErrcCallback: (dataForStder: any) => any, shouldProcesBeDead?: () => boolean) => Promise<number> | number
         //#endregion
       )
+        //#region websqlFunc
         //#region @backend
         : child_process.ChildProcess
       //#endregion
@@ -1254,12 +1260,14 @@ export class HelpersCore extends HelpersMessages {
         options.detach = detach;
         return Helpers.runAsyncIn(command, options);
         //#endregion
+        //#endregion
       },
-      //#endregion
 
-      //#region @backend
-      asyncAsPromise(): any { // TODO Promise<void>
-
+      /**
+       * start command as asynchronous nodej proces inside promise
+       */
+      asyncAsPromise(): Promise<void> {
+        //#region @backendFunc
         let isResolved = false;
         return new Promise<any>((resolve, reject) => {
           const proc = Helpers.runAsyncIn(command, options);
@@ -1277,14 +1285,16 @@ export class HelpersCore extends HelpersMessages {
             }
           });
         });
-
+        //#endregion
       },
-      //#endregion
 
-      //#region @backend
+      /**
+       * start command as asynchronous nodej proces inside promise
+       * and wait until output contains some string
+       */
       unitlOutputContains(stdoutMsg: string | string[], stderMsg?: string | string[], timeout = 0,
         stdoutOutputContainsCallback?: () => any) {
-
+        //#region @backendFunc
         let isResolved = false;
         return new Promise<any>((resolve, reject) => {
 
@@ -1360,9 +1370,9 @@ export class HelpersCore extends HelpersMessages {
 
           });
         });
-
+        //#endregion
       }
-      //#endregion
+
     }
   }
   //#endregion
