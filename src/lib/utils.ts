@@ -1,7 +1,7 @@
-import { CoreModels } from "./core-models";
+import { CoreModels } from './core-models';
 import axios, { AxiosResponse } from 'axios';
-import { path } from "./core-imports";
-import { Helpers } from "./index";
+import { path } from './core-imports';
+import { Helpers } from './index';
 //#region @backend
 import { Blob } from 'buffer';
 //#endregion
@@ -9,7 +9,6 @@ import { Blob } from 'buffer';
 const BLOB_SUPPORTED_IN_SQLJS = false;
 
 export namespace Utils {
-
   //#region db binary format type
   export enum DbBinaryFormatEnum {
     Blob = 'Blob',
@@ -32,13 +31,13 @@ export namespace Utils {
    * for sql.js => string (shoulb be blob - but not supported)
    *
    */
-  export type DbBinaryFormat = DbBinaryFormatForBrowser
+  export type DbBinaryFormat =
+    | DbBinaryFormatForBrowser
     //#region @backend
     | DbBinaryFormatForBackend;
   //#endregion
   //#endregion
   export namespace binary {
-
     //#region binay utils / array buffer to blob
     //#region @browser
     /**
@@ -48,7 +47,10 @@ export namespace Utils {
      * @param contentType
      * @returns
      */
-    export async function arrayBufferToBlob(buffer: ArrayBuffer, contentType: CoreModels.ContentType): Promise<Blob> {
+    export async function arrayBufferToBlob(
+      buffer: ArrayBuffer,
+      contentType: CoreModels.ContentType,
+    ): Promise<Blob> {
       // @ts-ignore
       return new Blob([buffer], { type: contentType });
     }
@@ -94,20 +96,27 @@ export namespace Utils {
      * @param base64Data
      * @returns
      */
-    export async function base64toBlob(base64Data: string, contentTypeOverride?: CoreModels.ContentType): Promise<Blob> {
+    export async function base64toBlob(
+      base64Data: string,
+      contentTypeOverride?: CoreModels.ContentType,
+    ): Promise<Blob> {
       let content_type: CoreModels.ContentType = void 0 as any;
       let file_base64: string = void 0 as any;
       if (!contentTypeOverride) {
         const m = /^data:(.+?);base64,(.+)$/.exec(base64Data);
         if (!m) {
-          throw new Error(`[firedev-framework][base64toBlob] Not a base64 blob [${base64Data}]`)
+          throw new Error(
+            `[firedev-framework][base64toBlob] Not a base64 blob [${base64Data}]`,
+          );
         }
         // tslint:disable-next-line:prefer-const
         var [__, contenttype, filebase64] = m;
         content_type = contenttype as any;
         file_base64 = filebase64;
       }
-      content_type = (contentTypeOverride ? contentTypeOverride : content_type || '') as any;
+      content_type = (
+        contentTypeOverride ? contentTypeOverride : content_type || ''
+      ) as any;
       base64Data = contentTypeOverride ? base64Data : file_base64;
       const sliceSize = 1024;
       const byteCharacters = atob(base64Data);
@@ -132,7 +141,9 @@ export namespace Utils {
 
     //#region binay utils / base64 string to db binary format
 
-    export async function base64toDbBinaryFormat(text: string): Promise<DbBinaryFormat> {
+    export async function base64toDbBinaryFormat(
+      text: string,
+    ): Promise<DbBinaryFormat> {
       let result: DbBinaryFormat;
       //#region @browser
       result = await (async () => {
@@ -154,7 +165,9 @@ export namespace Utils {
     //#endregion
 
     //#region binay utils / db binary format to base64 string
-    export async function dbBinaryFormatToBase64(binaryFormat: DbBinaryFormat): Promise<string> {
+    export async function dbBinaryFormatToBase64(
+      binaryFormat: DbBinaryFormat,
+    ): Promise<string> {
       let result: string;
       //#region @browser
       result = await (async () => {
@@ -176,15 +189,11 @@ export namespace Utils {
     }
     //#endregion
 
-
-
-
-
-
-
     //#region binay utils / base64 string to db binary format
 
-    export async function textToDbBinaryFormat(text: string): Promise<DbBinaryFormat> {
+    export async function textToDbBinaryFormat(
+      text: string,
+    ): Promise<DbBinaryFormat> {
       let result: DbBinaryFormat;
       //#region @browser
       result = await (async () => {
@@ -206,7 +215,9 @@ export namespace Utils {
     //#endregion
 
     //#region binay utils / db binary format to base64 string
-    export async function dbBinaryFormatToText(binaryFormat: DbBinaryFormat): Promise<string> {
+    export async function dbBinaryFormatToText(
+      binaryFormat: DbBinaryFormat,
+    ): Promise<string> {
       let result: string;
       //#region @browser
       result = await (async () => {
@@ -228,13 +239,12 @@ export namespace Utils {
     }
     //#endregion
 
-
-
-
-
     //#region binay utils / base64 string to nodejs buffer
     //#region @backend
-    export async function base64toBuffer(base64Data: string, contentTypeOverride?: CoreModels.ContentType): Promise<Buffer> {
+    export async function base64toBuffer(
+      base64Data: string,
+      contentTypeOverride?: CoreModels.ContentType,
+    ): Promise<Buffer> {
       const blob = await base64toBlob(base64Data, contentTypeOverride);
       const buffer = await blobToBuffer(blob);
       return buffer;
@@ -254,15 +264,20 @@ export namespace Utils {
 
     //#region binay utils / file to blob
     export async function fileToBlob(file: File) {
-      return new Blob([new Uint8Array(await file.arrayBuffer())], { type: file.type })
-    };
+      return new Blob([new Uint8Array(await file.arrayBuffer())], {
+        type: file.type,
+      });
+    }
     //#endregion
 
     //#region binay utils / blob to file
-    export async function blobToFile(blob: Blob, nameForFile: string = 'my-file-name'): Promise<File> {
+    export async function blobToFile(
+      blob: Blob,
+      nameForFile: string = 'my-file-name',
+    ): Promise<File> {
       if (!nameForFile) {
-        nameForFile = 'nonamefile' + (new Date()).getTime();
-      };
+        nameForFile = 'nonamefile' + new Date().getTime();
+      }
       // @ts-ignore
       return new File([blob], nameForFile);
     }
@@ -289,7 +304,10 @@ export namespace Utils {
 
     //#region binay utils / text to nodejs buffer
     //#region @backend
-    export async function textToBuffer(text: string, type: CoreModels.ContentType = 'text/plain'): Promise<Buffer> {
+    export async function textToBuffer(
+      text: string,
+      type: CoreModels.ContentType = 'text/plain',
+    ): Promise<Buffer> {
       const blob = await textToBlob(text, type);
       const buffer = await blobToBuffer(blob);
       return buffer;
@@ -308,7 +326,10 @@ export namespace Utils {
     //#endregion
 
     //#region binay utils / text to blob
-    export async function textToBlob(text: string, type: CoreModels.ContentType = 'text/plain'): Promise<Blob> {
+    export async function textToBlob(
+      text: string,
+      type: CoreModels.ContentType = 'text/plain',
+    ): Promise<Blob> {
       const blob = new Blob([text], { type });
       return blob;
     }
@@ -316,12 +337,15 @@ export namespace Utils {
 
     //#region binay utils / blob to text
     export async function blobToText(blob: Blob): Promise<string> {
-      return await blob.text()
+      return await blob.text();
     }
     //#endregion
 
     //#region binay utils / text to file
-    export async function textToFile(text: string, fileRelativePathOrName: string): Promise<File> {
+    export async function textToFile(
+      text: string,
+      fileRelativePathOrName: string,
+    ): Promise<File> {
       // console.log({ path })
       const ext = path.extname(fileRelativePathOrName);
 
@@ -345,7 +369,9 @@ export namespace Utils {
 
     //#region binay utils / json to blob
     export async function jsonToBlob(jsonObj: object): Promise<Blob> {
-      const blob = new Blob([JSON.stringify(jsonObj, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(jsonObj, null, 2)], {
+        type: 'application/json',
+      });
       return blob;
     }
     //#endregion
@@ -355,23 +381,20 @@ export namespace Utils {
      * TODO NOT TESTED
      */
     export async function blobToJson(blob: Blob): Promise<string> {
-      return JSON.parse(await blob.text())
+      return JSON.parse(await blob.text());
     }
     //#endregion
-
-
 
     //#region binay utils / get blob from url
     export async function getBlobFrom(url: string): Promise<Blob> {
       const response: AxiosResponse<Blob> = await axios({
         url,
         method: 'get',
-        responseType: 'blob'
+        responseType: 'blob',
       });
       return response.data;
     }
     //#endregion
-
   }
 
   export namespace css {
@@ -383,13 +406,12 @@ export namespace Utils {
      */
     export function numValue(pixelsCss: string | number): number {
       // tslint:disable-next-line:radix
-      return parseInt(pixelsCss?.toString()?.replace('px', '')
+      return parseInt(
+        pixelsCss?.toString()?.replace('px', ''),
         // .replace('pt', '') TOOD handle other types
         // .replace('1rem', '') // to
       );
     }
     //#endregion
   }
-
-
 }

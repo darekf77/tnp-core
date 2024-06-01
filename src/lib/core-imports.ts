@@ -25,21 +25,21 @@ import * as chokidar from 'chokidar';
 import * as mkdirp from 'mkdirp';
 import * as ncp from 'copy-paste';
 import * as ps from 'ps-node';
-import * as  psList from 'ps-list';
+import * as psList from 'ps-list';
 import * as fkill from 'fkill';
 import * as portfinder from 'portfinder';
 const isRoot = require('is-root');
 const isAdmin = require('is-admin');
 
 async function isElevated() {
-  return (process.platform === 'win32' ? isAdmin() : isRoot())
-};
+  return process.platform === 'win32' ? isAdmin() : isRoot();
+}
 
 //#endregion
 
 let $;
 //#region @browser
-$ = jQuery
+$ = jQuery;
 //#endregion
 //#region @backend
 $ = cheerio;
@@ -50,9 +50,9 @@ $ = cheerio;
 import { path as pathMock } from './node-path-mock';
 //#endregion
 
-let path
-  // #region @backend
-  = pathBase;
+let path = void 0 as any;
+// #region @backend
+path = pathBase;
 //#endregion
 
 //#region @browser
@@ -65,9 +65,9 @@ path = pathMock;
 //#region @browser
 import { chalk as chalkMock } from './node-chalk-mock';
 //#endregion
-let chalk: Chalk
-  // #region @backend
-  = chalkBase as any;
+let chalk: Chalk = void 0 as any;
+// #region @backend
+chalk = chalkBase as any;
 //#endregion
 
 //#region @browser
@@ -75,7 +75,6 @@ let chalk: Chalk
 chalk = chalkMock;
 //#endregion
 //#endregion
-
 
 function win32Path(p: string) {
   //#region @backend
@@ -94,7 +93,7 @@ function win32Path(p: string) {
  */
 const crossPlatformPath = (pathStringOrPathParts: string | string[]) => {
   if (Array.isArray(pathStringOrPathParts)) {
-    pathStringOrPathParts = pathStringOrPathParts.join('/')
+    pathStringOrPathParts = pathStringOrPathParts.join('/');
   }
   //#region @backend
   if (process.platform === 'win32') {
@@ -117,9 +116,7 @@ const crossPlatformPath = (pathStringOrPathParts: string | string[]) => {
   }
 
   return pathStringOrPathParts.replace(/\\/g, '/').replace(/\/\//g, '/');
-}
-
-
+};
 
 export {
   _,
@@ -131,8 +128,8 @@ export {
   path,
   chalk,
   json5,
-  $
-}
+  $,
+};
 
 //#region @backend
 export {
@@ -145,7 +142,8 @@ export {
   fse,
   os,
   child_process,
-  http, https,
+  http,
+  https,
   rimraf,
   net,
   ps,
@@ -153,4 +151,4 @@ export {
   portfinder,
   psList,
 };
- //#endregion
+//#endregion

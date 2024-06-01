@@ -17,19 +17,22 @@ export interface IPROGRESS_DATA {
 }
 
 export class PROGRESS_DATA implements IPROGRESS_DATA {
-
   public static log(log: IPROGRESS_DATA) {
     //#region @backend
     if (global.tnpShowProgress) {
-      Helpers.log(`[[[${JSON.stringify({ value: log.value, msg: log.msg, date: new Date() } as IPROGRESS_DATA)}]]]`, 1)
+      Helpers.log(
+        `[[[${JSON.stringify({ value: log.value, msg: log.msg, date: new Date() } as IPROGRESS_DATA)}]]]`,
+        1,
+      );
     }
     //#endregion
   }
 
-
-  public static resolveFrom(chunk: string,
-    callbackOnFounded?: (json: PROGRESS_DATA) => any, checkSplit = true): PROGRESS_DATA[] {
-
+  public static resolveFrom(
+    chunk: string,
+    callbackOnFounded?: (json: PROGRESS_DATA) => any,
+    checkSplit = true,
+  ): PROGRESS_DATA[] {
     let progress;
     let res: PROGRESS_DATA[] = [];
     if (!_.isString(chunk)) {
@@ -56,13 +59,17 @@ export class PROGRESS_DATA implements IPROGRESS_DATA {
       try {
         const p = JSON.parse(progress);
         const single = _.merge(new PROGRESS_DATA(), p);
-        res = res.concat([single])
+        res = res.concat([single]);
         if (_.isFunction(callbackOnFounded)) {
           callbackOnFounded(single);
         }
       } catch (err) {
-        Helpers.error(err, true, true)
-        Helpers.error(`ProgresssBarData: fail to parse "${progress}"`, true, true)
+        Helpers.error(err, true, true);
+        Helpers.error(
+          `ProgresssBarData: fail to parse "${progress}"`,
+          true,
+          true,
+        );
       }
     }
     return res;
@@ -71,9 +78,7 @@ export class PROGRESS_DATA implements IPROGRESS_DATA {
   public value?: number;
   public msg?: string;
 
-  public type: CoreModels.PROGRESS_DATA_TYPE = 'event'
+  public type: CoreModels.PROGRESS_DATA_TYPE = 'event';
 
   public date?: Date;
-
-
 }

@@ -1,15 +1,17 @@
 //#region @notForNpm
-import { Helpers } from "./lib/index";
-import { child_process } from "./lib/index";
+import { Helpers } from './lib/index';
+import { child_process } from './lib/index';
 
 try {
-  const out = child_process.execSync('where firedev', { stdio: ['ignore', 'pipe', 'ignore'] })?.toString()
+  const out = child_process
+    .execSync('where firedev', { stdio: ['ignore', 'pipe', 'ignore'] })
+    ?.toString();
   console.log({
-    out
-  })
+    out,
+  });
 } catch (error) {
   console.log({
-    error
-  })
+    error,
+  });
 }
 //#endregion

@@ -351,7 +351,7 @@ export class HelpersCore extends HelpersMessages {
   remove(fileOrFolderPathOrPatter: string | string[], exactFolder = false) {
     //#region @backendFunc
     if (Array.isArray(fileOrFolderPathOrPatter)) {
-      fileOrFolderPathOrPatter = path.join(...fileOrFolderPathOrPatter);
+      fileOrFolderPathOrPatter = crossPlatformPath(fileOrFolderPathOrPatter);
     }
     Helpers.log(`[firedev-core][remove]: ${fileOrFolderPathOrPatter}`, 1);
     if (exactFolder) {
@@ -699,7 +699,7 @@ export class HelpersCore extends HelpersMessages {
   //#region @backend
   public mkdirp(folderPath: string | string[]): void {
     if (_.isArray(folderPath)) {
-      folderPath = path.join(...folderPath);
+      folderPath = crossPlatformPath(folderPath);
     }
     if (!path.isAbsolute(folderPath)) {
       Helpers.warn(
@@ -809,7 +809,7 @@ export class HelpersCore extends HelpersMessages {
   isUnexistedLink(filePath: string | string[]): boolean {
     //#region @backendFunc
     if (_.isArray(filePath)) {
-      filePath = crossPlatformPath(path.join(...filePath));
+      filePath = crossPlatformPath(filePath);
     }
     filePath = Helpers.removeSlashAtEnd(filePath);
     if (process.platform === 'win32') {
@@ -817,8 +817,8 @@ export class HelpersCore extends HelpersMessages {
     }
 
     try {
-      const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
-      return linkToUnexitedLink && !fse.existsSync(fse.readlinkSync(filePath));
+      const linkToUnexitedLink = fse.lstatSync(filePath as string).isSymbolicLink();
+      return linkToUnexitedLink && !fse.existsSync(fse.readlinkSync(filePath as string));
     } catch (error) {
       return false;
     }
@@ -833,16 +833,23 @@ export class HelpersCore extends HelpersMessages {
   isExistedSymlink(filePath: string | string[]): boolean {
     //#region @backendFunc
     if (_.isArray(filePath)) {
-      filePath = crossPlatformPath(path.join(...filePath));
+      filePath = crossPlatformPath(filePath);
     }
+
     filePath = Helpers.removeSlashAtEnd(filePath);
+
     if (process.platform === 'win32') {
       filePath = path.win32.normalize(filePath);
     }
 
     try {
-      const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
-      return linkToUnexitedLink && fse.existsSync(fse.readlinkSync(filePath));
+      const linkToUnexitedLink = fse
+        .lstatSync(filePath as string)
+        .isSymbolicLink();
+      return (
+        linkToUnexitedLink &&
+        fse.existsSync(fse.readlinkSync(filePath as string))
+      );
     } catch (error) {
       return false;
     }
@@ -879,7 +886,7 @@ export class HelpersCore extends HelpersMessages {
   ) {
     //#region @backendFunc
     if (_.isArray(folderOrFilePath)) {
-      folderOrFilePath = path.join(...folderOrFilePath);
+      folderOrFilePath = crossPlatformPath(folderOrFilePath);
     }
     if (!folderOrFilePath) {
       Helpers.warn(
