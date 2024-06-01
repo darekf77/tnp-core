@@ -614,6 +614,8 @@ export class HelpersCore extends HelpersMessages {
       rimraf.sync(linkDest);
     }
 
+    // console.log({ targetExisted, linkDest });
+
     if (process.platform === 'win32') {
       // const resolvedTarget = crossPlatformPath(path.resolve(targetExisted));
 
@@ -644,21 +646,13 @@ export class HelpersCore extends HelpersMessages {
         fse.symlinkSync(targetExisted, linkDest, 'dir');
       } else {
         if (targetIsFile) {
-          if (
-            path.basename(path.dirname(targetExisted)) === '.bin' && // TODO QUICK_FIX MEGA HACK
-            path.basename(path.dirname(path.dirname(targetExisted))) ===
-              'node_modules'
-          ) {
-            fse.linkSync(targetExisted, linkDest);
-          } else {
-            const winLinkCommand = `mklink ${windowsHardLink ? '/D' : targetIsFile ? '/H' : '/j'} "${linkDest}" "${targetExisted}"`;
-            const showSymlinkOutputOnWindows = forceTrace;
-            Helpers.run(winLinkCommand, {
-              biggerBuffer: false,
-              output: showSymlinkOutputOnWindows,
-              silence: !showSymlinkOutputOnWindows,
-            }).sync();
-          }
+          const winLinkCommand = `mklink ${windowsHardLink ? '/D' : targetIsFile ? '/H' : '/j'} "${linkDest}" "${targetExisted}"`;
+          const showSymlinkOutputOnWindows = forceTrace;
+          Helpers.run(winLinkCommand, {
+            biggerBuffer: false,
+            output: showSymlinkOutputOnWindows,
+            silence: !showSymlinkOutputOnWindows,
+          }).sync();
         } else {
           fse.symlinkSync(targetExisted, linkDest, 'junction');
         }
@@ -729,8 +723,11 @@ export class HelpersCore extends HelpersMessages {
         `[firedev-core][mkdirp] folder path already exists: ${folderPath}`,
       );
     } else {
-      // if(Helpers.isSymlinkFileExitedOrUnexisted(folderPath)) {
-      //   Helpers.error(`Folder is symlink.. can't recreate`)
+      // if (Helpers.isSymlinkFileExitedOrUnexisted(path.dirname(folderPath))) {
+      //   // TODO SUPER HACK
+      //   try {
+      //     Helpers.removeFileIfExists(path.dirname(folderPath));
+      //   } catch (error) {}
       // }
       Helpers.log(`[firedev-core][mkdirp] ${folderPath}`, 1);
       fse.mkdirpSync(folderPath);
@@ -817,8 +814,13 @@ export class HelpersCore extends HelpersMessages {
     }
 
     try {
-      const linkToUnexitedLink = fse.lstatSync(filePath as string).isSymbolicLink();
-      return linkToUnexitedLink && !fse.existsSync(fse.readlinkSync(filePath as string));
+      const linkToUnexitedLink = fse
+        .lstatSync(filePath as string)
+        .isSymbolicLink();
+      return (
+        linkToUnexitedLink &&
+        !fse.existsSync(fse.readlinkSync(filePath as string))
+      );
     } catch (error) {
       return false;
     }
