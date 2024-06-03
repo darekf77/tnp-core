@@ -21,6 +21,7 @@ import { Helpers } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
 import { ipcRenderer, webFrame } from 'electron';
+import type { ChildProcess } from 'child_process';
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
 //#endregion
@@ -45,23 +46,26 @@ const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
 
 //#region models
 export interface RunSyncOrAsyncOptions {
-  functionFn: Function,
-  context?: object,
-  arrayOfParams?: any[],
+  functionFn: Function;
+  context?: object;
+  arrayOfParams?: any[];
 }
 
 export interface CommandOutputOptions {
-  biggerBuffer?: boolean,
-  showWholeCommandNotOnlyLastLine?: boolean,
+  biggerBuffer?: boolean;
+  showWholeCommandNotOnlyLastLine?: boolean;
   showStder?: boolean;
   gatherColors?: boolean;
-  showErrorWarning?: boolean,
+  showErrorWarning?: boolean;
 }
 //#endregion
 
+// TODO UNCOMMENT
+// const globalProcessStdout = {};
+// const globalProcessStder = {};
+// const maxProcessHistoryLinesChekc = 20;
 
 export class HelpersCore extends HelpersMessages {
-
   //#region singleton
   private static _instanceCore: HelpersCore;
   public static get InstanceCore() {
@@ -74,7 +78,7 @@ export class HelpersCore extends HelpersMessages {
 
   //#region fields / getters
   //#region @backend
-  readonly processes: child_process.ChildProcess[] = [];
+  readonly processes: ChildProcess[] = [];
   //#endregion
   readonly bigMaxBuffer = 2024 * 500;
 
@@ -82,12 +86,12 @@ export class HelpersCore extends HelpersMessages {
   get isRunningIn() {
     return {
       mochaTest() {
-        return (typeof global['it'] === 'function');
+        return typeof global['it'] === 'function';
       },
       cliMode() {
         return !!global['globalSystemToolMode'];
       },
-    }
+    };
   }
   //#endregion
   //#endregion
@@ -127,7 +131,8 @@ export class HelpersCore extends HelpersMessages {
     if (!this.isElectron) {
       return;
     }
-    return (window as any).require('electron').ipcRenderer as typeof ipcRenderer;
+    return (window as any).require('electron')
+      .ipcRenderer as typeof ipcRenderer;
     //#endregion
   }
   //#endregion
@@ -164,10 +169,11 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / get electron window
-  getElectronWindow({ allowRunningInsecureContent = true }: { allowRunningInsecureContent?: boolean; } = {}) {
+  getElectronWindow({
+    allowRunningInsecureContent = true,
+  }: { allowRunningInsecureContent?: boolean } = {}) {
     //#region @backendFunc
     // const size = screen.getPrimaryDisplay().workAreaSize;
-
     // // Create the browser window.
     // const win = new BrowserWindow({
     //   x: 0,
@@ -193,12 +199,15 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
+  //#region methods / sleep
   sleep(seconds = 1) {
     //#region @backendFunc
     return Helpers.run(`sleep ${seconds}`).sync();
     //#endregion
   }
+  //#endregion
 
+  //#region methods / remove if exists
   removeIfExists(absoluteFileOrFolderPath: string | string[]) {
     //#region  @backendFunc
     if (Array.isArray(absoluteFileOrFolderPath)) {
@@ -210,7 +219,7 @@ export class HelpersCore extends HelpersMessages {
     }
     try {
       fse.unlinkSync(absoluteFileOrFolderPath);
-    } catch (error) { }
+    } catch (error) {}
     if (fse.existsSync(absoluteFileOrFolderPath)) {
       if (fse.lstatSync(absoluteFileOrFolderPath).isDirectory()) {
         fse.removeSync(absoluteFileOrFolderPath);
@@ -220,7 +229,9 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region methods / remove file if exists
   removeFileIfExists(absoluteFilePath: string | string[]) {
     //#region @backendFunc
     if (Array.isArray(absoluteFilePath)) {
@@ -237,16 +248,18 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region methods / remove folder if exists
   removeFolderIfExists(absoluteFolderPath: string | string[]) {
     //#region @backendFunc
     if (Array.isArray(absoluteFolderPath)) {
       absoluteFolderPath = crossPlatformPath(absoluteFolderPath);
     }
-    Helpers.log(`[helpers] Remove folder: ${absoluteFolderPath}`)
+    Helpers.log(`[helpers] Remove folder: ${absoluteFolderPath}`);
     if (process.platform === 'win32') {
       // rimraf.sync(absoluteFolderPath);
-      this.tryRemoveDir(absoluteFolderPath, false, true)
+      this.tryRemoveDir(absoluteFolderPath, false, true);
       return;
     }
 
@@ -255,7 +268,9 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region methods / remove empty line from string
   /**
    * leave max 1 empty line
    */
@@ -263,32 +278,42 @@ export class HelpersCore extends HelpersMessages {
     const lines = (str || '').split('\n');
     let previousWasEmpty = false;
 
-    return lines.filter(line => {
-      if (line.trim() === '') {
-        if (previousWasEmpty) {
-          // Skip this line because the previous line was also empty
-          return false;
+    return lines
+      .filter(line => {
+        if (line.trim() === '') {
+          if (previousWasEmpty) {
+            // Skip this line because the previous line was also empty
+            return false;
+          } else {
+            // Allow this line, but set flag that next empty line should be skipped
+            previousWasEmpty = true;
+            return true;
+          }
         } else {
-          // Allow this line, but set flag that next empty line should be skipped
-          previousWasEmpty = true;
+          // Reset flag if the line is not empty
+          previousWasEmpty = false;
           return true;
         }
-      } else {
-        // Reset flag if the line is not empty
-        previousWasEmpty = false;
-        return true;
-      }
-    }).join('\n');
-  };
+      })
+      .join('\n');
+  }
+  //#endregion
 
+  //#region methods / try remove empty dir
   /**
    * @deprecated
    */
-  tryRemoveDir(dirpath: string, contentOnly = false, omitWarningNotExisted = false) {
+  tryRemoveDir(
+    dirpath: string,
+    contentOnly = false,
+    omitWarningNotExisted = false,
+  ) {
     //#region @backendFunc
     if (!fse.existsSync(dirpath)) {
       if (!omitWarningNotExisted) {
-        Helpers.warn(`[firedev-helper][tryRemoveDir] Folder ${path.basename(dirpath)} doesn't exist.`)
+        Helpers.warn(
+          `[firedev-helper][tryRemoveDir] Folder ${path.basename(dirpath)} doesn't exist.`,
+        );
       }
       return;
     }
@@ -296,11 +321,11 @@ export class HelpersCore extends HelpersMessages {
 
     try {
       if (contentOnly) {
-        rimraf.sync(`${dirpath}/*`)
+        rimraf.sync(`${dirpath}/*`);
       } else {
-        rimraf.sync(dirpath)
+        rimraf.sync(dirpath);
       }
-      Helpers.log(`Remove done: ${dirpath}`)
+      Helpers.log(`Remove done: ${dirpath}`);
       return;
     } catch (e) {
       Helpers.warn(`
@@ -314,22 +339,23 @@ export class HelpersCore extends HelpersMessages {
       in windows explorer
 
 
-      `)
+      `);
       Helpers.sleep(1);
       Helpers.tryRemoveDir(dirpath, contentOnly);
     }
     //#endregion
   }
+  //#endregion
 
   //#region methods / remove file or folder
   remove(fileOrFolderPathOrPatter: string | string[], exactFolder = false) {
     //#region @backendFunc
     if (Array.isArray(fileOrFolderPathOrPatter)) {
-      fileOrFolderPathOrPatter = path.join(...fileOrFolderPathOrPatter);
+      fileOrFolderPathOrPatter = crossPlatformPath(fileOrFolderPathOrPatter);
     }
     Helpers.log(`[firedev-core][remove]: ${fileOrFolderPathOrPatter}`, 1);
     if (exactFolder) {
-      rimraf.sync(fileOrFolderPathOrPatter, { glob: false, disableGlob: true, });
+      rimraf.sync(fileOrFolderPathOrPatter, { glob: false, disableGlob: true });
       return;
     }
     rimraf.sync(fileOrFolderPathOrPatter);
@@ -341,15 +367,45 @@ export class HelpersCore extends HelpersMessages {
   //#region @backend
   cleanExit() {
     Helpers.processes.forEach(p => {
-      p.kill('SIGINT')
-      p.kill('SIGTERM')
-      Helpers.log(`Killing child process on ${p.pid}`)
-    })
-    Helpers.log(`Killing parent on ${process.pid}`)
-    process.exit()
-  };
+      p.kill('SIGINT');
+      p.kill('SIGTERM');
+      Helpers.log(`Killing child process on ${p.pid}`);
+    });
+    Helpers.log(`Killing parent on ${process.pid}`);
+    process.exit();
+  }
   //#endregion
   //#endregion
+
+  private getShell(): string {
+    //#region @backendFunc
+    // This function attempts to determine the current shell
+    if (os.platform() === 'win32') {
+      // On Windows, COMSPEC usually points to cmd.exe
+      return process.env.COMSPEC;
+    } else {
+      // On Unix-like systems, SHELL points to the current shell
+      return process.env.SHELL;
+    }
+    //#endregion
+  }
+
+  get isRunningInGitBash(): boolean {
+    //#region @backendFunc
+    // console.log('TERM', process.env.TERM);
+    // console.log('MSYSTEM', process.env.MSYSTEM);
+    return process.env.TERM.search('xterm') !== -1 && !!process.env.MSYSTEM;
+    //#endregion
+  }
+
+  /**
+   * Check if the current shell is supported by Firedev framework.
+   */
+  get isSupportedFiredevTerminal(): boolean {
+    //#region @backendFunc
+    return process.platform === 'win32' ? this.isRunningInGitBash : true;
+    //#endregion
+  }
 
   //#region methods / check if function is class
   /**
@@ -360,7 +416,11 @@ export class HelpersCore extends HelpersMessages {
     if (typeof funcOrClass === 'function') {
       // Check if it has a prototype property
       // console.log('Object.getOwnPropertyNames(funcOrClass.prototype)', Object.getOwnPropertyNames(funcOrClass.prototype).filter(f => f !== 'constructor'))
-      isClass = !!funcOrClass.prototype && Object.getOwnPropertyNames(funcOrClass.prototype).filter(f => f !== 'constructor').length > 0;
+      isClass =
+        !!funcOrClass.prototype &&
+        Object.getOwnPropertyNames(funcOrClass.prototype).filter(
+          f => f !== 'constructor',
+        ).length > 0;
     }
     // console.log('is class: ' + isClass, funcOrClass)
     return isClass;
@@ -426,7 +486,8 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / run sync or async
   public async runSyncOrAsync<FUNCTION_RETURN_TYPE = any>(
-    fnOrOptions: RunSyncOrAsyncOptions): Promise<FUNCTION_RETURN_TYPE> {
+    fnOrOptions: RunSyncOrAsyncOptions,
+  ): Promise<FUNCTION_RETURN_TYPE> {
     if (_.isUndefined(fnOrOptions)) {
       return void 0 as any;
     }
@@ -448,7 +509,7 @@ export class HelpersCore extends HelpersMessages {
 
     if (promisOrValue instanceof Promise) {
       // wasPromise = true;
-      promisOrValue = Promise.resolve(promisOrValue)
+      promisOrValue = Promise.resolve(promisOrValue);
     }
     // console.log('was promis ', wasPromise)
     return promisOrValue;
@@ -457,7 +518,9 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / create symlink
   //#region @backend
-  public createSymLink(existedFileOrFolder: string, destinationPath: string,
+  public createSymLink(
+    existedFileOrFolder: string,
+    destinationPath: string,
     options?: {
       continueWhenExistedFolderDoesntExists?: boolean;
       windowsHardLink?: boolean;
@@ -467,8 +530,8 @@ export class HelpersCore extends HelpersMessages {
        * only if you know that symlink can be created
        */
       speedUpProcess?: boolean;
-    }): void {
-
+    },
+  ): void {
     //#region fix parameters
     existedFileOrFolder = crossPlatformPath(existedFileOrFolder);
     destinationPath = crossPlatformPath(destinationPath);
@@ -477,8 +540,11 @@ export class HelpersCore extends HelpersMessages {
     // to: ${destinationPath},
     // `)
 
-    Helpers.log(`[tnp-code][create link] exited -> dest
-    ${existedFileOrFolder} ${destinationPath}`, 1);
+    Helpers.log(
+      `[tnp-code][create link] exited -> dest
+    ${existedFileOrFolder} ${destinationPath}`,
+      1,
+    );
 
     options = options ? options : {};
     if (_.isUndefined(options.continueWhenExistedFolderDoesntExists)) {
@@ -498,10 +564,13 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
 
-    const { continueWhenExistedFolderDoesntExists, windowsHardLink, speedUpProcess } = options;
+    const {
+      continueWhenExistedFolderDoesntExists,
+      windowsHardLink,
+      speedUpProcess,
+    } = options;
 
     // console.log('Create link!')
-
 
     let targetExisted = existedFileOrFolder;
     let linkDest = destinationPath;
@@ -513,7 +582,7 @@ export class HelpersCore extends HelpersMessages {
         Helpers.error(`[helpers.createLink] target path doesn't exist: ${existedFileOrFolder}
           use option "continueWhenExistedFolderDoesntExists" to fix this if you know that
           file will be eventually in place
-        `)
+        `);
       }
     }
 
@@ -524,42 +593,46 @@ export class HelpersCore extends HelpersMessages {
      * ln -s ./ /test/inside -> /test/inside/mysource
      */
     if (options.allowNotAbsolutePathes) {
-
       if (linkDest === '.' || linkDest === './') {
         linkDest = crossPlatformPath(process.cwd());
       }
 
       if (!path.isAbsolute(linkDest)) {
-        linkDest = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), linkDest));
+        linkDest = crossPlatformPath(
+          path.join(crossPlatformPath(process.cwd()), linkDest),
+        );
       }
 
       if (!path.isAbsolute(targetExisted)) {
-        targetExisted = crossPlatformPath(path.join(crossPlatformPath(process.cwd()), targetExisted));
+        targetExisted = crossPlatformPath(
+          path.join(crossPlatformPath(process.cwd()), targetExisted),
+        );
       }
     } else {
       if (!path.isAbsolute(linkDest)) {
         Helpers.error(`[createsymlink] path is not absolute:
         targetExisted: ${targetExisted}
         linkDest: ${linkDest}
-        `)
+        `);
       }
       if (!path.isAbsolute(targetExisted)) {
         Helpers.error(`[createsymlink] path is not absolute:
         targetExisted: ${targetExisted}
         linkDest: ${linkDest}
-        `)
+        `);
       }
     }
 
-
     if (linkDest.endsWith('/')) {
-      linkDest = crossPlatformPath(path.join(linkDest, path.basename(targetExisted)))
+      linkDest = crossPlatformPath(
+        path.join(linkDest, path.basename(targetExisted)),
+      );
     }
 
     const parentFolderLinkDest = path.dirname(linkDest);
 
     if (Helpers.isSymlinkFileExitedOrUnexisted(parentFolderLinkDest)) {
-      fse.unlinkSync(parentFolderLinkDest)
+      fse.unlinkSync(parentFolderLinkDest);
     }
 
     if (!Helpers.isFolder(parentFolderLinkDest)) {
@@ -571,8 +644,9 @@ export class HelpersCore extends HelpersMessages {
       rimraf.sync(linkDest);
     }
 
-    if (process.platform === 'win32') {
+    // console.log({ targetExisted, linkDest });
 
+    if (process.platform === 'win32') {
       // const resolvedTarget = crossPlatformPath(path.resolve(targetExisted));
 
       // console.log(`resolved target from ${targetExisted} = ${resolvedTarget}, isFile: ${targetIsFile}`)
@@ -597,26 +671,20 @@ export class HelpersCore extends HelpersMessages {
       //   fse.unlinkSync(linkDest)
       // }
 
-      if (windowsHardLink) { // ADMIN RIGHT REQURED??
-        fse.symlinkSync(targetExisted, linkDest, 'dir')
+      if (windowsHardLink) {
+        // ADMIN RIGHT REQURED??
+        fse.symlinkSync(targetExisted, linkDest, 'dir');
       } else {
         if (targetIsFile) {
-          if (
-            (path.basename(path.dirname(targetExisted)) === '.bin') // TODO QUICK_FIX MEGA HACK
-            && (path.basename(path.dirname(path.dirname(targetExisted))) === 'node_modules')
-          ) {
-            fse.linkSync(targetExisted, linkDest)
-          } else {
-            const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${linkDest}" "${targetExisted}"`;
-            const showSymlinkOutputOnWindows = forceTrace;
-            Helpers.run(winLinkCommand, {
-              biggerBuffer: false,
-              output: showSymlinkOutputOnWindows,
-              silence: !showSymlinkOutputOnWindows,
-            }).sync();
-          }
+          const winLinkCommand = `mklink ${windowsHardLink ? '/D' : targetIsFile ? '/H' : '/j'} "${linkDest}" "${targetExisted}"`;
+          const showSymlinkOutputOnWindows = forceTrace;
+          Helpers.run(winLinkCommand, {
+            biggerBuffer: false,
+            output: showSymlinkOutputOnWindows,
+            silence: !showSymlinkOutputOnWindows,
+          }).sync();
         } else {
-          fse.symlinkSync(targetExisted, linkDest, 'junction')
+          fse.symlinkSync(targetExisted, linkDest, 'junction');
         }
       }
 
@@ -645,9 +713,8 @@ export class HelpersCore extends HelpersMessages {
       */
       //#endregion
     } else {
-      fse.symlinkSync(targetExisted, linkDest)
+      fse.symlinkSync(targetExisted, linkDest);
     }
-
   }
   //#endregion
   //#endregion
@@ -656,14 +723,24 @@ export class HelpersCore extends HelpersMessages {
   //#region @backend
   public mkdirp(folderPath: string | string[]): void {
     if (_.isArray(folderPath)) {
-      folderPath = path.join(...folderPath);
+      folderPath = crossPlatformPath(folderPath);
     }
     if (!path.isAbsolute(folderPath)) {
-      Helpers.warn(`[firedev-core][mkdirp] Path is not absolute, abort ${folderPath}`, true);
+      Helpers.warn(
+        `[firedev-core][mkdirp] Path is not absolute, abort ${folderPath}`,
+        true,
+      );
       return;
     }
-    if (_.isString(folderPath) && folderPath.startsWith('/tmp ') && os.platform() === 'darwin') {
-      Helpers.warn(`[firedev-core][mkdirp] On mac osx /tmp is changed to /private/tmp`, false);
+    if (
+      _.isString(folderPath) &&
+      folderPath.startsWith('/tmp ') &&
+      os.platform() === 'darwin'
+    ) {
+      Helpers.warn(
+        `[firedev-core][mkdirp] On mac osx /tmp is changed to /private/tmp`,
+        false,
+      );
       folderPath = folderPath.replace(`/tmp/`, '/private/tmp/');
     }
 
@@ -672,12 +749,17 @@ export class HelpersCore extends HelpersMessages {
     }
 
     if (fse.existsSync(folderPath)) {
-      Helpers.log(`[firedev-core][mkdirp] folder path already exists: ${folderPath}`);
+      Helpers.log(
+        `[firedev-core][mkdirp] folder path already exists: ${folderPath}`,
+      );
     } else {
-      // if(Helpers.isSymlinkFileExitedOrUnexisted(folderPath)) {
-      //   Helpers.error(`Folder is symlink.. can't recreate`)
+      // if (Helpers.isSymlinkFileExitedOrUnexisted(path.dirname(folderPath))) {
+      //   // TODO SUPER HACK
+      //   try {
+      //     Helpers.removeFileIfExists(path.dirname(folderPath));
+      //   } catch (error) {}
       // }
-      Helpers.log(`[firedev-core][mkdirp] ${folderPath}`, 1)
+      Helpers.log(`[firedev-core][mkdirp] ${folderPath}`, 1);
       fse.mkdirpSync(folderPath);
     }
   }
@@ -703,7 +785,7 @@ export class HelpersCore extends HelpersMessages {
         if (absoluteFileMatch) {
           fileLink = fse.realpathSync(fileLink);
         }
-        fileLink = crossPlatformPath(fileLink)
+        fileLink = crossPlatformPath(fileLink);
         return fileLink === destUrl;
       }
       if (Helpers.isFolder(possibleSymlink)) {
@@ -712,14 +794,16 @@ export class HelpersCore extends HelpersMessages {
     }
 
     try {
-      const linkToUnexitedLink = fse.lstatSync(possibleSymlink).isSymbolicLink();
+      const linkToUnexitedLink = fse
+        .lstatSync(possibleSymlink)
+        .isSymbolicLink();
       if (linkToUnexitedLink) {
         let fileLink = fse.readlinkSync(possibleSymlink);
         if (absoluteFileMatch) {
           fileLink = fse.realpathSync(fileLink);
         }
-        fileLink = crossPlatformPath(fileLink)
-        return (fileLink === destUrl);
+        fileLink = crossPlatformPath(fileLink);
+        return fileLink === destUrl;
       }
       return false;
     } catch (error) {
@@ -752,7 +836,7 @@ export class HelpersCore extends HelpersMessages {
   isUnexistedLink(filePath: string | string[]): boolean {
     //#region @backendFunc
     if (_.isArray(filePath)) {
-      filePath = crossPlatformPath(path.join(...filePath));
+      filePath = crossPlatformPath(filePath);
     }
     filePath = Helpers.removeSlashAtEnd(filePath);
     if (process.platform === 'win32') {
@@ -760,8 +844,13 @@ export class HelpersCore extends HelpersMessages {
     }
 
     try {
-      const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
-      return linkToUnexitedLink && !fse.existsSync(fse.readlinkSync(filePath));
+      const linkToUnexitedLink = fse
+        .lstatSync(filePath as string)
+        .isSymbolicLink();
+      return (
+        linkToUnexitedLink &&
+        !fse.existsSync(fse.readlinkSync(filePath as string))
+      );
     } catch (error) {
       return false;
     }
@@ -776,16 +865,23 @@ export class HelpersCore extends HelpersMessages {
   isExistedSymlink(filePath: string | string[]): boolean {
     //#region @backendFunc
     if (_.isArray(filePath)) {
-      filePath = crossPlatformPath(path.join(...filePath));
+      filePath = crossPlatformPath(filePath);
     }
+
     filePath = Helpers.removeSlashAtEnd(filePath);
+
     if (process.platform === 'win32') {
       filePath = path.win32.normalize(filePath);
     }
 
     try {
-      const linkToUnexitedLink = fse.lstatSync(filePath).isSymbolicLink();
-      return linkToUnexitedLink && fse.existsSync(fse.readlinkSync(filePath));
+      const linkToUnexitedLink = fse
+        .lstatSync(filePath as string)
+        .isSymbolicLink();
+      return (
+        linkToUnexitedLink &&
+        fse.existsSync(fse.readlinkSync(filePath as string))
+      );
     } catch (error) {
       return false;
     }
@@ -816,26 +912,32 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / exists
-  public exists(folderOrFilePath: string | string[]
+  public exists(
+    folderOrFilePath: string | string[],
     // , allowUnexistedLinks = false
   ) {
     //#region @backendFunc
     if (_.isArray(folderOrFilePath)) {
-      folderOrFilePath = path.join(...folderOrFilePath);
+      folderOrFilePath = crossPlatformPath(folderOrFilePath);
     }
     if (!folderOrFilePath) {
-      Helpers.warn(`[firedev-core][exists] Path is not a string, abort.. "${folderOrFilePath}"`, true);
+      Helpers.warn(
+        `[firedev-core][exists] Path is not a string, abort.. "${folderOrFilePath}"`,
+        true,
+      );
       return false;
     }
     if (!path.isAbsolute(folderOrFilePath)) {
-      Helpers.warn(`[firedev-core]
+      Helpers.warn(
+        `[firedev-core]
       File path is not absolute:
       ${folderOrFilePath}
 
-      `, true);
+      `,
+        true,
+      );
       return false;
     }
-
 
     return fse.existsSync(folderOrFilePath);
     //#endregion
@@ -848,16 +950,20 @@ export class HelpersCore extends HelpersMessages {
    */
   public _fixCommand(command: string): string {
     if (
-      (command.startsWith('tnp ') || command.startsWith('firedev ')) // TODO every cli projects here that uses run and need to kill process easly!
-      &&
-      (command.search('-spinner=false') === -1) && (command.search('-spinner=off') === -1)) {
-      command = `${command} -spinner=false`
+      (command.startsWith('tnp ') || command.startsWith('firedev ')) && // TODO every cli projects here that uses run and need to kill process easly!
+      command.search('-spinner=false') === -1 &&
+      command.search('-spinner=off') === -1
+    ) {
+      command = `${command} -spinner=false`;
     }
 
-    if (global.skipCoreCheck && (command.startsWith('tnp ') || command.startsWith('firedev '))) {
-      command = `${command} --skipCoreCheck`
+    if (
+      global.skipCoreCheck &&
+      (command.startsWith('tnp ') || command.startsWith('firedev '))
+    ) {
+      command = `${command} --skipCoreCheck`;
     }
-    return command
+    return command;
   }
   //#endregion
 
@@ -877,53 +983,51 @@ export class HelpersCore extends HelpersMessages {
         if (!options) {
           options = {} as any;
         }
-        return new Promise<string>((resolve) => {
+        return new Promise<string>(resolve => {
           // @ts-ignore
           let { ommitStder, cwd, biggerBuffer, gatherColors } = options;
           if (!cwd) {
-            cwd = process.cwd()
+            cwd = process.cwd();
           }
           const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : void 0;
 
           const env = gatherColors ? { ...process.env, FORCE_COLOR: '1' } : {};
           const proc = child_process.exec(command, {
-            cwd,// @ts-ignore
+            cwd, // @ts-ignore
             maxBuffer,
             env: env as any,
           } as any);
           let gatheredData = '';
 
-          proc.on('exit', (code) => {
+          proc.on('exit', code => {
             resolve(gatheredData);
           });
 
           // @ts-ignore
-          proc.stdout.on('data', (data) => {
+          proc.stdout.on('data', data => {
             gatheredData = `${gatheredData}${data?.toString() || ''}`;
-          })
+          });
 
           // @ts-ignore
-          proc.stdout.on('error', (data) => {
+          proc.stdout.on('error', data => {
             gatheredData = `${gatheredData}${data?.toString() || ''}`;
-          })
+          });
 
           if (!ommitStder) {
             // @ts-ignore
-            proc.stderr.on('data', (data) => {
+            proc.stderr.on('data', data => {
               gatheredData = `${gatheredData}${data?.toString() || ''}`;
-            })
+            });
 
             // @ts-ignore
-            proc.stderr.on('error', (data) => {
+            proc.stderr.on('error', data => {
               gatheredData = `${gatheredData}${data?.toString() || ''}`;
-            })
+            });
           }
-
-        })
-
-      }
+        });
+      },
       //#endregion
-    }
+    };
   }
   //#endregion
 
@@ -933,7 +1037,7 @@ export class HelpersCore extends HelpersMessages {
       setTimeout(() => {
         resolve(void 0);
       }, second * 1000);
-    })
+    });
   }
   //#endregion
 
@@ -950,8 +1054,8 @@ export class HelpersCore extends HelpersMessages {
     try {
       output = await Helpers.command(command).getherOutput({
         cwd, // @ts-ignore
-        biggerBuffer: opt.biggerBuffer,// @ts-ignore
-        ommitStder: !opt.showStder,// @ts-ignore
+        biggerBuffer: opt.biggerBuffer, // @ts-ignore
+        ommitStder: !opt.showStder, // @ts-ignore
         gatherColors: opt.gatherColors,
       });
       // console.log({
@@ -960,7 +1064,7 @@ export class HelpersCore extends HelpersMessages {
       // @ts-ignore
       if (opt.showWholeCommandNotOnlyLastLine) {
         // console.log('SHHOW WOLE', output)
-        return output.replace(/[^\x00-\xFF]/g, '')
+        return output.replace(/[^\x00-\xFF]/g, '');
       }
       const splited = (output || '').split('\n');
       output = (splited.pop() || '').replace(/[^\x00-\xFF]/g, '');
@@ -991,18 +1095,22 @@ export class HelpersCore extends HelpersMessages {
       // @ts-ignore
       const env = opt.gatherColors ? { ...process.env, FORCE_COLOR: '1' } : {};
       // output = Helpers.run(command, { output: false, cwd, biggerBuffer }).sync().toString().trim()
-      output = (child_process.execSync(command, {
-        cwd, // @ts-ignore
-        stdio: ['ignore', 'pipe', opt.showStder ? 'pipe' : 'ignore'], // @ts-ignore
-        maxBuffer: opt.biggerBuffer ? Helpers.bigMaxBuffer : void 0,
-        env: env as any,
-      })?.toString() || '').trim();
+      output = (
+        child_process
+          .execSync(command, {
+            cwd, // @ts-ignore
+            stdio: ['ignore', 'pipe', opt.showStder ? 'pipe' : 'ignore'], // @ts-ignore
+            maxBuffer: opt.biggerBuffer ? Helpers.bigMaxBuffer : void 0,
+            env: env as any,
+          })
+          ?.toString() || ''
+      ).trim();
       // console.log({
       //   output
       // })
       // @ts-ignore
       if (opt.showWholeCommandNotOnlyLastLine) {
-        return output.replace(/[^\x00-\xFF]/g, '')
+        return output.replace(/[^\x00-\xFF]/g, '');
       }
       const splited = (output || '').split('\n');
       output = (splited.pop() || '').replace(/[^\x00-\xFF]/g, '');
@@ -1020,12 +1128,15 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
   //#endregion
 
-
-  async killProcessByPort(portOrPortsToKill: number | number[], options?: {
-    silent?: boolean
-  }) {
+  //#region methods / kill process by port
+  async killProcessByPort(
+    portOrPortsToKill: number | number[],
+    options?: {
+      silent?: boolean;
+    },
+  ) {
     //#region @backendFunc
-    const showOutoput = (!options || !options.silent);
+    const showOutoput = !options || !options.silent;
     if (!_.isArray(portOrPortsToKill)) {
       portOrPortsToKill = [portOrPortsToKill];
     }
@@ -1035,17 +1146,24 @@ export class HelpersCore extends HelpersMessages {
       const org = port;
       port = Number(port);
       if (!_.isNumber(port)) {
-        showOutoput && Helpers.warn(`[firedev-helpers] Can't kill on port: "${org}"`);
+        showOutoput &&
+          Helpers.warn(`[firedev-helpers] Can't kill on port: "${org}"`);
         return;
       }
       try {
         await fkill(`:${port}`, { force: true });
         // run(`fkill -f :${port} &> /dev/null`, { output: false }).sync()
-        showOutoput && Helpers.info(`[firedev-helpers] Processs killed successfully on port: ${port}`);
+        showOutoput &&
+          Helpers.info(
+            `[firedev-helpers] Processs killed successfully on port: ${port}`,
+          );
       } catch (e) {
-        showOutoput && Helpers.warn(`[firedev-helpers] No process to kill  on port: ${port}... `, false);
+        showOutoput &&
+          Helpers.warn(
+            `[firedev-helpers] No process to kill  on port: ${port}... `,
+            false,
+          );
       }
-
 
       // console.log(`Killing process on port ${port} in progress`);
       // try {
@@ -1063,12 +1181,18 @@ export class HelpersCore extends HelpersMessages {
     }
     //#endregion
   }
+  //#endregion
 
-  async killOnPort(portOrPortsToKill: number | number[], options?: {
-    silent?: boolean
-  }) {
+  //#region methods / kill on port
+  async killOnPort(
+    portOrPortsToKill: number | number[],
+    options?: {
+      silent?: boolean;
+    },
+  ) {
     return await Helpers.killProcessByPort(portOrPortsToKill, options);
   }
+  //#endregion
 
   //#region methods / kill process
   public killProcess(byPid: number) {
@@ -1076,21 +1200,25 @@ export class HelpersCore extends HelpersMessages {
     // Helpers.run(`kill -9 ${byPid}`).sync()
     //#endregion
     //#region @backend
-    Helpers.run(`fkill --force ${byPid}`).sync()
+    Helpers.run(`fkill --force ${byPid}`).sync();
     // return;
     //#endregion
     //#region @websqlOnly
     if (WEBSQL_PROC_MOCK_PROCESSES_PID[byPid]) {
       const ppid = WEBSQL_PROC_MOCK_PROCESSES_PID[byPid].ppid;
       if (WEBSQL_PROC_MOCK_PROCESSES_PPID[ppid]) {
-        const allChilds = WEBSQL_PROC_MOCK_PROCESSES_PPID[ppid].childProcesses as number[];
-        WEBSQL_PROC_MOCK_PROCESSES_PPID[ppid].childProcesses = allChilds.filter(p => p !== byPid);
+        const allChilds = WEBSQL_PROC_MOCK_PROCESSES_PPID[ppid]
+          .childProcesses as number[];
+        WEBSQL_PROC_MOCK_PROCESSES_PPID[ppid].childProcesses = allChilds.filter(
+          p => p !== byPid,
+        );
       }
       delete WEBSQL_PROC_MOCK_PROCESSES_PID[byPid];
     }
 
     if (WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid]) {
-      const childs = WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid].childProcesses as number[];
+      const childs = WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid]
+        .childProcesses as number[];
       for (let index = 0; index < childs.length; index++) {
         const childPid = childs[index];
         delete WEBSQL_PROC_MOCK_PROCESSES_PID[childPid];
@@ -1102,8 +1230,7 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / run
-  public run(command: string,
-    options?: CoreModels.RunOptions) {
+  public run(command: string, options?: CoreModels.RunOptions) {
     command = Helpers._fixCommand(command);
 
     // console.log({ command })
@@ -1112,9 +1239,9 @@ export class HelpersCore extends HelpersMessages {
     if (!options) options = {};
     if (options.output === void 0) options.output = true;
     if (options.biggerBuffer === void 0) options.biggerBuffer = false;
-    if (options.cwd === void 0) options.cwd = crossPlatformPath(process.cwd())
+    if (options.cwd === void 0) options.cwd = crossPlatformPath(process.cwd());
     if (!_.isString(command)) {
-      Helpers.error(`[firedev-helpers] command is not a string`)
+      Helpers.error(`[firedev-helpers] command is not a string`);
     }
     //#endregion
     return {
@@ -1122,20 +1249,28 @@ export class HelpersCore extends HelpersMessages {
        * start command as synchronous nodej proces
        */
 
-      sync() { // TODO buffer
+      sync() {
+        // TODO buffer
         //#region @backendFunc
         // @ts-ignore
         if (_.isArray(options.extractFromLine)) {
-          Helpers.error(`[tnp-helper] extractFromLine only for:
+          Helpers.error(
+            `[tnp-helper] extractFromLine only for:
           - asyncAsPromise
           - async
           - unitlOutputContains
 
-          `, false, true);
+          `,
+            false,
+            true,
+          );
         }
 
         // @ts-ignore
-        if (_.isNumber(options.tryAgainWhenFailAfter) && options.tryAgainWhenFailAfter > 0) {
+        if (
+          _.isNumber(options.tryAgainWhenFailAfter) &&
+          options.tryAgainWhenFailAfter > 0
+        ) {
           // TODO try again when fail
           // try {
           const proc = Helpers.runSyncIn(command, options);
@@ -1154,16 +1289,17 @@ export class HelpersCore extends HelpersMessages {
        * start command as asynchronous nodej proces
        * @param detach (default: false) - if true process will be detached
        */
-      async(detach = false,
+      async(
+        detach = false,
         //#region @browser
-        mockFun?: (stdoutCallback: (dataForStdout: any) => any, stdErrcCallback: (dataForStder: any) => any, shouldProcesBeDead?: () => boolean) => Promise<number> | number
+        mockFun?: (
+          stdoutCallback: (dataForStdout: any) => any,
+          stdErrcCallback: (dataForStder: any) => any,
+          shouldProcesBeDead?: () => boolean,
+        ) => Promise<number> | number,
         //#endregion
-      )
+      ): ChildProcess {
         //#region websqlFunc
-        //#region @backend
-        : child_process.ChildProcess
-      //#endregion
-      {
         //#region mock of process
         //#region @browser
         if (mockFun) {
@@ -1172,31 +1308,36 @@ export class HelpersCore extends HelpersMessages {
           const exitSub = new Subject();
           const subscribtions: Subscription[] = [];
 
-
           const procDummy = {
             stdout: {
               on(action: 'data', stdoutCallback: any) {
                 if (action == 'data') {
-                  subscribtions.push(subStdoutSub.subscribe(d => {
-                    stdoutCallback(d);
-                  }))
+                  subscribtions.push(
+                    subStdoutSub.subscribe(d => {
+                      stdoutCallback(d);
+                    }),
+                  );
                 }
-              }
+              },
             },
             stderr: {
               on(action: 'data', stdoutCallback: any) {
                 if (action == 'data') {
-                  subscribtions.push(subStderSub.subscribe(d => {
-                    stdoutCallback(d);
-                  }))
+                  subscribtions.push(
+                    subStderSub.subscribe(d => {
+                      stdoutCallback(d);
+                    }),
+                  );
                 }
-              }
+              },
             },
             on(action: 'exit', exitFun: any) {
               if (action == 'exit') {
-                subscribtions.push(exitSub.subscribe(d => {
-                  exitFun(d);
-                }))
+                subscribtions.push(
+                  exitSub.subscribe(d => {
+                    exitFun(d);
+                  }),
+                );
               }
             }, // @ts-ignore
             ppid: void 0 as number, // @ts-ignore
@@ -1206,36 +1347,41 @@ export class HelpersCore extends HelpersMessages {
           procDummy.pid = Math.round(Math.random() * (1000 - 100)) + 100;
           procDummy.ppid = procDummy.pid + 9999;
 
-
           WEBSQL_PROC_MOCK_PROCESSES_PID[procDummy.pid] = procDummy;
           if (!WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid]) {
             WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid] = {
               childProcesses: [],
             };
           }
-          WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid].childProcesses.push(procDummy.pid);
-
+          WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid].childProcesses.push(
+            procDummy.pid,
+          );
 
           const checkIfProcessShouldBeDead = () => {
-            return _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PID[procDummy.pid]) || _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid])
+            return (
+              _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PID[procDummy.pid]) ||
+              _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid])
+            );
           };
 
           const f = Helpers.runSyncOrAsync({
             functionFn: mockFun,
             arrayOfParams: [
-              (d) => {
+              d => {
                 setTimeout(() => {
                   subStdoutSub.next(d);
                 });
-              }, (d) => {
+              },
+              d => {
                 setTimeout(() => {
                   subStderSub.next(d);
                 });
-              }, () => {
+              },
+              () => {
                 const shouldBeDead = checkIfProcessShouldBeDead();
                 return shouldBeDead;
-              }
-            ]
+              },
+            ],
           });
           f.then(exitCode => {
             if (_.isNil(exitCode)) {
@@ -1244,13 +1390,13 @@ export class HelpersCore extends HelpersMessages {
             setTimeout(() => {
               exitSub.next(exitCode);
               subscribtions.forEach(s => s.unsubscribe());
-            })
-          }).catch((e) => {
+            });
+          }).catch(e => {
             console.error(e);
-            console.error(`Something wrong with your mock funciton`)
+            console.error(`Something wrong with your mock funciton`);
             exitSub.next(1);
             subscribtions.forEach(s => s.unsubscribe());
-          })
+          });
           return procDummy as any;
         }
         //#endregion
@@ -1276,7 +1422,6 @@ export class HelpersCore extends HelpersMessages {
               isResolved = true;
               resolve(void 0);
             }
-
           });
           proc.on('error', () => {
             if (!isResolved) {
@@ -1292,12 +1437,15 @@ export class HelpersCore extends HelpersMessages {
        * start command as asynchronous nodej proces inside promise
        * and wait until output contains some string
        */
-      unitlOutputContains(stdoutMsg: string | string[], stderMsg?: string | string[], timeout = 0,
-        stdoutOutputContainsCallback?: () => any) {
+      unitlOutputContains(
+        stdoutMsg: string | string[],
+        stderMsg?: string | string[],
+        timeout = 0,
+        stdoutOutputContainsCallback?: () => any,
+      ) {
         //#region @backendFunc
         let isResolved = false;
         return new Promise<any>((resolve, reject) => {
-
           if (_.isString(stdoutMsg)) {
             stdoutMsg = [stdoutMsg];
           }
@@ -1310,13 +1458,15 @@ export class HelpersCore extends HelpersMessages {
 
           const proc = Helpers.runAsyncIn(command, options);
           // @ts-ignore
-          proc.stderr.on('data', (message) => {
+          proc.stderr.on('data', message => {
             const data: string = message.toString().trim();
             if (!isResolved && _.isArray(stderMsg)) {
               for (let index = 0; index < stderMsg.length; index++) {
                 const rejectm = stderMsg[index];
-                if ((data.search(rejectm) !== -1)) {
-                  Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
+                if (data.search(rejectm) !== -1) {
+                  Helpers.info(
+                    `[unitlOutputContains] Rejected move to next step...`,
+                  );
                   isResolved = true;
                   setTimeout(() => {
                     reject();
@@ -1329,22 +1479,24 @@ export class HelpersCore extends HelpersMessages {
           });
 
           // @ts-ignore
-          proc.stdout.on('data', (message) => {
+          proc.stdout.on('data', message => {
             const data: string = message.toString().trim();
             if (isResolved) {
               for (let index = 0; index < stdoutMsg.length; index++) {
                 const m = stdoutMsg[index];
-                if ((data.search(m) !== -1)) {
-                  stdoutOutputContainsCallback && stdoutOutputContainsCallback();
+                if (data.search(m) !== -1) {
+                  stdoutOutputContainsCallback &&
+                    stdoutOutputContainsCallback();
                   break;
                 }
               }
             } else {
               for (let index = 0; index < stdoutMsg.length; index++) {
                 const m = stdoutMsg[index];
-                if ((data.search(m) !== -1)) {
+                if (data.search(m) !== -1) {
                   Helpers.info(`[unitlOutputContains] Move to next step...`);
-                  stdoutOutputContainsCallback && stdoutOutputContainsCallback();
+                  stdoutOutputContainsCallback &&
+                    stdoutOutputContainsCallback();
                   isResolved = true;
                   setTimeout(() => {
                     resolve(void 0);
@@ -1356,8 +1508,10 @@ export class HelpersCore extends HelpersMessages {
             if (!isResolved && _.isArray(stderMsg)) {
               for (let index = 0; index < stderMsg.length; index++) {
                 const rejectm = stderMsg[index];
-                if ((data.search(rejectm) !== -1)) {
-                  Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
+                if (data.search(rejectm) !== -1) {
+                  Helpers.info(
+                    `[unitlOutputContains] Rejected move to next step...`,
+                  );
                   isResolved = true;
                   setTimeout(() => {
                     reject();
@@ -1367,28 +1521,28 @@ export class HelpersCore extends HelpersMessages {
                 }
               }
             }
-
           });
         });
         //#endregion
-      }
-
-    }
+      },
+    };
   }
   //#endregion
 
   //#region methods / question yest no
-  async questionYesNo(message: string,
+  async questionYesNo(
+    message: string,
     callbackTrue?: () => any,
     callbackFalse?: () => any,
     defaultValue = true,
     /**
      * in non interactive mode
      */
-    mustAnswerQuestion = false) {
+    mustAnswerQuestion = false,
+  ) {
     //#region @backendFunc
     let response = {
-      value: defaultValue
+      value: defaultValue,
     };
     if (global.tnpNonInteractive && !mustAnswerQuestion) {
       Helpers.info(`${message} - AUTORESPONSE: ${defaultValue ? 'YES' : 'NO'}`);
@@ -1399,7 +1553,7 @@ export class HelpersCore extends HelpersMessages {
         message,
         initial: defaultValue,
         active: 'yes',
-        inactive: 'no'
+        inactive: 'no',
       });
     }
     if (response.value) {
@@ -1419,15 +1573,22 @@ export class HelpersCore extends HelpersMessages {
   //#region methods / get stdio
   //#region @backend
   public getStdio(options?: CoreModels.RunOptions) {
-    const { // @ts-ignore
-      output, silence, stdio
+    const {
+      // @ts-ignore
+      output,
+      silence,
+      stdio,
       // pipeToParentProcerss = false,
       // inheritFromParentProcerss = false
     } = options;
     if (typeof stdio !== 'undefined') {
       return stdio;
     }
-    let resstdio = output ? [0, 1, 2] : ((_.isBoolean(silence) && silence) ? 'ignore' : undefined);
+    let resstdio = output
+      ? [0, 1, 2]
+      : _.isBoolean(silence) && silence
+        ? 'ignore'
+        : undefined;
     // if (pipeToParentProcerss) {
     //   stdio = ['pipe', 'pipe', 'pipe'] as any;
     // }
@@ -1445,9 +1606,9 @@ export class HelpersCore extends HelpersMessages {
     // @ts-ignore
     const { cwd, biggerBuffer } = options;
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
-    let stdio = Helpers.getStdio(options)
+    let stdio = Helpers.getStdio(options);
     Helpers.checkProcess(cwd, command);
-    return child_process.execSync(command, { stdio, cwd, maxBuffer } as any)
+    return child_process.execSync(command, { stdio, cwd, maxBuffer } as any);
   }
   //#endregion
   //#endregion
@@ -1456,18 +1617,24 @@ export class HelpersCore extends HelpersMessages {
   //#region @backend
   public runAsyncIn(command: string, options?: CoreModels.RunOptions) {
     // @ts-ignore
-    const { output, cwd, biggerBuffer, outputLineReplace, extractFromLine, detach } = options;
+    const {
+      output,
+      cwd,
+      biggerBuffer,
+      outputLineReplace,
+      extractFromLine,
+      detach,
+    } = options;
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
-    let stdio = Helpers.getStdio(options)
+    let stdio = Helpers.getStdio(options);
     Helpers.checkProcess(cwd, command);
 
-
-    let proc: child_process.ChildProcess;
+    let proc: ChildProcess;
     if (detach) {
       //#region detached
       const cmd = _.first(command.split(' '));
       const argsForCmd = command.split(' ').slice(1);
-      Helpers.log(`cmd: "${cmd}",  args: "${argsForCmd.join(' ')}"`)
+      Helpers.log(`cmd: "${cmd}",  args: "${argsForCmd.join(' ')}"`);
       if (process.platform === 'win32') {
         proc = spawn(cmd, argsForCmd, { cwd, detached: true });
 
@@ -1489,7 +1656,7 @@ export class HelpersCore extends HelpersMessages {
 
       DETACHED PROCESS IS WORKING ON PID: ${proc.pid}
 
-      `)
+      `);
       // proc = child.exec(`${command} &`, { cwd, maxBuffer, });
       //#endregion
     } else {
@@ -1507,10 +1674,11 @@ export class HelpersCore extends HelpersMessages {
       //   });
       // }
     }
-    return Helpers.logProc(proc,
+    return Helpers.logProc(
+      proc,
       detach ? true : output,
       detach ? void 0 : stdio,
-      outputLineReplace,// @ts-ignore
+      outputLineReplace, // @ts-ignore
       options.prefix,
       extractFromLine,
     );
@@ -1520,12 +1688,14 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / log process
   //#region @backend
-  logProc(proc: child_process.ChildProcess,
+  logProc(
+    proc: ChildProcess,
     output = true,
     stdio,
     outputLineReplace: (outputLine: string) => string,
     prefix: string,
-    extractFromLine?: (string | Function)[]) {
+    extractFromLine?: (string | Function)[],
+  ) {
     Helpers.processes.push(proc);
 
     if (stdio) {
@@ -1533,46 +1703,72 @@ export class HelpersCore extends HelpersMessages {
       proc.stdio = stdio;
     }
 
-
     if (!prefix) {
       prefix = '';
     }
 
     if (output) {
       // @ts-ignore
-      proc.stdout.on('data', (data) => {
+      proc.stdout.on('data', data => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
         // }
 
-        process.stdout.write(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine))
-      })
+        process.stdout.write(
+          Helpers.modifyLineByLine(
+            data,
+            outputLineReplace,
+            prefix,
+            extractFromLine,
+          ),
+        );
+      });
 
       // @ts-ignore
-      proc.stdout.on('error', (data) => {
+      proc.stdout.on('error', data => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
         // }
 
-        console.log(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine));
-      })
+        console.log(
+          Helpers.modifyLineByLine(
+            data,
+            outputLineReplace,
+            prefix,
+            extractFromLine,
+          ),
+        );
+      });
 
       // @ts-ignore
-      proc.stderr.on('data', (data) => {
+      proc.stderr.on('data', data => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
         // }
-        process.stderr.write(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine))
-      })
+        process.stderr.write(
+          Helpers.modifyLineByLine(
+            data,
+            outputLineReplace,
+            prefix,
+            extractFromLine,
+          ),
+        );
+      });
 
       // @ts-ignore
-      proc.stderr.on('error', (data) => {
+      proc.stderr.on('error', data => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
         // }
-        console.log(Helpers.modifyLineByLine(data, outputLineReplace, prefix, extractFromLine));
-      })
-
+        console.log(
+          Helpers.modifyLineByLine(
+            data,
+            outputLineReplace,
+            prefix,
+            extractFromLine,
+          ),
+        );
+      });
     }
 
     return proc;
@@ -1581,7 +1777,7 @@ export class HelpersCore extends HelpersMessages {
   async execute(
     command: string,
     cwd: string,
-    options?: Omit<CoreModels.ExecuteOptions, 'tryAgainWhenFailAfter'>
+    options?: Omit<CoreModels.ExecuteOptions, 'tryAgainWhenFailAfter'>,
   ) {
     //#region options
     let {
@@ -1592,12 +1788,13 @@ export class HelpersCore extends HelpersMessages {
       extractFromLine,
       exitOnErrorCallback,
       askToTryAgainOnError,
+      similarProcessKey,
     } = options || {};
     //#endregion
 
     command = Helpers._fixCommand(command);
 
-    let childProcess: child_process.ChildProcess;
+    let childProcess: ChildProcess;
     // let {
     //   stderMsgForPromiseResolve,
     //   stdoutMsgForPromiseResolve
@@ -1620,29 +1817,65 @@ export class HelpersCore extends HelpersMessages {
       resolvePromiseMsg.stderr = [resolvePromiseMsg.stderr];
     }
 
-    const handlProc = (proc: child_process.ChildProcess) => {
+    const handlProc = (proc: ChildProcess) => {
       return new Promise((resolve, reject) => {
+        // TODO UNCOMMENT + TEST
+        // if (
+        //   similarProcessKey &&
+        //   !Array.isArray(globalProcessStdout[similarProcessKey])
+        // ) {
+        //   globalProcessStdout[similarProcessKey] = [];
+        // }
+        // if (
+        //   similarProcessKey &&
+        //   !Array.isArray(globalProcessStder[similarProcessKey])
+        // ) {
+        //   globalProcessStder[similarProcessKey] = [];
+        // }
+        // let lastRawDataStdout = similarProcessKey
+        //   ? globalProcessStdout[similarProcessKey]
+        //   : [];
+        // let lastRawDataStder = similarProcessKey
+        //   ? globalProcessStder[similarProcessKey]
+        //   : [];
 
         //#region handle stdout data
-        proc.stdout.on('data', (rawData) => {
-          let data = (rawData?.toString() || '');
+
+        proc.stdout.on('data', rawData => {
+          let data = rawData?.toString() || '';
+
+          // TODO UNCOMMENT + TEST
+          // if (data !== '' && lastRawDataStdout.includes(data.trim())) {
+          //   // console.warn(`[execute][stdout] Same data as last one, skip...`);
+          //   // process.stdout.write('-');
+          //   return;
+          // }
+          // lastRawDataStdout.push(data.trim());
+          // if (lastRawDataStdout.length > maxProcessHistoryLinesChekc) {
+          //   lastRawDataStdout.shift();
+          // }
 
           data = Helpers.modifyLineByLine(
             data, // @ts-ignore
             outputLineReplace,
             prefix,
-            extractFromLine
+            extractFromLine,
           );
 
           if (!hideOutput.stdout) {
             process.stdout.write(data);
           }
 
-
-          if (!isResolved && _.isArray(resolvePromiseMsg.stdout)) { // @ts-ignore
-            for (let index = 0; index < resolvePromiseMsg.stdout.length; index++) { // @ts-ignore
+          if (!isResolved && _.isArray(resolvePromiseMsg.stdout)) {
+            // @ts-ignore
+            for (
+              let index = 0;
+              index < resolvePromiseMsg.stdout.length;
+              index++
+            ) {
+              // @ts-ignore
               const m = resolvePromiseMsg.stdout[index];
-              if ((data.search(m) !== -1)) {
+              if (data.search(m) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Move to next step...`)
                 isResolved = true;
                 resolve(void 0);
@@ -1651,10 +1884,16 @@ export class HelpersCore extends HelpersMessages {
             }
           }
 
-          if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) { // @ts-ignore
-            for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) { // @ts-ignore
+          if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) {
+            // @ts-ignore
+            for (
+              let index = 0;
+              index < resolvePromiseMsg.stderr.length;
+              index++
+            ) {
+              // @ts-ignore
               const rejectm = resolvePromiseMsg.stderr[index];
-              if ((data.search(rejectm) !== -1)) {
+              if (data.search(rejectm) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
                 isResolved = true;
                 reject();
@@ -1663,17 +1902,15 @@ export class HelpersCore extends HelpersMessages {
               }
             }
           }
-
         });
         //#endregion
 
         //#region handle exit process
-        proc.on('exit', async (code) => {
+        proc.on('exit', async code => {
           // console.log(`Command exit code: ${code}`)
           if (hideOutput.acceptAllExitCodeAsSuccess) {
             resolve(void 0);
           } else {
-
             if (code !== 0) {
               if (_.isFunction(exitOnErrorCallback)) {
                 try {
@@ -1692,47 +1929,63 @@ export class HelpersCore extends HelpersMessages {
               resolve(void 0);
             }
           }
-
-
         });
         //#endregion
 
         //#region handle stdout error
-        proc.stdout.on('error', (rawData) => {
-          let data = (rawData?.toString() || '');
+        proc.stdout.on('error', rawData => {
+          let data = rawData?.toString() || '';
+
+          // TODO UNCOMMENT + TEST
+          // if (data !== '' && lastRawDataStder.includes(data.trim())) {
+          //   // console.warn(`[execute][stder] Same data as last one, skip...`);
+          //   // process.stdout.write('-');
+          //   return;
+          // }
+          // lastRawDataStder.push(data.trim());
+          // if (lastRawDataStder.length > maxProcessHistoryLinesChekc) {
+          //   lastRawDataStder.shift();
+          // }
+
           data = Helpers.modifyLineByLine(
             data, // @ts-ignore
             outputLineReplace,
             prefix,
-            extractFromLine
+            extractFromLine,
           );
 
           if (!hideOutput.stdout) {
-            process.stdout.write(JSON.stringify(data))
+            process.stdout.write(JSON.stringify(data));
           }
 
           // console.log(data);
-        })
+        });
         //#endregion
 
         //#region handle stder data
-        proc.stderr.on('data', (rawData) => {
-          let data = (rawData?.toString() || '');
+        proc.stderr.on('data', rawData => {
+          let data = rawData?.toString() || '';
           data = Helpers.modifyLineByLine(
             data, // @ts-ignore
             outputLineReplace,
             prefix,
-            extractFromLine
+            extractFromLine,
           );
 
           if (!hideOutput.stderr) {
             process.stderr.write(data);
           }
 
-          if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) { // @ts-ignore
-            for (let index = 0; index < resolvePromiseMsg.stderr.length; index++) { // @ts-ignore
+          if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) {
+            // @ts-ignore
+            for (
+              let index = 0;
+              index < resolvePromiseMsg.stderr.length;
+              index++
+            ) {
+              // @ts-ignore
               const rejectm = resolvePromiseMsg.stderr[index];
-              if ((data.search(rejectm) !== -1)) {
+              if (data.search(rejectm) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
                 isResolved = true;
                 reject();
@@ -1741,23 +1994,22 @@ export class HelpersCore extends HelpersMessages {
               }
             }
           }
-
         });
         //#endregion
 
         //#region handle stder error
-        proc.stderr.on('error', (rawData) => {
-          let data = (rawData?.toString() || '');
+        proc.stderr.on('error', rawData => {
+          let data = rawData?.toString() || '';
           data = Helpers.modifyLineByLine(
             data, // @ts-ignore
             outputLineReplace,
             prefix,
-            extractFromLine
+            extractFromLine,
           );
 
           // @ts-ignore
           if (!hideOutput.stderr) {
-            process.stderr.write(JSON.stringify(data))
+            process.stderr.write(JSON.stringify(data));
           }
           // console.log(data);
         });
@@ -1771,13 +2023,17 @@ export class HelpersCore extends HelpersMessages {
         await handlProc(childProcess);
         break;
       } catch (error) {
-        Helpers.error(`Command failed:
+        Helpers.error(
+          `Command failed:
 
 ${command}
 
 in location: ${cwd}
 
-        `, true, true);
+        `,
+          true,
+          true,
+        );
         if (askToTryAgainOnError) {
           if (!(await Helpers.questionYesNo(`Try again this command ?`))) {
             throw error;
@@ -1818,32 +2074,49 @@ command: ${command}
     prefix: string,
     extractFromLine?: (string | Function)[],
   ): string {
-    const checkExtract = (_.isArray(extractFromLine) && extractFromLine.length > 0);
+    const checkExtract =
+      _.isArray(extractFromLine) && extractFromLine.length > 0;
     let modifyOutput = _.isFunction(outputLineReplace);
     if (modifyOutput && _.isString(data)) {
-      data = data.split(/\r?\n/).map(line => outputLineReplace(
-        line // .replace(chalkCharactersRegex, '')
-      )).join('\n');
+      data = data
+        .split(/\r?\n/)
+        .map(line =>
+          outputLineReplace(
+            line, // .replace(chalkCharactersRegex, '')
+          ),
+        )
+        .join('\n');
     }
     if (prefix && _.isString(data)) {
-      return data.split('\n').map(singleLine => {
-        if (!singleLine || singleLine.trim().length === 0 || singleLine.trim() === '.') {
-          return singleLine;
-        }
-        if (checkExtract) {
-          const sFuncs = extractFromLine
-            .filter(f => _.isString(f))
-          if (sFuncs.filter(f => (singleLine.search(f as string) !== -1)).length === sFuncs.length) {
-            const fun = extractFromLine.find(f => _.isFunction(f));
-            if (fun) {
-              let s = singleLine;
-              sFuncs.forEach(f => { s = s.replace(f as string, '') });
-              (fun as Function)(s.trim());
+      return data
+        .split('\n')
+        .map(singleLine => {
+          if (
+            !singleLine ||
+            singleLine.trim().length === 0 ||
+            singleLine.trim() === '.'
+          ) {
+            return singleLine;
+          }
+          if (checkExtract) {
+            const sFuncs = extractFromLine.filter(f => _.isString(f));
+            if (
+              sFuncs.filter(f => singleLine.search(f as string) !== -1)
+                .length === sFuncs.length
+            ) {
+              const fun = extractFromLine.find(f => _.isFunction(f));
+              if (fun) {
+                let s = singleLine;
+                sFuncs.forEach(f => {
+                  s = s.replace(f as string, '');
+                });
+                (fun as Function)(s.trim());
+              }
             }
           }
-        }
-        return `${prefix} ${singleLine}`
-      }).join('\n');
+          return `${prefix} ${singleLine}`;
+        })
+        .join('\n');
     }
     return data as string;
   }
@@ -1889,8 +2162,11 @@ command: ${command}
    * @deprecated
    */
   private isFile(pathToFileOrMaybeFolder: string) {
-    return pathToFileOrMaybeFolder && fse.existsSync(pathToFileOrMaybeFolder) &&
-      !fse.lstatSync(pathToFileOrMaybeFolder).isDirectory();
+    return (
+      pathToFileOrMaybeFolder &&
+      fse.existsSync(pathToFileOrMaybeFolder) &&
+      !fse.lstatSync(pathToFileOrMaybeFolder).isDirectory()
+    );
   }
   //#endregion
   //#endregion
@@ -1898,29 +2174,40 @@ command: ${command}
   //#region methods / read file
   //#region @backend
 
-  async tryReadFile(absoluteFilePath: string | string[], // @ts-ignore
+  async tryReadFile(
+    absoluteFilePath: string | string[], // @ts-ignore
     defaultValueWhenNotExists = void 0 as string,
     notTrim = false,
   ): Promise<string | undefined> {
-
     if (process.platform === 'win32') {
       while (true) {
         try {
-          const fileContent = Helpers.readFile(absoluteFilePath, defaultValueWhenNotExists, notTrim);
+          const fileContent = Helpers.readFile(
+            absoluteFilePath,
+            defaultValueWhenNotExists,
+            notTrim,
+          );
           return fileContent;
         } catch (error) {
-          Helpers.error(`Not able to read locked file: ${absoluteFilePath}`, true, true);
+          Helpers.error(
+            `Not able to read locked file: ${absoluteFilePath}`,
+            true,
+            true,
+          );
           await Helpers.wait(2);
         }
       }
-
     }
-    return Helpers.readFile(absoluteFilePath, defaultValueWhenNotExists, notTrim);
+    return Helpers.readFile(
+      absoluteFilePath,
+      defaultValueWhenNotExists,
+      notTrim,
+    );
   }
 
   /**
-  * wrapper for fs.readFileSync
-  */
+   * wrapper for fs.readFileSync
+   */
   readFile(
     absoluteFilePath: string | string[], // @ts-ignore
     defaultValueWhenNotExists = void 0 as string,
@@ -1938,13 +2225,18 @@ command: ${command}
       return defaultValueWhenNotExists;
     }
     if (notTrim) {
-      return fse.readFileSync(absoluteFilePath, {
-        encoding
-      }).toString();
+      return fse
+        .readFileSync(absoluteFilePath, {
+          encoding,
+        })
+        .toString();
     }
-    return fse.readFileSync(absoluteFilePath, {
-      encoding
-    }).toString().trim();
+    return fse
+      .readFileSync(absoluteFilePath, {
+        encoding,
+      })
+      .toString()
+      .trim();
   }
   //#endregion
   //#endregion
@@ -1955,7 +2247,11 @@ command: ${command}
    * read json from absolute path
    * @returns json object
    */
-  public readJson(absoluteFilePath: string | string[], defaultValue = {}, useJson5 = false): any {
+  public readJson(
+    absoluteFilePath: string | string[],
+    defaultValue = {},
+    useJson5 = false,
+  ): any {
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -1968,13 +2264,19 @@ command: ${command}
       const fileContent = Helpers.readFile(absoluteFilePath);
       let json;
       // @ts-ignore
-      json = Helpers.parse(fileContent, useJson5 || absoluteFilePath.endsWith('.json5'));
+      json = Helpers.parse(
+        fileContent,
+        useJson5 || absoluteFilePath.endsWith('.json5'),
+      );
       return json;
     } catch (error) {
       return defaultValue;
     }
   }
-  public readJson5(absoluteFilePath: string | string[], defaultValue = {}): any {
+  public readJson5(
+    absoluteFilePath: string | string[],
+    defaultValue = {},
+  ): any {
     return Helpers.readJson(absoluteFilePath, defaultValue, true);
   }
   //#endregion
@@ -1988,32 +2290,39 @@ command: ${command}
    */
   public parse<T = any>(jsonInstring: string, useJson5 = false): any {
     if (!_.isString(jsonInstring)) {
-      Helpers.log(jsonInstring)
-      Helpers.warn(`[firedev-core] Trying to parse no a string...`)
+      Helpers.log(jsonInstring);
+      Helpers.warn(`[firedev-core] Trying to parse no a string...`);
       return jsonInstring;
     }
-    return (useJson5 ? json5.parse(jsonInstring) : JSON.parse(jsonInstring)) as T;
+    return (
+      useJson5 ? json5.parse(jsonInstring) : JSON.parse(jsonInstring)
+    ) as T;
   }
   //#endregion
   //#endregion
 
   //#region methods / compilation wrapper
   //#region @backend
-  public async compilationWrapper(fn: () => void, taskName: string = 'Task',
-    executionType: 'Compilation of' | 'Code execution of' | 'Event:' = 'Compilation of') {
-
+  public async compilationWrapper(
+    fn: () => void,
+    taskName: string = 'Task',
+    executionType:
+      | 'Compilation of'
+      | 'Code execution of'
+      | 'Event:' = 'Compilation of',
+  ) {
     // global?.spinner?.start();
     function currentDate() {
       return `[${dateformat(new Date(), 'HH:MM:ss')}]`;
     }
     if (!fn || !_.isFunction(fn)) {
-      Helpers.error(`${executionType} wrapper: "${fn}" is not a function.`)
-      process.exit(1)
+      Helpers.error(`${executionType} wrapper: "${fn}" is not a function.`);
+      process.exit(1);
     }
 
-    Helpers.log(`${currentDate()} ${executionType} "${taskName}" Started..`)
+    Helpers.log(`${currentDate()} ${executionType} "${taskName}" Started..`);
     await Helpers.runSyncOrAsync({ functionFn: fn });
-    Helpers.log(`${currentDate()} ${executionType} "${taskName}" Done\u2713`)
+    Helpers.log(`${currentDate()} ${executionType} "${taskName}" Done\u2713`);
 
     // global?.spinner?.stop();
   }
@@ -2021,10 +2330,16 @@ command: ${command}
   //#endregion
 
   //#region methods / replace in line
-  replaceLinesInFile(absoluteFilePath: string | (string[]), lineReplaceFn: (line: string) => string) {
+  replaceLinesInFile(
+    absoluteFilePath: string | string[],
+    lineReplaceFn: (line: string) => string,
+  ) {
     //#region @backend
     const file = Helpers.readFile(absoluteFilePath) || '';
-    Helpers.writeFile(absoluteFilePath, file.split('\n').map(lineReplaceFn).join('\n'));
+    Helpers.writeFile(
+      absoluteFilePath,
+      file.split('\n').map(lineReplaceFn).join('\n'),
+    );
     //#endregion
   }
   //#endregion
@@ -2034,13 +2349,16 @@ command: ${command}
   /**
    * wrapper for fs.writeFileSync
    */
-  writeFile(absoluteFilePath: string | (string[]), input: string | object
-    //#region @backend
-    | Buffer
+  writeFile(
+    absoluteFilePath: string | string[],
+    input:
+      | string
+      | object
+      //#region @backend
+      | Buffer,
     //#endregion
-    ,
-    options?: { overrideSameFile?: boolean; preventParentFile?: boolean; }): boolean {
-
+    options?: { overrideSameFile?: boolean; preventParentFile?: boolean },
+  ): boolean {
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -2050,17 +2368,23 @@ command: ${command}
     if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
       const beforePath = absoluteFilePath;
       absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
-      Helpers.logWarn(`[firedev-core] WRITTING JSON into real path:
-      original: ${beforePath}
-      real    : ${absoluteFilePath}
-      `, forceTrace);
+      // Helpers.logWarn(
+      //   `[firedev-core] WRITTING JSON into real path:
+      // original: ${beforePath}
+      // real    : ${absoluteFilePath}
+      // `,
+      //   forceTrace,
+      // );
     }
 
     const { preventParentFile, overrideSameFile } = options || {};
     const dontWriteSameFile = !overrideSameFile;
 
     if (preventParentFile) {
-      if (Helpers.isFile(path.dirname(absoluteFilePath)) && fse.existsSync(path.dirname(absoluteFilePath))) {
+      if (
+        Helpers.isFile(path.dirname(absoluteFilePath)) &&
+        fse.existsSync(path.dirname(absoluteFilePath))
+      ) {
         fse.unlinkSync(path.dirname(absoluteFilePath));
       }
     }
@@ -2077,7 +2401,7 @@ command: ${command}
     if (_.isObject(input)) {
       input = Helpers.stringify(input);
     } else if (!_.isString(input)) {
-      input = ''
+      input = '';
     }
     if (dontWriteSameFile) {
       if (fse.existsSync(absoluteFilePath)) {
@@ -2090,7 +2414,7 @@ command: ${command}
     }
 
     fse.writeFileSync(absoluteFilePath, input, {
-      encoding
+      encoding,
     });
     return true;
   }
@@ -2102,9 +2426,11 @@ command: ${command}
   /**
    * wrapper for fs.writeFileSync
    */
-  writeJson(absoluteFilePath: string | (string[]), input: object,
-    optoins?: { preventParentFile?: boolean, writeJson5?: boolean }): boolean {
-
+  writeJson(
+    absoluteFilePath: string | string[],
+    input: object,
+    optoins?: { preventParentFile?: boolean; writeJson5?: boolean },
+  ): boolean {
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -2112,7 +2438,10 @@ command: ${command}
     const { preventParentFile, writeJson5 } = optoins || {};
 
     if (preventParentFile) {
-      if (Helpers.isFile(path.dirname(absoluteFilePath)) && fse.existsSync(path.dirname(absoluteFilePath))) {
+      if (
+        Helpers.isFile(path.dirname(absoluteFilePath)) &&
+        fse.existsSync(path.dirname(absoluteFilePath))
+      ) {
         fse.unlinkSync(path.dirname(absoluteFilePath));
       }
     }
@@ -2127,25 +2456,34 @@ command: ${command}
         var writer = json5Write.load(existedContent);
       } catch (error) {
         console.error(error?.message);
-        Helpers.error(`Pleas fix your jsonc file (json with comments) in
-        ${absoluteFilePath}`, false, true);
+        Helpers.error(
+          `Pleas fix your jsonc file (json with comments) in
+        ${absoluteFilePath}`,
+          false,
+          true,
+        );
       }
 
       writer.write(input);
-      Helpers.writeFile(absoluteFilePath, this.removeEmptyLineFromString(writer.toSource({
-        quote: 'double',
-        trailingComma: false,
-        quoteKeys: true
-      })));
+      Helpers.writeFile(
+        absoluteFilePath,
+        this.removeEmptyLineFromString(
+          writer.toSource({
+            quote: 'double',
+            trailingComma: false,
+            quoteKeys: true,
+          }),
+        ),
+      );
     } else {
       fse.writeJSONSync(absoluteFilePath, input, {
         encoding,
-        spaces: 2
+        spaces: 2,
       });
     }
     return true;
   }
-  writeJson5(absoluteFilePath: string | (string[]), input: object) {
+  writeJson5(absoluteFilePath: string | string[], input: object) {
     return Helpers.writeJson(absoluteFilePath, input, { writeJson5: true });
   }
   //#endregion
@@ -2157,9 +2495,12 @@ command: ${command}
    * return absolute paths for folders inside folders
    * @returns absoulte pathes to folders from path
    */
-  public foldersFrom(pathToFolder: string | string[], options?: {
-    recursive?: boolean;
-  }): string[] {
+  public foldersFrom(
+    pathToFolder: string | string[],
+    options?: {
+      recursive?: boolean;
+    },
+  ): string[] {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
@@ -2174,8 +2515,9 @@ command: ${command}
       try {
         const files = fse.readdirSync(folderPath, { withFileTypes: true });
         for (const file of files) {
-          if (file.isDirectory()
-            && !Helpers.isSymlinkFileExitedOrUnexisted([folderPath, file.name])
+          if (
+            file.isDirectory() &&
+            !Helpers.isSymlinkFileExitedOrUnexisted([folderPath, file.name])
           ) {
             const dirPath = crossPlatformPath([folderPath, file.name]);
             // console.log('dirPath', dirPath)
@@ -2189,7 +2531,7 @@ command: ${command}
       } catch (err) {
         Helpers.error(`Error reading directory ${folderPath}: ${err}`);
       }
-    }
+    };
 
     // Start reading from the initial folder
     readDirectory(pathToFolder);
@@ -2211,22 +2553,26 @@ command: ${command}
     if (!Helpers.exists(pathToFolder)) {
       return [];
     }
-    return fse.readdirSync(pathToFolder)
-      .map(f => path.join(pathToFolder as string, f))
-      .filter(f => fse.existsSync(f) && fse.lstatSync(f).isSymbolicLink())
-      .map(f => {
-        const realPath = fse.realpathSync(f);
-        const isFolder = Helpers.isFolder(realPath);
-        if (isFolder) {
-          if (outputRealPath) {
-            return realPath;
-          } else {
-            return f;
+    return (
+      fse
+        .readdirSync(pathToFolder)
+        .map(f => path.join(pathToFolder as string, f))
+        .filter(f => fse.existsSync(f) && fse.lstatSync(f).isSymbolicLink())
+        .map(f => {
+          const realPath = fse.realpathSync(f);
+          const isFolder = Helpers.isFolder(realPath);
+          if (isFolder) {
+            if (outputRealPath) {
+              return realPath;
+            } else {
+              return f;
+            }
           }
-        }
-      }).filter(f => !!f)
-      // @ts-ignore
-      .map(f => crossPlatformPath(f));
+        })
+        .filter(f => !!f)
+        // @ts-ignore
+        .map(f => crossPlatformPath(f))
+    );
   }
   //#endregion
   //#endregion
@@ -2252,7 +2598,8 @@ command: ${command}
     if (!Helpers.exists(pathToFolder)) {
       return [];
     }
-    return fse.readdirSync(pathToFolder)
+    return fse
+      .readdirSync(pathToFolder)
       .map(f => path.join(pathToFolder as string, f))
       .filter(f => {
         let res = false;
@@ -2289,12 +2636,13 @@ command: ${command}
     }
 
     if (recrusive) {
-      const all = fse.readdirSync(pathToFolder)
+      const all = fse
+        .readdirSync(pathToFolder)
         .map(f => path.join(pathToFolder as string, f));
       const folders = [] as string[];
       const files = all.filter(f => {
         if (fse.lstatSync(f).isDirectory()) {
-          folders.push(f)
+          folders.push(f);
           return false;
         }
         return true;
@@ -2309,11 +2657,12 @@ command: ${command}
           }, []),
       ].map(f => crossPlatformPath(f));
     }
-    return fse.readdirSync(pathToFolder)
+    return fse
+      .readdirSync(pathToFolder)
       .map(f => crossPlatformPath(path.join(pathToFolder as string, f)))
       .filter(f => {
-        return !fse.lstatSync(f).isDirectory()
-      })
+        return !fse.lstatSync(f).isDirectory();
+      });
   }
   //#endregion
   //#endregion
@@ -2322,10 +2671,10 @@ command: ${command}
   //#region @backend
   public openFolderInFileExploer(folderPath: string): void {
     if (process.platform === 'win32') {
-      folderPath = win32Path(folderPath)
+      folderPath = win32Path(folderPath);
     }
     try {
-      Helpers.info(`Opening path.. "${folderPath}"`)
+      Helpers.info(`Opening path.. "${folderPath}"`);
       if (process.platform === 'win32') {
         Helpers.run(`explorer .`, { cwd: folderPath }).sync();
         return;
@@ -2338,7 +2687,6 @@ command: ${command}
     } catch (error) {
       Helpers.warn(`Not able to open in file explorer: "${folderPath}"`, false);
     }
-
   }
   //#endregion
   //#endregion
@@ -2351,5 +2699,4 @@ command: ${command}
     //#endregion
   }
   //#endregion
-
 }

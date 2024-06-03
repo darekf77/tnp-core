@@ -20,7 +20,7 @@ const KEY = {
   LAST_SUCCESS: Symbol(),
   LAST_TASK_STARTED: Symbol(),
   LAST_TASK_DONE: Symbol(),
-}
+};
 
 const KEY_COUNT = {
   LAST_ERROR: Symbol(),
@@ -30,7 +30,7 @@ const KEY_COUNT = {
   LAST_SUCCESS: Symbol(),
   LAST_TASK_STARTED: Symbol(),
   LAST_TASK_DONE: Symbol(),
-}
+};
 
 const KEY_IMPORTANTCE = {
   LAST_ERROR: Symbol(),
@@ -40,7 +40,7 @@ const KEY_IMPORTANTCE = {
   LAST_SUCCESS: Symbol(),
   LAST_TASK_STARTED: Symbol(),
   LAST_TASK_DONE: Symbol(),
-}
+};
 
 //#region @backend
 global[KEY_COUNT.LAST_ERROR] = 0;
@@ -50,7 +50,6 @@ global[KEY_COUNT.LAST_LOG] = 0;
 global[KEY_COUNT.LAST_SUCCESS] = 0;
 global[KEY_COUNT.LAST_TASK_STARTED] = 0;
 global[KEY_COUNT.LAST_TASK_DONE] = 0;
-
 
 global[KEY_IMPORTANTCE.LAST_ERROR] = 0;
 global[KEY_IMPORTANTCE.LAST_INFO] = 0;
@@ -69,7 +68,6 @@ const forceTrace = global.hideLog === false;
 const LIMIT = 10;
 
 export class HelpersMessages extends HelpersIsomorphic {
-
   msgCacheClear() {
     //#region @backend
     global[KEY.LAST_LOG] = void 0;
@@ -82,22 +80,24 @@ export class HelpersMessages extends HelpersIsomorphic {
   renderError(err: Error) {
     if (this.isBrowser) {
       // TODO for FE
-      console.error(err)
+      console.error(err);
     } else {
       //#region @backend
       const createCallsiteRecord = require('callsite-record');
       // console.log(createCallsiteRecord)
-      console.log(createCallsiteRecord && createCallsiteRecord({ forError: err })?.renderSync({}))
+      console.log(
+        createCallsiteRecord &&
+          createCallsiteRecord({ forError: err })?.renderSync({}),
+      );
       return;
       //#endregion
     }
   }
 
   error(details: any, noExit = false, noTrace = false) {
-
     //#region browser mode
     if (Helpers.isBrowser) {
-      console.error(details)
+      console.error(details);
       return;
     }
     //#endregion
@@ -114,9 +114,8 @@ export class HelpersMessages extends HelpersIsomorphic {
     details = transformData(details);
 
     const display = (dot = false) => {
-
       if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details })
+        PROGRESS_DATA.log({ msg: dot ? '.' : details });
       }
       if (dot) {
         process.stdout.write(chalk.red('.'));
@@ -138,7 +137,6 @@ export class HelpersMessages extends HelpersIsomorphic {
             console.log(details); // no formatiing debuggable code
           }
         }
-
       }
     };
 
@@ -158,8 +156,6 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
   //#endregion
 
-
-
   //#region info
   info(details: string, repeatable = false) {
     // //#region @backend
@@ -176,7 +172,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#region @backend
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
       }
       if (dot) {
         process.stdout.write(chalk.blue('.'));
@@ -185,22 +181,21 @@ export class HelpersMessages extends HelpersIsomorphic {
           process?.send(`info::${chalk.blue(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log(chalk.blue(details))
+            console.log(chalk.blue(details));
           } else {
-            console.log(details)
+            console.log(details);
           }
-
         }
       }
     };
 
     if (!global.muteMessages && !global.hideInfos) {
-      if ((global[KEY.LAST_INFO] === details) && !repeatable) {
+      if (global[KEY.LAST_INFO] === details && !repeatable) {
         global[KEY_COUNT.LAST_INFO]++;
         if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
-          display(true)
+          display(true);
         } else {
-          display()
+          display();
         }
       } else {
         global[KEY_COUNT.LAST_INFO] = 0;
@@ -224,7 +219,7 @@ export class HelpersMessages extends HelpersIsomorphic {
 
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
       }
       if (dot) {
         process.stdout.write(chalk.green('.'));
@@ -233,22 +228,21 @@ export class HelpersMessages extends HelpersIsomorphic {
           process?.send(`success::${chalk.green(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log(chalk.green(details))
+            console.log(chalk.green(details));
           } else {
-            console.log(details)
+            console.log(details);
           }
-
         }
       }
     };
 
     if (!global.muteMessages && !global.hideInfos) {
-      if ((global[KEY.LAST_SUCCESS] === details)) {
+      if (global[KEY.LAST_SUCCESS] === details) {
         global[KEY_COUNT.LAST_SUCCESS]++;
         if (global[KEY_COUNT.LAST_SUCCESS] > LIMIT) {
-          display(true)
+          display(true);
         } else {
-          display()
+          display();
         }
       } else {
         global[KEY_COUNT.LAST_SUCCESS] = 0;
@@ -273,14 +267,16 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     //#region @backend
 
-    details = `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}] ` + transformData(details);
+    details =
+      `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}] ` +
+      transformData(details);
 
     const display = (dot = false) => {
       if (global.hideLog && isLogTask) {
         return;
       }
       if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
       }
       if (dot) {
         process.stdout.write(chalk.cyan('.'));
@@ -289,11 +285,10 @@ export class HelpersMessages extends HelpersIsomorphic {
           process?.send(`taskstart::► ${chalk.cyan(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log('- ' + chalk.cyan(details))
+            console.log('- ' + chalk.cyan(details));
           } else {
-            console.log(details)
+            console.log(details);
           }
-
         }
       }
     };
@@ -304,12 +299,12 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
 
     if (!global.muteMessages && !global.hideInfos) {
-      if ((global[KEY.LAST_TASK_STARTED] === details)) {
+      if (global[KEY.LAST_TASK_STARTED] === details) {
         global[KEY_COUNT.LAST_TASK_STARTED]++;
         if (global[KEY_COUNT.LAST_TASK_STARTED] > LIMIT) {
-          display(true)
+          display(true);
         } else {
-          display()
+          display();
         }
       } else {
         global[KEY_COUNT.LAST_TASK_STARTED] = 0;
@@ -337,15 +332,17 @@ export class HelpersMessages extends HelpersIsomorphic {
       details = lastStatedTask;
     }
 
-    details = `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}] ` + transformData(details);
+    details =
+      `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}] ` +
+      transformData(details);
 
     const display = (dot = false) => {
       // if(!details) {
       //   console.warn(`Probabl you forgot set Helpers.taskStart() for Helpers.taskDone()`)
       // }
-      details = details?.replace('...', '')
+      details = details?.replace('...', '');
       if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' })
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
       }
       if (dot) {
         process.stdout.write(chalk.green('.'));
@@ -354,22 +351,21 @@ export class HelpersMessages extends HelpersIsomorphic {
           process?.send(`taskdone::\u2713 ${chalk.green(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log('\u2713 ' + chalk.green(details))
+            console.log('\u2713 ' + chalk.green(details));
           } else {
-            console.log(details)
+            console.log(details);
           }
-
         }
       }
     };
 
     if (!global.muteMessages && !global.hideInfos) {
-      if ((global[KEY.LAST_TASK_DONE] === details)) {
+      if (global[KEY.LAST_TASK_DONE] === details) {
         global[KEY_COUNT.LAST_TASK_DONE]++;
         if (global[KEY_COUNT.LAST_TASK_DONE] > LIMIT) {
-          display(true)
+          display(true);
         } else {
-          display()
+          display();
         }
       } else {
         global[KEY_COUNT.LAST_TASK_DONE] = 0;
@@ -383,7 +379,6 @@ export class HelpersMessages extends HelpersIsomorphic {
 
   //#region log
   log(details: any, debugLevel = 0) {
-
     if (Helpers.isBrowser) {
       console.log(details);
       return;
@@ -396,8 +391,8 @@ export class HelpersMessages extends HelpersIsomorphic {
     //   'global.muteMessages': global.muteMessages,
     //   details
     // })
-    const verboseLevel = (global.verboseLevel || 0);
-    debugLevel = (debugLevel || 0);
+    const verboseLevel = global.verboseLevel || 0;
+    debugLevel = debugLevel || 0;
 
     if (debugLevel > verboseLevel) {
       return;
@@ -406,9 +401,8 @@ export class HelpersMessages extends HelpersIsomorphic {
     details = transformData(details);
 
     const display = (dot = false) => {
-
       if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details })
+        PROGRESS_DATA.log({ msg: dot ? '.' : details });
       }
       if (dot) {
         process.stdout.write('.');
@@ -422,17 +416,14 @@ export class HelpersMessages extends HelpersIsomorphic {
             console.log(details);
           }
         }
-
-
       }
-
     };
 
-    if ((!global.muteMessages && !global.hideLog)) {
+    if (!global.muteMessages && !global.hideLog) {
       if (global[KEY.LAST_LOG] === details) {
         global[KEY_COUNT.LAST_LOG]++;
         if (global[KEY_COUNT.LAST_LOG] > LIMIT) {
-          display(true)
+          display(true);
         } else {
           display();
         }
@@ -451,10 +442,10 @@ export class HelpersMessages extends HelpersIsomorphic {
    * Logs not visible in normal use of firedev-cli
    */
   logSuccess(details: any | string) {
-    if (global.hideLog && (frameworkName === 'firedev')) {
+    if (global.hideLog && frameworkName === 'firedev') {
       return;
     }
-    Helpers.success(details)
+    Helpers.success(details);
   }
   //#endregion
 
@@ -463,10 +454,10 @@ export class HelpersMessages extends HelpersIsomorphic {
    * Logs not visible in normal use of firedev-cli
    */
   logInfo(details: string, repeatable = false) {
-    if (global.hideLog && (frameworkName === 'firedev')) {
+    if (global.hideLog && frameworkName === 'firedev') {
       return;
     }
-    Helpers.info(details, repeatable)
+    Helpers.info(details, repeatable);
   }
   //#endregion
 
@@ -475,7 +466,7 @@ export class HelpersMessages extends HelpersIsomorphic {
    * Logs not visible in normal use of firedev-cli
    */
   logError(details: any, noExit = false, noTrace = false) {
-    if (global.hideLog && (frameworkName === 'firedev')) {
+    if (global.hideLog && frameworkName === 'firedev') {
       return;
     }
     Helpers.error(details, noExit, noTrace);
@@ -487,16 +478,15 @@ export class HelpersMessages extends HelpersIsomorphic {
    * Logs not visible in normal use of firedev-cli
    */
   logWarn(details: string, trace = false) {
-    if (global.hideLog && (frameworkName === 'firedev')) {
+    if (global.hideLog && frameworkName === 'firedev') {
       return;
     }
-    Helpers.warn(details, trace)
+    Helpers.warn(details, trace);
   }
   //#endregion
 
   //#region warn
   warn(details: string, trace = false) {
-
     if (Helpers.isBrowser) {
       console.warn(details);
       return;
@@ -508,7 +498,7 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'warning' })
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'warning' });
       }
 
       if (dot) {
@@ -519,19 +509,26 @@ export class HelpersMessages extends HelpersIsomorphic {
         } else {
           if (global.globalSystemToolMode) {
             if (trace) {
-              (!global.muteMessages && !global.hideWarnings) && console.trace(chalk.yellow(details))
+              !global.muteMessages &&
+                !global.hideWarnings &&
+                console.trace(chalk.yellow(details));
             } else {
-              (!global.muteMessages && !global.hideWarnings) && console.log(chalk.yellow(details))
+              !global.muteMessages &&
+                !global.hideWarnings &&
+                console.log(chalk.yellow(details));
             }
           } else {
             if (trace) {
-              (!global.muteMessages && !global.hideWarnings) && console.trace(details)
+              !global.muteMessages &&
+                !global.hideWarnings &&
+                console.trace(details);
             } else {
-              (!global.muteMessages && !global.hideWarnings) && console.log(details)
+              !global.muteMessages &&
+                !global.hideWarnings &&
+                console.log(details);
             }
           }
         }
-
       }
     };
 
@@ -552,12 +549,10 @@ export class HelpersMessages extends HelpersIsomorphic {
   //#endregion
 }
 
-
-
 function transformData(details: any) {
   if (typeof details === 'object') {
     if (Array.isArray(details)) {
-      return details.join('\n')
+      return details.join('\n');
     }
     try {
       const json = JSON.stringify(details);

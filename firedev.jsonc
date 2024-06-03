@@ -1,7 +1,5 @@
 {
-  "resources": [
-    "README.md"
-  ],
+  "resources": ["README.md"],
 
   "overrided": {
     "ignoreDepsPattern": [],
@@ -31,7 +29,7 @@
       "copy-paste",
       "is-root",
       "is-admin",
-      "dateformat"
+      "dateformat",
     ],
 
     "dependencies": {},
@@ -60,9 +58,7 @@
   "required": [],
   "version": "v4",
 
-  "additionalNpmNames": [
-    "firedev-core"
-  ],
+  "additionalNpmNames": ["firedev-core"],
 
   "isGenerated": false,
   "requiredServers": [],

@@ -1,5 +1,4 @@
 export class HelpersIsomorphic {
-
   get isBrowser() {
     //#region @backend
     return false;
@@ -27,18 +26,30 @@ export class HelpersIsomorphic {
   get isElectron() {
     // Renderer process
     // @ts-ignore
-    if (typeof window !== 'undefined' && typeof window.process === 'object' && window.process.type === 'renderer') {
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.process === 'object' &&
+      window.process.type === 'renderer'
+    ) {
       return true;
     }
 
     // Main process
     // @ts-ignore
-    if (typeof process !== 'undefined' && typeof process.versions === 'object' && !!process.versions.electron) {
+    if (
+      typeof process !== 'undefined' &&
+      typeof process.versions === 'object' &&
+      !!process.versions.electron
+    ) {
       return true;
     }
 
     // Detect the user agent when the `nodeIntegration` option is set to false
-    if (typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.indexOf('Electron') >= 0) {
+    if (
+      typeof navigator === 'object' &&
+      typeof navigator.userAgent === 'string' &&
+      navigator.userAgent.indexOf('Electron') >= 0
+    ) {
       return true;
     }
 
@@ -46,18 +57,21 @@ export class HelpersIsomorphic {
   }
 
   contain(arr: any[], item: any): boolean {
-    return arr.filter(l => {
-      if (l instanceof RegExp) {
-        return l.test(item)
-      }
-      if (l === item) {
-        return true;
-      }
-      if ((item.match && typeof item.match === 'function') ? item.match(l) : false) {
-        return true
-      }
-      return false;
-    }).length > 0;
+    return (
+      arr.filter(l => {
+        if (l instanceof RegExp) {
+          return l.test(item);
+        }
+        if (l === item) {
+          return true;
+        }
+        if (
+          item.match && typeof item.match === 'function' ? item.match(l) : false
+        ) {
+          return true;
+        }
+        return false;
+      }).length > 0
+    );
   }
-
 }

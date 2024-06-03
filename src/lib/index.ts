@@ -7,6 +7,3 @@ export * from './progress-data';
 export * from './utils';
 export { HelpersCore as CoreHelpers, CommandOutputOptions } from './helpers';
 export let Helpers = Base.InstanceCore;
-
-
-

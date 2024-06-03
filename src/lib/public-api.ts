@@ -5,6 +5,3 @@ export * from './core-config';
 export * from './progress-data';
 export { HelpersCore as CoreHelpers } from './helpers';
 export let Helpers = Base.InstanceCore;
-
-
-
