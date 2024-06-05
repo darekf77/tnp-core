@@ -31,11 +31,10 @@ export namespace CoreModels {
     | 'v2'
     | 'v3'
     | 'v4'
-    | 'v5'
-    | 'v6'
-    | 'v7'
-    | 'v8'
-    | 'v9';
+    | 'v16'
+    | 'v18'
+    | 'v18'
+    | 'v20'
   export type CutableFileExt = 'scss' | 'css' | 'sass' | 'html' | 'ts';
   export type ImageFileExtension = 'jpg' | 'jpeg' | 'png' | 'svg';
   export type FileExtension =

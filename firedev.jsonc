@@ -56,7 +56,7 @@
   "isCoreProject": false,
   "useFramework": false,
   "required": [],
-  "version": "v4",
+  "version": "v16",
 
   "additionalNpmNames": ["firedev-core"],
 
