@@ -4,10 +4,12 @@ import * as moment from 'moment';
 import * as dateformat from 'dateformat';
 import { Chalk } from 'chalk';
 import * as json5 from 'json5';
+import type jQueryType from 'jquery';
+import type chalkBaseType from 'chalk';
 //#region @browser
 import jQuery from 'jquery';
 //#endregion
-
+import type * as pathBaseType from 'path';
 //#region @backend
 import * as cheerio from 'cheerio';
 import * as pathBase from 'path';
@@ -31,13 +33,13 @@ import * as portfinder from 'portfinder';
 const isRoot = require('is-root');
 const isAdmin = require('is-admin');
 
-async function isElevated() {
+async function isElevated(): Promise<boolean> {
   return process.platform === 'win32' ? isAdmin() : isRoot();
 }
 
 //#endregion
 
-let $;
+let $: jQueryType;
 //#region @browser
 $ = jQuery;
 //#endregion
@@ -50,7 +52,7 @@ $ = cheerio;
 import { path as pathMock } from './node-path-mock';
 //#endregion
 
-let path = void 0 as any;
+let path = void 0 as typeof pathBaseType;
 // #region @backend
 path = pathBase;
 //#endregion
@@ -65,7 +67,7 @@ path = pathMock;
 //#region @browser
 import { chalk as chalkMock } from './node-chalk-mock';
 //#endregion
-let chalk: Chalk = void 0 as any;
+let chalk: Chalk = void 0 as typeof chalkBaseType;
 // #region @backend
 chalk = chalkBase as any;
 //#endregion
@@ -76,7 +78,10 @@ chalk = chalkMock;
 //#endregion
 //#endregion
 
-function win32Path(p: string) {
+/**
+ * transform unix path to win32 path
+ */
+const win32Path = (p: string): string => {
   //#region @backend
   if (process.platform !== 'win32') {
     return p;
@@ -86,12 +91,14 @@ function win32Path(p: string) {
     p = p.replace(/^\/[a-z]\//, `${p.charAt(1).toUpperCase()}:/`);
   }
   return path.win32.normalize(p);
-}
+};
 
 /**
  * This funciton will replace // to /
  */
-const crossPlatformPath = (pathStringOrPathParts: string | string[]) => {
+const crossPlatformPath = (
+  pathStringOrPathParts: string | string[],
+): string => {
   if (Array.isArray(pathStringOrPathParts)) {
     pathStringOrPathParts = pathStringOrPathParts.join('/');
   }
