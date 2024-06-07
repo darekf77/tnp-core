@@ -382,10 +382,10 @@ export class HelpersCore extends HelpersMessages {
     // This function attempts to determine the current shell
     if (os.platform() === 'win32') {
       // On Windows, COMSPEC usually points to cmd.exe
-      return process.env.COMSPEC;
+      return process.env?.COMSPEC;
     } else {
       // On Unix-like systems, SHELL points to the current shell
-      return process.env.SHELL;
+      return process.env?.SHELL;
     }
     //#endregion
   }
@@ -394,7 +394,7 @@ export class HelpersCore extends HelpersMessages {
     //#region @backendFunc
     // console.log('TERM', process.env.TERM);
     // console.log('MSYSTEM', process.env.MSYSTEM);
-    return process.env.TERM.search('xterm') !== -1 && !!process.env.MSYSTEM;
+    return process.env?.TERM?.search('xterm') !== -1 && !!process.env?.MSYSTEM;
     //#endregion
   }
 
