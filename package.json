@@ -370,7 +370,7 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "16.444.9",
+  "version": "16.444.10",
   "lastBuildTagHash": "cc5c4052904d03a6074475a8c15673bf2ef29b72",
   "main": "index.js"
 }
