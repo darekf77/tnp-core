@@ -394,7 +394,11 @@ export class HelpersCore extends HelpersMessages {
     //#region @backendFunc
     // console.log('TERM', process.env.TERM);
     // console.log('MSYSTEM', process.env.MSYSTEM);
-    return process.env?.TERM?.search('xterm') !== -1 && !!process.env?.MSYSTEM;
+    return (
+      (process.env?.TERM?.search('cygwin') !== -1 ||
+        process.env?.TERM?.search('xterm') !== -1) &&
+      !!process.env?.MSYSTEM
+    );
     //#endregion
   }
 
