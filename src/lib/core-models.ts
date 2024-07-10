@@ -1,4 +1,5 @@
 export namespace CoreModels {
+  export type LibraryType = 'angular' | 'typescript';
   export type ReleaseType = 'major' | 'minor' | 'patch';
   export type PROGRESS_DATA_TYPE = 'info' | 'error' | 'warning' | 'event';
   export type EnvironmentName =
@@ -33,8 +34,7 @@ export namespace CoreModels {
     | 'v4'
     | 'v16'
     | 'v18'
-    | 'v18'
-    | 'v20'
+    | 'v20';
   export type CutableFileExt = 'scss' | 'css' | 'sass' | 'html' | 'ts';
   export type ImageFileExtension = 'jpg' | 'jpeg' | 'png' | 'svg';
   export type FileExtension =
