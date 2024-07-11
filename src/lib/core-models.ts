@@ -1,7 +1,46 @@
 export namespace CoreModels {
+
+  //#region package
+  export type Package = {
+    name: string;
+    version?: string;
+    installType?: InstalationType;
+  };
+  //#endregion
+
+  //#region npm install options
+  export type NpmInstallOptions = {
+    pkg?: CoreModels.Package;
+    silent?: boolean;
+    remove?: boolean;
+    useYarn?: boolean;
+    force?: boolean;
+    reason?: string;
+    removeYarnOrPackageJsonLock?: boolean;
+    generateYarnOrPackageJsonLock?: boolean;
+    ignoreOptional?: boolean;
+  }
+  //#endregion
+
+  //#region installation type
+  export type InstalationType = '-g' | '--save' | '--save-dev';
+
+  export const InstalationTypeArr = ['-g', '--save', '--save-dev'];
+  //#endregion
+
+  //#region library type
   export type LibraryType = 'angular' | 'typescript';
+  //#endregion
+
+  //#region release type
   export type ReleaseType = 'major' | 'minor' | 'patch';
+  //#endregion
+
+  //#region progress data type
   export type PROGRESS_DATA_TYPE = 'info' | 'error' | 'warning' | 'event';
+  //#endregion
+
+  //#region environment name
   export type EnvironmentName =
     | 'local'
     | 'static'
@@ -12,6 +51,9 @@ export namespace CoreModels {
     | 'test'
     | 'qa'
     | 'custom';
+  //#endregion
+
+  //#region push type
   export type PUSHTYPE =
     | 'feat'
     | 'chore'
@@ -25,8 +67,16 @@ export namespace CoreModels {
     | 'bugfix'
     | 'release'
     | 'docs';
+  //#endregion
 
+  //#region ui framework
+  /**
+   * @deprecated
+   */
   export type UIFramework = 'bootstrap' | 'material' | 'ionic';
+  //#endregion
+
+  //#region framework version
   export type FrameworkVersion =
     | 'v1'
     | 'v2'
@@ -35,17 +85,34 @@ export namespace CoreModels {
     | 'v16'
     | 'v18'
     | 'v20';
-  export type CutableFileExt = 'scss' | 'css' | 'sass' | 'html' | 'ts';
-  export type ImageFileExtension = 'jpg' | 'jpeg' | 'png' | 'svg';
-  export type FileExtension =
+  //#endregion
+
+  //#region cuttable file exitension
+  export type CutableFileExt =
+    | 'scss'
+    | 'css'
+    | 'less'
+    | 'sass'
+    | 'html'
     | 'ts'
-    | 'js'
+    | 'tsx'
+    | 'js';
+  //#endregion
+
+  //#region file extension
+  export type ImageFileExtension = 'jpg' | 'jpeg' | 'png' | 'svg';
+  //#endregion
+
+  //#region file extension
+  export type FileExtension =
     | 'json'
     | 'html'
     | ImageFileExtension
     | 'txt'
     | CutableFileExt;
+  //#endregion
 
+  //#region http method
   export type HttpMethod =
     | 'get'
     | 'post'
@@ -54,14 +121,26 @@ export namespace CoreModels {
     | 'patch'
     | 'head'
     | 'jsonp';
+  //#endregion
+
+  //#region http status code
   export type ParamType = 'Path' | 'Query' | 'Cookie' | 'Header' | 'Body';
+  //#endregion
+
+  //#region ts usage
   export type TsUsage = 'import' | 'export';
+  //#endregion
+
+  //#region base project type
   export type BaseProjectType =
     | 'typescript'
     | 'angular'
     | 'angular-lib'
     | 'unknow'
     | 'unknow-npm-project';
+  //#endregion
+
+  //#region base project type arr
   export const BaseProjectTypeArr = [
     'typescript',
     'angular',
@@ -69,7 +148,9 @@ export namespace CoreModels {
     'unknow',
     'unknow-npm-project',
   ];
+  //#endregion
 
+  //#region lib type
   export type LibType =
     | BaseProjectType
     | 'isomorphic-lib' // + https://github.com/maximegris/angular-electron
@@ -78,18 +159,36 @@ export namespace CoreModels {
     | 'vscode-ext'
     | 'chrome-ext'
     | 'unknow-npm-project';
+  //#endregion
 
+  //#region new factory type
+  /**
+   * @deprecated
+   */
   export type NewFactoryType = LibType | 'model' | 'single-file-project';
+  //#endregion
+
+  //#region core lib category
+  /**
+   * @deprecated
+   */
   export type CoreLibCategory = LibType | 'common';
+  //#endregion
 
+  //#region file event
   export type FileEvent = 'created' | 'changed' | 'removed' | 'rename';
+  //#endregion
 
+  //#region out folder
   /**
    * @deprecated
    */
   export type OutFolder = 'dist' | 'browser';
+  //#endregion
 
-  export type DatabaseType = 'better-sqlite3' | 'mysql' | 'sqljs';
+  //#region database type
+  export type DatabaseType = ':inmemory' | 'mysql' | 'sqljs';
+  //#endregion
 
   //#region uploaded backend file
   export interface UploadedBackendFile {
