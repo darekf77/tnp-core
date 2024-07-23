@@ -377,19 +377,7 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
   //#endregion
 
-  private getShell(): string {
-    //#region @backendFunc
-    // This function attempts to determine the current shell
-    if (os.platform() === 'win32') {
-      // On Windows, COMSPEC usually points to cmd.exe
-      return process.env?.COMSPEC;
-    } else {
-      // On Unix-like systems, SHELL points to the current shell
-      return process.env?.SHELL;
-    }
-    //#endregion
-  }
-
+  //#region methods / is running in git bash
   get isRunningInGitBash(): boolean {
     //#region @backendFunc
     // console.log('TERM', process.env.TERM);
@@ -401,7 +389,9 @@ export class HelpersCore extends HelpersMessages {
     );
     //#endregion
   }
+  //#endregion
 
+  //#region methods / check if projects is running in supported terminal
   /**
    * Check if the current shell is supported by Firedev framework.
    */
@@ -410,6 +400,7 @@ export class HelpersCore extends HelpersMessages {
     return process.platform === 'win32' ? this.isRunningInGitBash : true;
     //#endregion
   }
+  //#endregion
 
   //#region methods / check if function is class
   /**
@@ -2279,10 +2270,18 @@ command: ${command}
   }
   public readJson5(
     absoluteFilePath: string | string[],
-    defaultValue = {},
+    defaultValue: any = {},
   ): any {
     return Helpers.readJson(absoluteFilePath, defaultValue, true);
   }
+
+  public readJsonC(
+    absoluteFilePath: string | string[],
+    defaultValue: any = {},
+  ): any {
+    return this.readJson5(absoluteFilePath, defaultValue);
+  }
+
   //#endregion
   //#endregion
 
@@ -2490,6 +2489,10 @@ command: ${command}
   writeJson5(absoluteFilePath: string | string[], input: object) {
     return Helpers.writeJson(absoluteFilePath, input, { writeJson5: true });
   }
+
+  writeJsonC(absoluteFilePath: string | string[], input: object) {
+    return this.writeJson5(absoluteFilePath, input);
+  }
   //#endregion
   //#endregion
 
@@ -2506,7 +2509,7 @@ command: ${command}
     },
   ): string[] {
     if (_.isArray(pathToFolder)) {
-      pathToFolder = path.join(...pathToFolder) as string;
+      pathToFolder = crossPlatformPath(pathToFolder) as string;
     }
     if (!Helpers.exists(pathToFolder)) {
       return [];
@@ -2515,7 +2518,7 @@ command: ${command}
     let directories: string[] = [];
 
     // Helper function to read a directory
-    const readDirectory = (folderPath: string) => {
+    const readDirectory = (folderPath: string): void => {
       try {
         const files = fse.readdirSync(folderPath, { withFileTypes: true });
         for (const file of files) {
@@ -2550,7 +2553,10 @@ command: ${command}
   /**
    * @returns absolute pathes to links from path
    */
-  linksToFoldersFrom(pathToFolder: string | string[], outputRealPath = false) {
+  linksToFoldersFrom(
+    pathToFolder: string | string[],
+    outputRealPath: boolean = false,
+  ): string[] {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
@@ -2625,8 +2631,8 @@ command: ${command}
    */
   public filesFrom(
     pathToFolder: string | string[],
-    recrusive = false,
-    incudeUnexistedLinks = false,
+    recrusive: boolean = false,
+    incudeUnexistedLinks: boolean = false,
   ): string[] {
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
@@ -2642,7 +2648,7 @@ command: ${command}
     if (recrusive) {
       const all = fse
         .readdirSync(pathToFolder)
-        .map(f => path.join(pathToFolder as string, f));
+        .map(f => crossPlatformPath([pathToFolder as string, f]));
       const folders = [] as string[];
       const files = all.filter(f => {
         if (fse.lstatSync(f).isDirectory()) {

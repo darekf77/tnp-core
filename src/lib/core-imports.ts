@@ -102,27 +102,65 @@ const crossPlatformPath = (
   if (Array.isArray(pathStringOrPathParts)) {
     pathStringOrPathParts = pathStringOrPathParts.join('/');
   }
-  //#region @backend
-  if (process.platform === 'win32') {
-    if (pathStringOrPathParts && /^[A-Z]\:/.test(pathStringOrPathParts)) {
-      pathStringOrPathParts = _.lowerFirst(pathStringOrPathParts);
-    }
-  } else {
-    return pathStringOrPathParts?.replace(/\/\//g, '/');
-  }
-  //#endregion
+
   if (typeof pathStringOrPathParts !== 'string') {
     return pathStringOrPathParts;
   }
 
-  const isExtendedLengthPath = /^\\\\\?\\/.test(pathStringOrPathParts);
-  const hasNonAscii = /[^\u0000-\u0080]+/.test(pathStringOrPathParts); // eslint-disable-line no-control-regex
+  // debugger;
 
-  if (isExtendedLengthPath || hasNonAscii) {
-    return pathStringOrPathParts?.replace(/\/\//g, '/');
+  if (
+    typeof pathStringOrPathParts === 'string' &&
+    /^[A-Z]\:/.test(pathStringOrPathParts)
+  ) {
+    pathStringOrPathParts = _.lowerFirst(pathStringOrPathParts);
   }
 
-  return pathStringOrPathParts.replace(/\\/g, '/').replace(/\/\//g, '/');
+  const isExtendedLengthPath = /^\\\\\?\\/.test(pathStringOrPathParts);
+  const hasNonAscii = /[^\u0000-\u0080]+/.test(pathStringOrPathParts); // eslint-disable-line no-control-regex
+  if (isExtendedLengthPath) {
+    console.warn(`[firedev-core][crossPlatformPath]: Path starts with \\\\,
+    this is not supported in crossPlatformPath`);
+    console.trace(`path: "${pathStringOrPathParts}"`);
+  }
+
+  if (hasNonAscii) {
+    console.warn(
+      `[firedev-core][crossPlatformPath]: Path contains non-ascii characters`,
+    );
+    console.trace(`path: "${pathStringOrPathParts}"`);
+  }
+
+  pathStringOrPathParts = (pathStringOrPathParts || '')
+    .replace(/\\/g, '/')
+    .replace(/\/\//g, '/')
+    .replace(/\/\//g, '/'); // TODO probably not needed
+
+  let isWindows = false;
+  //#region @backend
+  if (process.platform === 'win32') {
+    isWindows = true;
+  }
+  //#endregion
+
+  const regexWinPath1 = /^(\/)[a-zA-Z]\:/;
+  // handle supported gitbash path
+  // (nodejs require need to use /c/ instead of c:/)
+  if (isWindows && regexWinPath1.test(pathStringOrPathParts)) {
+    pathStringOrPathParts = pathStringOrPathParts.slice(1);
+  }
+
+  // let isUnixLike = !isWindows;
+
+  // const regexWinPath2 = /^(\\)[a-zA-Z]\:/;
+  // if (isUnixLike && regexWinPath2.test(pathStringOrPathParts)) {
+  //   console.warn(
+  //     `[firedev-core][crossPlatformPath]: Path starts with \\ and not from /`,
+  //   );
+  //   console.trace(`path: "${pathStringOrPathParts}"`);
+  // }
+
+  return pathStringOrPathParts;
 };
 
 export {
