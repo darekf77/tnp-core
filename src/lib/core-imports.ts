@@ -33,6 +33,11 @@ import * as portfinder from 'portfinder';
 const isRoot = require('is-root');
 const isAdmin = require('is-admin');
 
+let forceTrace = false;
+//#region @backend
+forceTrace = global.hideLog === false;
+//#endregion
+
 async function isElevated(): Promise<boolean> {
   return process.platform === 'win32' ? isAdmin() : isRoot();
 }
@@ -121,14 +126,14 @@ const crossPlatformPath = (
   if (isExtendedLengthPath) {
     console.warn(`[firedev-core][crossPlatformPath]: Path starts with \\\\,
     this is not supported in crossPlatformPath`);
-    console.trace(`path: "${pathStringOrPathParts}"`);
+    console[forceTrace ? 'trace' : 'warn'](`path: "${pathStringOrPathParts}"`);
   }
 
   if (hasNonAscii) {
     console.warn(
       `[firedev-core][crossPlatformPath]: Path contains non-ascii characters`,
     );
-    console.trace(`path: "${pathStringOrPathParts}"`);
+    console[forceTrace ? 'trace' : 'warn'](`path: "${pathStringOrPathParts}"`);
   }
 
   pathStringOrPathParts = (pathStringOrPathParts || '')
