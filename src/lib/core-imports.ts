@@ -1,15 +1,5 @@
-import * as _ from 'lodash';
-import * as q from 'q';
-import * as moment from 'moment';
-import * as dateformat from 'dateformat';
-import { Chalk } from 'chalk';
-import * as json5 from 'json5';
-import type jQueryType from 'jquery';
-import type chalkBaseType from 'chalk';
-//#region @browser
-import jQuery from 'jquery';
-//#endregion
-import type * as pathBaseType from 'path';
+//#region imports
+let forceTrace = false;
 //#region @backend
 import * as cheerio from 'cheerio';
 import * as pathBase from 'path';
@@ -32,18 +22,27 @@ import * as fkill from 'fkill';
 import * as portfinder from 'portfinder';
 const isRoot = require('is-root');
 const isAdmin = require('is-admin');
-
-let forceTrace = false;
-//#region @backend
 forceTrace = global.hideLog === false;
 //#endregion
-
-async function isElevated(): Promise<boolean> {
-  return process.platform === 'win32' ? isAdmin() : isRoot();
-}
-
+//#region @browser
+import jQuery from 'jquery';
+import { chalk as chalkMock } from './node-chalk-mock';
+import { path as pathMock } from './node-path-mock';
+//#endregion
+import * as _ from 'lodash';
+import * as q from 'q';
+import * as moment from 'moment';
+import * as dateformat from 'dateformat';
+import { Chalk } from 'chalk';
+import * as json5 from 'json5';
+import type jQueryType from 'jquery';
+import type chalkBaseType from 'chalk';
+import type * as pathBaseType from 'path';
 //#endregion
 
+//#region set up browser mocks
+
+//#region mock jquery
 let $: jQueryType;
 //#region @browser
 $ = jQuery;
@@ -51,11 +50,9 @@ $ = jQuery;
 //#region @backend
 $ = cheerio;
 //#endregion
+//#endregion
 
 //#region mock path
-//#region @browser
-import { path as pathMock } from './node-path-mock';
-//#endregion
 
 let path = void 0 as typeof pathBaseType;
 // #region @backend
@@ -69,9 +66,7 @@ path = pathMock;
 //#endregion
 
 //#region mock chalk
-//#region @browser
-import { chalk as chalkMock } from './node-chalk-mock';
-//#endregion
+
 let chalk: Chalk = void 0 as typeof chalkBaseType;
 // #region @backend
 chalk = chalkBase as any;
@@ -83,6 +78,17 @@ chalk = chalkMock;
 //#endregion
 //#endregion
 
+//#endregion
+
+//#region is elevated
+//#region @backend
+async function isElevated(): Promise<boolean> {
+  return process.platform === 'win32' ? isAdmin() : isRoot();
+}
+//#endregion
+//#endregion
+
+//#region transform unix path to win32 path
 /**
  * transform unix path to win32 path
  */
@@ -97,7 +103,9 @@ const win32Path = (p: string): string => {
   }
   return path.win32.normalize(p);
 };
+//#endregion
 
+//#region crossPlatformPath
 /**
  * This funciton will replace // to /
  */
@@ -126,14 +134,18 @@ const crossPlatformPath = (
   if (isExtendedLengthPath) {
     console.warn(`[firedev-core][crossPlatformPath]: Path starts with \\\\,
     this is not supported in crossPlatformPath`);
-    console[forceTrace ? 'trace' : 'warn'](`path: "${pathStringOrPathParts}"`);
+    if (forceTrace) {
+      console.trace(`path: "${pathStringOrPathParts}"`);
+    }
   }
 
   if (hasNonAscii) {
     console.warn(
       `[firedev-core][crossPlatformPath]: Path contains non-ascii characters`,
     );
-    console[forceTrace ? 'trace' : 'warn'](`path: "${pathStringOrPathParts}"`);
+    if (forceTrace) {
+      console.trace(`path: "${pathStringOrPathParts}"`);
+    }
   }
 
   pathStringOrPathParts = (pathStringOrPathParts || '')
@@ -167,7 +179,9 @@ const crossPlatformPath = (
 
   return pathStringOrPathParts;
 };
+//#endregion
 
+//#region exports
 export {
   _,
   q,
@@ -201,4 +215,5 @@ export {
   portfinder,
   psList,
 };
+//#endregion
 //#endregion
