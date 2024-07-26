@@ -53,7 +53,7 @@ export interface RunSyncOrAsyncOptions {
 
 export interface CommandOutputOptions {
   biggerBuffer?: boolean;
-  showWholeCommandNotOnlyLastLine?: boolean;
+  showOnlyLastLine?: boolean;
   showStder?: boolean;
   gatherColors?: boolean;
   showErrorWarning?: boolean;
@@ -1057,8 +1057,7 @@ export class HelpersCore extends HelpersMessages {
       //   output
       // })
       // @ts-ignore
-      if (opt.showWholeCommandNotOnlyLastLine) {
-        // console.log('SHHOW WOLE', output)
+      if (!opt.showOnlyLastLine) {
         return output.replace(/[^\x00-\xFF]/g, '');
       }
       const splited = (output || '').split('\n');
@@ -1104,7 +1103,7 @@ export class HelpersCore extends HelpersMessages {
       //   output
       // })
       // @ts-ignore
-      if (opt.showWholeCommandNotOnlyLastLine) {
+      if (!opt.showOnlyLastLine) {
         return output.replace(/[^\x00-\xFF]/g, '');
       }
       const splited = (output || '').split('\n');
