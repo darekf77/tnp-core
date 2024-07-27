@@ -34,6 +34,7 @@ export namespace CoreModels {
 
   //#region release type
   export type ReleaseType = 'major' | 'minor' | 'patch';
+  export type PreReleaseType = 'alpha' | 'beta' | 'rc';
   //#endregion
 
   //#region progress data type
