@@ -1,5 +1,4 @@
 export namespace CoreModels {
-
   //#region package
   export type Package = {
     name: string;
@@ -19,13 +18,28 @@ export namespace CoreModels {
     removeYarnOrPackageJsonLock?: boolean;
     generateYarnOrPackageJsonLock?: boolean;
     ignoreOptional?: boolean;
-  }
+  };
   //#endregion
 
   //#region installation type
   export type InstalationType = '-g' | '--save' | '--save-dev';
 
   export const InstalationTypeArr = ['-g', '--save', '--save-dev'];
+  //#endregion
+
+  //#region package json dependency obj
+  export type PackageJsonDependencyObj =
+    | 'dependencies'
+    | 'devDependencies'
+    | 'peerDependencies'
+    | 'resolutions';
+
+  export const PackageJsonDependencyObjArr = [
+    'dependencies',
+    'devDependencies',
+    'peerDependencies',
+    'resolutions',
+  ] as PackageJsonDependencyObj[];
   //#endregion
 
   //#region library type
