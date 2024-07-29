@@ -142,6 +142,20 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
+  //#region clear console
+  clearConsole() {
+    Helpers.msgCacheClear();
+    console.log('\x1Bc');
+
+    // process.stdout.write('\033c\033[3J');
+    // try {
+    //   run('clear').sync()
+    // } catch (error) {
+    //   console.log('clear console not succedd')
+    // }
+  }
+  //#endregion
+
   //#region methods / electron ipc renderer
   /**
    * get electron browser ipc renderer
