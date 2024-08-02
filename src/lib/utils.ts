@@ -3,12 +3,69 @@ import axios, { AxiosResponse } from 'axios';
 import { path } from './core-imports';
 import { Helpers } from './index';
 //#region @backend
+import { fse } from './core-imports';
 import { Blob } from 'buffer';
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
 
 export namespace Utils {
+  interface AttrJsoncProp {
+    name: string;
+    value?: any;
+  }
+  export namespace json {
+    export function getAtrributies(
+      jsoncDeepPath: string,
+      fileContent: string,
+    ): AttrJsoncProp[] {
+      //#region @backendFunc
+      // Extract the specific section based on jsoncDeepPath
+      const regexPath = jsoncDeepPath.replace(/\./g, '\\s*:\\s*\\{');
+      const pathRegex = new RegExp(
+        `"${regexPath}"\\s*:\\s*\\{([\\s\\S]*?)\\}`,
+        'g',
+      );
+      const matchedSection = fileContent.match(pathRegex);
+
+      if (!matchedSection) {
+        return [];
+      }
+
+      const sectionContent = matchedSection[0];
+      const attrRegex = /\/\/\s*@(\w+)(?:\s*=\s*([^\s@]+))?/g;
+      const results: AttrJsoncProp[] = [];
+
+      let match;
+      while ((match = attrRegex.exec(sectionContent)) !== null) {
+        const [, name, value] = match;
+
+        // Find if an existing entry for this name already exists
+        const existingEntry = results.find(attr => attr.name === name);
+
+        if (existingEntry) {
+          // If it exists and value is provided, add it to the array
+          if (value) {
+            if (Array.isArray(existingEntry.value)) {
+              existingEntry.value.push(value);
+            } else {
+              existingEntry.value = [existingEntry.value, value];
+            }
+          }
+        } else {
+          // Otherwise, create a new entry
+          results.push({
+            name,
+            value: value ? value : undefined,
+          });
+        }
+      }
+
+      return results;
+      //#endregion
+    }
+  }
+
   //#region db binary format type
   export enum DbBinaryFormatEnum {
     Blob = 'Blob',
