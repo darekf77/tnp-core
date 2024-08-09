@@ -1464,7 +1464,110 @@ export class HelpersCore extends HelpersMessages {
         //#endregion
       },
 
+      unitlOutput(optionsOutput: {
+        stdoutMsg: string | string[];
+        stderMsg?: string | string[];
+        timeout?: number;
+        stdoutOutputContainsCallback?: () => any;
+      }): Promise<void> {
+        //#region @backendFunc
+        optionsOutput = optionsOutput || ({} as any);
+        let { stdoutMsg, stderMsg, timeout, stdoutOutputContainsCallback } =
+          optionsOutput;
+        let isResolved = false;
+        return new Promise<any>((resolve, reject) => {
+          if (_.isString(stdoutMsg)) {
+            stdoutMsg = [stdoutMsg];
+          }
+          if (_.isString(stderMsg)) {
+            stderMsg = [stderMsg];
+          }
+          if (!_.isArray(stdoutMsg)) {
+            reject(`[unitlOutputContains] Message not a array`);
+          }
+
+          const proc = Helpers.runAsyncIn(command, options);
+
+          proc.on('exit', () => {
+            console.info(`EXIT OF PROCESS`);
+          });
+
+          //#region stderr
+          // @ts-ignore
+          proc.stderr.on('data', message => {
+            const data: string = message.toString().trim();
+            if (!isResolved && _.isArray(stderMsg)) {
+              for (let index = 0; index < stderMsg.length; index++) {
+                const rejectm = stderMsg[index];
+                if (data.search(rejectm) !== -1) {
+                  console.info(
+                    `[unitlOutputContains] Rejected move to next step...`,
+                  );
+                  isResolved = true;
+                  setTimeout(() => {
+                    reject();
+                    proc.kill('SIGINT');
+                  }, timeout);
+                  break;
+                }
+              }
+            }
+          });
+          //#endregion
+
+          //#region stdout
+          // @ts-ignore
+          proc.stdout.on('data', message => {
+            const data: string = message.toString().trim();
+            if (isResolved) {
+              for (let index = 0; index < stdoutMsg.length; index++) {
+                const m = stdoutMsg[index];
+                if (data.search(m) !== -1) {
+                  console.info(`[unitlOutputContains][is resolved] Move to next step...`);
+                  stdoutOutputContainsCallback &&
+                    stdoutOutputContainsCallback();
+                  break;
+                }
+              }
+            } else {
+              for (let index = 0; index < stdoutMsg.length; index++) {
+                const m = stdoutMsg[index];
+                if (data.search(m) !== -1) {
+                  console.info(`[unitlOutputContains] Move to next step...`);
+                  stdoutOutputContainsCallback &&
+                    stdoutOutputContainsCallback();
+                  isResolved = true;
+                  setTimeout(() => {
+                    resolve(void 0);
+                  }, timeout);
+                  break;
+                }
+              }
+            }
+            if (!isResolved && _.isArray(stderMsg)) {
+              for (let index = 0; index < stderMsg.length; index++) {
+                const rejectm = stderMsg[index];
+                if (data.search(rejectm) !== -1) {
+                  console.info(
+                    `[unitlOutputContains] Rejected move to next step...`,
+                  );
+                  isResolved = true;
+                  setTimeout(() => {
+                    reject();
+                    proc.kill('SIGINT');
+                  }, timeout);
+                  break;
+                }
+              }
+            }
+          });
+          //#endregion
+        });
+        //#endregion
+      },
+
       /**
+       * @deprecated use unitOutput
        * start command as asynchronous nodej proces inside promise
        * and wait until output contains some string
        */

@@ -140,8 +140,9 @@ const crossPlatformPath = (
   }
 
   if (hasNonAscii) {
+    const allNonAscii = pathStringOrPathParts.match(/[^\u0000-\u0080]+/g) || '';
     console.warn(
-      `[firedev-core][crossPlatformPath]: Path contains non-ascii characters`,
+      `[firedev-core][crossPlatformPath]: Path contains non-ascii characters: ${allNonAscii}`,
     );
     if (forceTrace) {
       console.trace(`path: "${pathStringOrPathParts}"`);
