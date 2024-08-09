@@ -39,6 +39,7 @@ import type jQueryType from 'jquery';
 import type chalkBaseType from 'chalk';
 import type * as pathBaseType from 'path';
 //#endregion
+import { Helpers } from './index';
 
 //#region set up browser mocks
 
@@ -141,12 +142,10 @@ const crossPlatformPath = (
 
   if (hasNonAscii) {
     const allNonAscii = pathStringOrPathParts.match(/[^\u0000-\u0080]+/g) || '';
-    console.warn(
+    Helpers.logWarn(
       `[firedev-core][crossPlatformPath]: Path contains non-ascii characters: ${allNonAscii}`,
     );
-    if (forceTrace) {
-      console.trace(`path: "${pathStringOrPathParts}"`);
-    }
+    Helpers.logWarn(pathStringOrPathParts);
   }
 
   pathStringOrPathParts = (pathStringOrPathParts || '')
