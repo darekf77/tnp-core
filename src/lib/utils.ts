@@ -1,6 +1,6 @@
 import { CoreModels } from './core-models';
 import axios, { AxiosResponse } from 'axios';
-import { path } from './core-imports';
+import { path, _ } from './core-imports';
 import { Helpers } from './index';
 //#region @backend
 import { fse } from './core-imports';
@@ -15,55 +15,117 @@ export namespace Utils {
     value?: any;
   }
   export namespace json {
-    export function getAtrributies(
-      jsoncDeepPath: string,
-      fileContent: string,
-    ): AttrJsoncProp[] {
-      //#region @backendFunc
-      // Extract the specific section based on jsoncDeepPath
-      const regexPath = jsoncDeepPath.replace(/\./g, '\\s*:\\s*\\{');
-      const pathRegex = new RegExp(
-        `"${regexPath}"\\s*:\\s*\\{([\\s\\S]*?)\\}`,
-        'g',
-      );
-      const matchedSection = fileContent.match(pathRegex);
-
-      if (!matchedSection) {
-        return [];
-      }
-
-      const sectionContent = matchedSection[0];
-      const attrRegex = /\/\/\s*@(\w+)(?:\s*=\s*([^\s@]+))?/g;
-      const results: AttrJsoncProp[] = [];
-
-      let match;
-      while ((match = attrRegex.exec(sectionContent)) !== null) {
-        const [, name, value] = match;
-
-        // Find if an existing entry for this name already exists
-        const existingEntry = results.find(attr => attr.name === name);
-
-        if (existingEntry) {
-          // If it exists and value is provided, add it to the array
-          if (value) {
-            if (Array.isArray(existingEntry.value)) {
-              existingEntry.value.push(value);
-            } else {
-              existingEntry.value = [existingEntry.value, value];
-            }
-          }
+    export const getAtrributies = (
+      jsonDeepPath: string, // lodash path to property in json ex. deep.path.to.prop
+      fileContent: string, // jsonc or json5 - json with comments
+    ): AttrJsoncProp[] => {
+      const lines = fileContent.split('\n');
+      // split path to parts but keep part if is for example 'sql.js
+      const pathParts = jsonDeepPath.split('.').reduce((a, b) => {
+        if (a.length === 0) {
+          return [b];
+        }
+        const last: string = a[a.length - 1];
+        if (
+          (last.startsWith(`['`) && b.endsWith(`']`)) ||
+          (last.startsWith(`["`) && b.endsWith(`"]`))
+        ) {
+          a[a.length - 1] = [last, b].join('.');
         } else {
-          // Otherwise, create a new entry
-          results.push({
-            name,
-            value: value ? value : undefined,
-          });
+          a.push(b);
+        }
+        return a;
+      }, []);
+      // console.log({ pathParts });
+      // const pathParts = jsonDeepPath.split('.');
+      const keyName = pathParts.pop()!.replace(/^\["(.+)"\]$/, '$1');
+      let currentPath = '';
+      let attributes: AttrJsoncProp[] = [];
+      let collectedComments: string[] = [];
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+
+        if (trimmedLine.startsWith('//')) {
+          // Collect comments
+          collectedComments.push(trimmedLine);
+          // trimmedLine.startsWith('//pizda') &&
+          //   console.log('pushlin line', { trimmedLine });
+        } else if (trimmedLine.startsWith('"') || trimmedLine.startsWith("'")) {
+          // Extract the key from the line
+          const match = trimmedLine.match(/["']([^"']+)["']\s*:/);
+          // console.log({ match0: match && match[0], match1: match && match[1] });
+          if (match) {
+            const key = match[1];
+            currentPath = currentPath
+              ? `${currentPath}.${key.includes('.') ? `['${key}']` : key}`
+              : key;
+            // console.log({ key });
+            // Check if the current path matches the jsonDeepPath
+            if (
+              (currentPath.endsWith(keyName) &&
+                !currentPath.endsWith('/' + keyName)) ||
+              currentPath.endsWith(`['${keyName}']`)
+            ) {
+              // console.log('extract attributes', {
+              //   keyName,
+              //   collectedCommentsLength: collectedComments.length,
+              // });
+              // Process the collected comments to extract attributes
+              attributes = extractAttributesFromComments(collectedComments);
+              break;
+            }
+
+            // Reset collected comments as they only relate to the next key
+            collectedComments = [];
+          }
         }
       }
 
-      return results;
-      //#endregion
-    }
+      return attributes;
+    };
+
+    const extractAttributesFromComments = (
+      comments: string[],
+    ): AttrJsoncProp[] => {
+      const attributes: AttrJsoncProp[] = [];
+      const attrRegex = /@(\w+)(?:\s*=\s*([^\s@]+))?/g;
+      // console.log({ comments });
+      for (const comment of comments) {
+        let match;
+        while ((match = attrRegex.exec(comment)) !== null) {
+          const [, name, value] = match;
+
+          const existingAttribute = attributes.find(
+            attr => attr.name === `@${name}`,
+          );
+
+          if (existingAttribute) {
+            if (value) {
+              if (Array.isArray(existingAttribute.value)) {
+                existingAttribute.value.push(value);
+              } else {
+                existingAttribute.value = [existingAttribute.value, value];
+              }
+            }
+          } else {
+            attributes.push({
+              name: `@${name}`,
+              value: value ? value : true,
+            });
+          }
+        }
+      }
+
+      // Normalize single values not to be arrays
+      attributes.forEach(attr => {
+        if (Array.isArray(attr.value) && attr.value.length === 1) {
+          attr.value = attr.value[0];
+        }
+      });
+
+      return attributes;
+    };
   }
 
   //#region db binary format type
