@@ -341,7 +341,7 @@
     "tnp-core": "~18.0.3",
     "tnp-db": "~16.444.14",
     "tnp-helpers": "~16.444.25",
-    "tnp-models": "~16.444.15",
+    "tnp-models": "~18.0.1",
     "ts-debug": "1.3.0",
     "ts-json-schema-generator": "2.3.0-next.5",
     "ts-loader": "2.3.1",
@@ -371,7 +371,7 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "18.0.6",
-  "lastBuildTagHash": "594f15311ae98ce2ea4c20c2b686a2a2d42b5212",
+  "version": "18.0.9",
+  "lastBuildTagHash": "376f751971549c50b8bf57caaf9925145e420d9d",
   "main": "dist/app.electron.js"
 }
