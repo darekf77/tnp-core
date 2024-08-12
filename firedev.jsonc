@@ -29,12 +29,12 @@
       "copy-paste",
       "is-root",
       "is-admin",
-      "dateformat",
+      "dateformat"
     ],
 
     "dependencies": {},
     "linkedFolders": [],
-    "npmFixes": [],
+    "npmFixes": []
   },
 
   "smartContainerBuildTarget": "",
@@ -48,7 +48,7 @@
     "cliBuildNoDts": false,
     "cliBuildObscure": false,
     "cliBuildIncludeNodeModules": false,
-    "cliBuildUglify": false,
+    "cliBuildUglify": false
   },
 
   "smartContainerTarget": "",
@@ -56,14 +56,12 @@
   "isCoreProject": false,
   "useFramework": false,
   "required": [],
-  "version": "v16",
-
+  "version": "v18",
   "additionalNpmNames": ["firedev-core"],
-
   "isGenerated": false,
   "requiredServers": [],
   "license": "MIT",
   "private": false,
   "main": "index.js",
-  "workerPlugins": {},
+  "workerPlugins": {}
 }
