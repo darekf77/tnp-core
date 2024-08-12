@@ -1,10 +1,10 @@
 {
-  "resources": ["README.md"],
-
+  "resources": [
+    "README.md"
+  ],
   "overrided": {
     "ignoreDepsPattern": [],
     "includeAsDev": [],
-
     "includeOnly": [
       "axios",
       "glob",
@@ -31,15 +31,12 @@
       "is-admin",
       "dateformat"
     ],
-
     "dependencies": {},
     "linkedFolders": [],
     "npmFixes": []
   },
-
   "smartContainerBuildTarget": "",
   "linkedRepos": [],
-
   "libReleaseOptions": {
     "nodts": false,
     "obscure": false,
@@ -50,14 +47,15 @@
     "cliBuildIncludeNodeModules": false,
     "cliBuildUglify": false
   },
-
   "smartContainerTarget": "",
   "type": "isomorphic-lib",
   "isCoreProject": false,
   "useFramework": false,
   "required": [],
   "version": "v18",
-  "additionalNpmNames": ["firedev-core"],
+  "additionalNpmNames": [
+    "firedev-core"
+  ],
   "isGenerated": false,
   "requiredServers": [],
   "license": "MIT",
