@@ -10,6 +10,15 @@ import { Blob } from 'buffer';
 const BLOB_SUPPORTED_IN_SQLJS = false;
 
 export namespace Utils {
+  /**
+   * Example:
+   * new RegExp(escapeStringForRegEx('a.b.c'),'g') => /a\.b\.c/g
+   */
+  export const escapeStringForRegEx = (stringForRegExp: string) => {
+    return stringForRegExp.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  };
+
+  //#region json
   interface AttrJsoncProp {
     name: string;
     value?: any;
@@ -127,6 +136,9 @@ export namespace Utils {
       return attributes;
     };
   }
+  //#endregion
+
+  //#region binary
 
   //#region db binary format type
   export enum DbBinaryFormatEnum {
@@ -515,7 +527,9 @@ export namespace Utils {
     }
     //#endregion
   }
+  //#endregion
 
+  //#region css
   export namespace css {
     //#region css utils / numeric value of pixels
     /**
@@ -533,4 +547,5 @@ export namespace Utils {
     }
     //#endregion
   }
+  //#endregion
 }

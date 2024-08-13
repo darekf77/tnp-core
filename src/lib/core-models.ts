@@ -48,7 +48,15 @@ export namespace CoreModels {
 
   //#region release type
   export type ReleaseType = 'major' | 'minor' | 'patch';
-  export type PreReleaseType = 'alpha' | 'beta' | 'rc';
+  export type PreReleaseType = 'alpha' | 'beta' | 'rc' | 'next';
+  export const NpmSpecialVersions = [
+    'latest',
+    'next',
+    'beta',
+    'alpha',
+    'rc',
+    'lts',
+  ];
   //#endregion
 
   //#region progress data type
@@ -516,6 +524,35 @@ export namespace CoreModels {
     compileOnSave: boolean;
     compilerOptions: CompilerOptions;
     angularCompilerOptions: AngularCompilerOptions;
+  }
+  //#endregion
+
+  //#region firedev json
+  export interface FiredevJson {
+    type: CoreModels.LibType;
+    version?: CoreModels.FrameworkVersion;
+    smartContainerBuildTarget?: string;
+    smart?: boolean;
+    monorepo?: boolean;
+    libReleaseOptions: {
+      cliBuildObscure?: boolean;
+      cliBuildUglify?: boolean;
+      cliBuildNoDts?: boolean;
+      cliBuildIncludeNodeModules?: boolean;
+    };
+    /**
+     * project is template for other project
+     */
+    isCoreProject: boolean;
+    scripts?: { [script in string]: string };
+    description?: string;
+    license?: string;
+    private?: boolean;
+    author?: string;
+    homepage?: string;
+    overrided: {
+      dependencies?: { [name: string]: string };
+    };
   }
   //#endregion
 }
