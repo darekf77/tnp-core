@@ -373,7 +373,7 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "18.0.28",
+  "version": "18.0.29",
   "lastBuildTagHash": "932d089cd3a8f4a5623e6fc9a2d68a1d6394957e",
   "main": "dist/app.electron.js"
 }
