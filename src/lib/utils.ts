@@ -548,4 +548,59 @@ export namespace Utils {
     //#endregion
   }
   //#endregion
+
+  //#region process
+  export namespace process {
+    export interface ProcessStartOptions {
+      /**
+       * by default is process.cwd();
+       */
+      cwd?: string;
+      showCommand?: boolean;
+      /**
+       * Modify output line by line
+       */
+      outputLineReplace?: (outputLineStderOrStdout: string) => string;
+      resolvePromiseMsg?: {
+        /**
+         * unitil this string is in output of stdout
+         */
+        stdout?: string | string[];
+        /**
+         * unitil this string is in output of stderr
+         */
+        stderr?: string | string[];
+        /**
+         * by default only resolve when exit code is 0
+         */
+        resolveAfterAnyExitCode?: boolean;
+      };
+      /**
+       * Prefix messages output from child_prcess
+       */
+      prefix?: string;
+      /**
+       * Try command again after fail after n miliseconds
+       */
+      tryAgainWhenFailAfter?: number;
+      askToTryAgainOnError?: boolean;
+      exitOnErrorCallback?: (code: number) => void;
+      /**
+       * Use big buffer for big webpack logs
+       */
+      biggerBuffer?: boolean;
+      hideOutput?: {
+        stdout?: boolean;
+        stderr?: boolean;
+      };
+    }
+
+    export async function startAsync(
+      command: string,
+      options?: ProcessStartOptions & { detach?: boolean },
+    ) {}
+    export function startSync(command: string, options?: ProcessStartOptions) {}
+  }
+
+  //#endregion
 }
