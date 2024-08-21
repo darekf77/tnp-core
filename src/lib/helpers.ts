@@ -375,6 +375,7 @@ export class HelpersCore extends HelpersMessages {
       ${dirpath}
       in windows explorer
 
+      or try to unlock file with app Unlocker or File Locksmith (from power tools)
 
       `);
       Helpers.sleep(1);
