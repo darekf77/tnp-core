@@ -10,19 +10,35 @@ export namespace CoreModels {
   //#region npm install options
   export type NpmInstallOptions = {
     pkg?: CoreModels.Package;
+    /**
+     * false by default
+     */
     silent?: boolean;
-    remove?: boolean;
+    /**
+     * false by default
+     */
     useYarn?: boolean;
+    /**
+     * false by default
+     */
     force?: boolean;
+    /**
+     * Reason for installing package(s)
+     */
     reason?: string;
+    /**
+     * true by default
+     */
     removeYarnOrPackageJsonLock?: boolean;
+    /**
+     * false by default
+     */
     generateYarnOrPackageJsonLock?: boolean;
-    ignoreOptional?: boolean;
   };
   //#endregion
 
   //#region installation type
-  export type InstalationType = '-g' | '--save' | '--save-dev';
+  export type InstalationType = '-g' | '--save' | '--save-dev' | 'remove';
 
   export const InstalationTypeArr = ['-g', '--save', '--save-dev'];
   //#endregion
