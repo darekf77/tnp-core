@@ -342,7 +342,7 @@
     "tnp": "~18.0.4",
     "tnp-cli": "~18.0.3",
     "tnp-config": "~18.0.6",
-    "tnp-core": "~18.0.28",
+    "tnp-core": "~18.0.30",
     "tnp-db": "~18.0.4",
     "tnp-helpers": "~18.0.4",
     "tnp-models": "~18.0.5",
@@ -375,7 +375,7 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "18.0.29",
-  "lastBuildTagHash": "932d089cd3a8f4a5623e6fc9a2d68a1d6394957e",
+  "version": "18.0.30",
+  "lastBuildTagHash": "c53173fed90f36d5e04017e0794dc430808fcee2",
   "main": "dist/app.electron.js"
 }
