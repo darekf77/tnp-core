@@ -1470,6 +1470,7 @@ export class HelpersCore extends HelpersMessages {
         stderMsg?: string | string[];
         timeout?: number;
         stdoutOutputContainsCallback?: () => any;
+        outputLineReplace?: (outputLine: string) => string;
       }): Promise<void> {
         //#region @backendFunc
         optionsOutput = optionsOutput || ({} as any);
@@ -1568,7 +1569,7 @@ export class HelpersCore extends HelpersMessages {
       },
 
       /**
-       * @deprecated use unitOutput
+       * @deprecated use unitlOutput
        * start command as asynchronous nodej proces inside promise
        * and wait until output contains some string
        */
@@ -1923,11 +1924,14 @@ export class HelpersCore extends HelpersMessages {
       extractFromLine,
       exitOnErrorCallback,
       askToTryAgainOnError,
+      resolvePromiseMsgCallback,
       similarProcessKey,
     } = options || {};
     //#endregion
 
     command = Helpers._fixCommand(command);
+    const { stderr:stderResolvePromiseMsgCallback,
+       stdout:stdoutResolvePromiseMsgCallback }  =resolvePromiseMsgCallback || {};
 
     let childProcess: ChildProcess;
     // let {
@@ -2012,6 +2016,7 @@ export class HelpersCore extends HelpersMessages {
               const m = resolvePromiseMsg.stdout[index];
               if (data.search(m) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Move to next step...`)
+                stdoutResolvePromiseMsgCallback && stdoutResolvePromiseMsgCallback();
                 isResolved = true;
                 resolve(void 0);
                 break;
@@ -2030,6 +2035,7 @@ export class HelpersCore extends HelpersMessages {
               const rejectm = resolvePromiseMsg.stderr[index];
               if (data.search(rejectm) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
+                stdoutResolvePromiseMsgCallback && stdoutResolvePromiseMsgCallback();
                 isResolved = true;
                 reject();
                 proc.kill('SIGINT');
@@ -2122,6 +2128,7 @@ export class HelpersCore extends HelpersMessages {
               const rejectm = resolvePromiseMsg.stderr[index];
               if (data.search(rejectm) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
+                stderResolvePromiseMsgCallback && stderResolvePromiseMsgCallback();
                 isResolved = true;
                 reject();
                 proc.kill('SIGINT');

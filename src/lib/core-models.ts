@@ -261,6 +261,10 @@ export namespace CoreModels {
       stdout?: string | string[];
       stderr?: string | string[];
     };
+    resolvePromiseMsgCallback?: {
+      stdout?: () => any;
+      stderr?: () => any;
+    };
     prefix?: string;
     detach?: boolean;
     /**
