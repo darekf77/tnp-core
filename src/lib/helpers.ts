@@ -349,12 +349,12 @@ export class HelpersCore extends HelpersMessages {
     if (!fse.existsSync(dirpath)) {
       if (!omitWarningNotExisted) {
         Helpers.warn(
-          `[firedev-helper][tryRemoveDir] Folder ${path.basename(dirpath)} doesn't exist.`,
+          `[taon-helper][tryRemoveDir] Folder ${path.basename(dirpath)} doesn't exist.`,
         );
       }
       return;
     }
-    Helpers.log(`[firedev-helpers][tryRemoveDir]: ${dirpath}`);
+    Helpers.log(`[taon-helpers][tryRemoveDir]: ${dirpath}`);
 
     try {
       if (contentOnly) {
@@ -391,7 +391,7 @@ export class HelpersCore extends HelpersMessages {
     if (Array.isArray(fileOrFolderPathOrPatter)) {
       fileOrFolderPathOrPatter = crossPlatformPath(fileOrFolderPathOrPatter);
     }
-    Helpers.log(`[firedev-core][remove]: ${fileOrFolderPathOrPatter}`, 1);
+    Helpers.log(`[taon-core][remove]: ${fileOrFolderPathOrPatter}`, 1);
     if (exactFolder) {
       rimraf.sync(fileOrFolderPathOrPatter, { glob: false, disableGlob: true });
       return;
@@ -431,9 +431,9 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / check if projects is running in supported terminal
   /**
-   * Check if the current shell is supported by Firedev framework.
+   * Check if the current shell is supported by Taon framework.
    */
-  get isSupportedFiredevTerminal(): boolean {
+  get isSupportedTaonTerminal(): boolean {
     //#region @backendFunc
     return process.platform === 'win32' ? this.isRunningInGitBash : true;
     //#endregion
@@ -760,7 +760,7 @@ export class HelpersCore extends HelpersMessages {
     }
     if (!path.isAbsolute(folderPath)) {
       Helpers.warn(
-        `[firedev-core][mkdirp] Path is not absolute, abort ${folderPath}`,
+        `[taon-core][mkdirp] Path is not absolute, abort ${folderPath}`,
         true,
       );
       return;
@@ -771,7 +771,7 @@ export class HelpersCore extends HelpersMessages {
       os.platform() === 'darwin'
     ) {
       Helpers.warn(
-        `[firedev-core][mkdirp] On mac osx /tmp is changed to /private/tmp`,
+        `[taon-core][mkdirp] On mac osx /tmp is changed to /private/tmp`,
         false,
       );
       folderPath = folderPath.replace(`/tmp/`, '/private/tmp/');
@@ -783,7 +783,7 @@ export class HelpersCore extends HelpersMessages {
 
     if (fse.existsSync(folderPath)) {
       Helpers.log(
-        `[firedev-core][mkdirp] folder path already exists: ${folderPath}`,
+        `[taon-core][mkdirp] folder path already exists: ${folderPath}`,
       );
     } else {
       // if (Helpers.isSymlinkFileExitedOrUnexisted(path.dirname(folderPath))) {
@@ -792,7 +792,7 @@ export class HelpersCore extends HelpersMessages {
       //     Helpers.removeFileIfExists(path.dirname(folderPath));
       //   } catch (error) {}
       // }
-      Helpers.log(`[firedev-core][mkdirp] ${folderPath}`, 1);
+      Helpers.log(`[taon-core][mkdirp] ${folderPath}`, 1);
       fse.mkdirpSync(folderPath);
     }
   }
@@ -955,14 +955,14 @@ export class HelpersCore extends HelpersMessages {
     }
     if (!folderOrFilePath) {
       Helpers.warn(
-        `[firedev-core][exists] Path is not a string, abort.. "${folderOrFilePath}"`,
+        `[taon-core][exists] Path is not a string, abort.. "${folderOrFilePath}"`,
         true,
       );
       return false;
     }
     if (!path.isAbsolute(folderOrFilePath)) {
       Helpers.warn(
-        `[firedev-core]
+        `[taon-core]
       File path is not absolute:
       ${folderOrFilePath}
 
@@ -983,7 +983,7 @@ export class HelpersCore extends HelpersMessages {
    */
   public _fixCommand(command: string): string {
     if (
-      (command.startsWith('tnp ') || command.startsWith('firedev ')) && // TODO every cli projects here that uses run and need to kill process easly!
+      (command.startsWith('tnp ') || command.startsWith('taon ')) && // TODO every cli projects here that uses run and need to kill process easly!
       command.search('-spinner=false') === -1 &&
       command.search('-spinner=off') === -1
     ) {
@@ -992,7 +992,7 @@ export class HelpersCore extends HelpersMessages {
 
     if (
       global.skipCoreCheck &&
-      (command.startsWith('tnp ') || command.startsWith('firedev '))
+      (command.startsWith('tnp ') || command.startsWith('taon '))
     ) {
       command = `${command} --skipCoreCheck`;
     }
@@ -1103,7 +1103,7 @@ export class HelpersCore extends HelpersMessages {
     } catch (e) {
       // @ts-ignore
       if (opt.showErrorWarning) {
-        Helpers.warn(`[firedev-helepr] Not able to get output from command:
+        Helpers.warn(`[taon-helepr] Not able to get output from command:
         "${command}"
         `);
       }
@@ -1149,7 +1149,7 @@ export class HelpersCore extends HelpersMessages {
     } catch (e) {
       // @ts-ignore
       if (opt.showErrorWarning) {
-        Helpers.warn(`[firedev-helpers] Not able to get output from command:
+        Helpers.warn(`[taon-helpers] Not able to get output from command:
       "${command}"
       cwd: ${cwd}
       `);
@@ -1174,12 +1174,12 @@ export class HelpersCore extends HelpersMessages {
     }
     for (let index = 0; index < portOrPortsToKill.length; index++) {
       let port = portOrPortsToKill[index];
-      Helpers.info(`[firedev-helpers] Killing process on port: ${port}`);
+      Helpers.info(`[taon-helpers] Killing process on port: ${port}`);
       const org = port;
       port = Number(port);
       if (!_.isNumber(port)) {
         showOutoput &&
-          Helpers.warn(`[firedev-helpers] Can't kill on port: "${org}"`);
+          Helpers.warn(`[taon-helpers] Can't kill on port: "${org}"`);
         return;
       }
       try {
@@ -1187,12 +1187,12 @@ export class HelpersCore extends HelpersMessages {
         // run(`fkill -f :${port} &> /dev/null`, { output: false }).sync()
         showOutoput &&
           Helpers.info(
-            `[firedev-helpers] Processs killed successfully on port: ${port}`,
+            `[taon-helpers] Processs killed successfully on port: ${port}`,
           );
       } catch (e) {
         showOutoput &&
           Helpers.warn(
-            `[firedev-helpers] No process to kill  on port: ${port}... `,
+            `[taon-helpers] No process to kill  on port: ${port}... `,
             false,
           );
       }
@@ -1273,7 +1273,7 @@ export class HelpersCore extends HelpersMessages {
     if (options.biggerBuffer === void 0) options.biggerBuffer = false;
     if (options.cwd === void 0) options.cwd = crossPlatformPath(process.cwd());
     if (!_.isString(command)) {
-      Helpers.error(`[firedev-helpers] command is not a string`);
+      Helpers.error(`[taon-helpers] command is not a string`);
     }
     //#endregion
     return {
@@ -2441,7 +2441,7 @@ command: ${command}
   public parse<T = any>(jsonInstring: string, useJson5 = false): any {
     if (!_.isString(jsonInstring)) {
       Helpers.log(jsonInstring);
-      Helpers.warn(`[firedev-core] Trying to parse no a string...`);
+      Helpers.warn(`[taon-core] Trying to parse no a string...`);
       return jsonInstring;
     }
     return (
@@ -2513,13 +2513,13 @@ command: ${command}
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
-    // Helpers.info(`[firedev-core] writeFile: ${absoluteFilePath}`);
+    // Helpers.info(`[taon-core] writeFile: ${absoluteFilePath}`);
     // debugger
     if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
       const beforePath = absoluteFilePath;
       absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
       // Helpers.logWarn(
-      //   `[firedev-core] WRITTING JSON into real path:
+      //   `[taon-core] WRITTING JSON into real path:
       // original: ${beforePath}
       // real    : ${absoluteFilePath}
       // `,

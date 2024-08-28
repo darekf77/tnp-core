@@ -133,7 +133,7 @@ const crossPlatformPath = (
   const isExtendedLengthPath = /^\\\\\?\\/.test(pathStringOrPathParts);
   const hasNonAscii = /[^\u0000-\u0080]+/.test(pathStringOrPathParts); // eslint-disable-line no-control-regex
   if (isExtendedLengthPath) {
-    console.warn(`[firedev-core][crossPlatformPath]: Path starts with \\\\,
+    console.warn(`[taon-core][crossPlatformPath]: Path starts with \\\\,
     this is not supported in crossPlatformPath`);
     if (forceTrace) {
       console.trace(`path: "${pathStringOrPathParts}"`);
@@ -143,7 +143,7 @@ const crossPlatformPath = (
   if (hasNonAscii) {
     const allNonAscii = pathStringOrPathParts.match(/[^\u0000-\u0080]+/g) || '';
     Helpers.logWarn(
-      `[firedev-core][crossPlatformPath]: Path contains non-ascii characters: ${allNonAscii}`,
+      `[taon-core][crossPlatformPath]: Path contains non-ascii characters: ${allNonAscii}`,
     );
     Helpers.logWarn(pathStringOrPathParts);
   }
@@ -172,7 +172,7 @@ const crossPlatformPath = (
   // const regexWinPath2 = /^(\\)[a-zA-Z]\:/;
   // if (isUnixLike && regexWinPath2.test(pathStringOrPathParts)) {
   //   console.warn(
-  //     `[firedev-core][crossPlatformPath]: Path starts with \\ and not from /`,
+  //     `[taon-core][crossPlatformPath]: Path starts with \\ and not from /`,
   //   );
   //   console.trace(`path: "${pathStringOrPathParts}"`);
   // }

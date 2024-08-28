@@ -3,7 +3,7 @@ let isBrowser = false;
 isBrowser = true;
 //#endregion
 
-const frameworkNameBeTmp: 'firedev' | 'tnp' = '' as any;
+const frameworkNameBeTmp: 'taon' | 'tnp' = '' as any;
 
 //#region @backend
 // @ts-ignore
@@ -11,4 +11,4 @@ frameworkNameBe = global['frameworkName'] ? global['frameworkName'] : '';
 //#endregion
 export const frameworkNameBe = frameworkNameBeTmp;
 
-export const frameworkName = isBrowser ? 'firedev' : frameworkNameBe;
+export const frameworkName = isBrowser ? 'taon' : frameworkNameBe;

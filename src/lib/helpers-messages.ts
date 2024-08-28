@@ -439,11 +439,11 @@ export class HelpersMessages extends HelpersIsomorphic {
   //#endregion
 
   /**
-   * Logs not visible in normal use of firedev-cli
+   * Logs not visible in normal use of taon-cli
    */
   logSuccess(details: any | string) {
     //#region @backendFunc
-    if (global.hideLog && frameworkName === 'firedev') {
+    if (global.hideLog && frameworkName === 'taon') {
       return;
     }
     Helpers.success(details);
@@ -451,11 +451,11 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
 
   /**
-   * Logs not visible in normal use of firedev-cli
+   * Logs not visible in normal use of taon-cli
    */
   logInfo(details: string, repeatable = false) {
     //#region @backendFunc
-    if (global.hideLog && frameworkName === 'firedev') {
+    if (global.hideLog && frameworkName === 'taon') {
       return;
     }
     Helpers.info(details, repeatable);
@@ -463,11 +463,11 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
 
   /**
-   * Logs not visible in normal use of firedev-cli
+   * Logs not visible in normal use of taon-cli
    */
   logError(details: any, noExit = false, noTrace = false) {
     //#region @backendFunc
-    if (global.hideLog && frameworkName === 'firedev') {
+    if (global.hideLog && frameworkName === 'taon') {
       return;
     }
     Helpers.error(details, noExit, noTrace);
@@ -476,11 +476,11 @@ export class HelpersMessages extends HelpersIsomorphic {
   //#endregion
 
   /**
-   * Logs not visible in normal use of firedev-cli
+   * Logs not visible in normal use of taon-cli
    */
   logWarn(details: string, trace = false) {
     //#region @backendFunc
-    if (global.hideLog && frameworkName === 'firedev') {
+    if (global.hideLog && frameworkName === 'taon') {
       return;
     }
     Helpers.warn(details, trace);

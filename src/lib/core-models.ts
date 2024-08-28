@@ -547,8 +547,8 @@ export namespace CoreModels {
   }
   //#endregion
 
-  //#region firedev json
-  export interface FiredevJson {
+  //#region taon json
+  export interface TaonJson {
     type: CoreModels.LibType;
     version?: CoreModels.FrameworkVersion;
     smartContainerBuildTarget?: string;

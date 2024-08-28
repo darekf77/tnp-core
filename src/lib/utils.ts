@@ -237,7 +237,7 @@ export namespace Utils {
         const m = /^data:(.+?);base64,(.+)$/.exec(base64Data);
         if (!m) {
           throw new Error(
-            `[firedev-framework][base64toBlob] Not a base64 blob [${base64Data}]`,
+            `[taon-framework][base64toBlob] Not a base64 blob [${base64Data}]`,
           );
         }
         // tslint:disable-next-line:prefer-const

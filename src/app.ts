@@ -1,5 +1,5 @@
 // // #region @notForNpm
-// import { Firedev } from 'firedev/src';
+// import { Taon } from 'taon/src';
 // import { map, Observable, share, Subject, takeUntil, tap } from 'rxjs';
 // const host = `http://localhost:3232`;
 
@@ -8,18 +8,18 @@
 // import { Component, OnInit } from '@angular/core';
 // import { CommonModule } from '@angular/common';
 // //#endregion
-// @Firedev.Entity({ className: 'Task' })
-// class Task extends Firedev.Base.Entity {
+// @Taon.Entity({ className: 'Task' })
+// class Task extends Taon.Base.Entity {
 
 //   //#region @websql
 
-//   @Firedev.Orm.Column.Generated()
+//   @Taon.Orm.Column.Generated()
 //   //#endregion
 //   id?: number;
 
 //   //#region @websql
 
-//   @Firedev.Orm.Column.Custom('varchar')
+//   @Taon.Orm.Column.Custom('varchar')
 //   //#endregion
 //   name?: string;
 
@@ -29,8 +29,8 @@
 //   static ctrl: TaskController;
 // }
 
-// @Firedev.Controller({ className: 'TaskController', entity: Task })
-// class TaskController extends Firedev.Base.Controller<Task> {
+// @Taon.Controller({ className: 'TaskController', entity: Task })
+// class TaskController extends Taon.Base.Controller<Task> {
 //   //#region @websql
 //   async initExampleDbData() { // @ts-ignore
 //     const db = await this.connection.getRepository(Task);
@@ -41,8 +41,8 @@
 //   }
 //   //#endregion
 
-//   @Firedev.Http.GET()
-//   count(): Firedev.Response<number> {
+//   @Taon.Http.GET()
+//   count(): Taon.Response<number> {
 //     //#region @websqlFunc
 //     return async () => { // @ts-ignore
 //       const db = await this.connection.getRepository(Task);
@@ -106,7 +106,7 @@
 // //#endregion
 
 // async function start() {
-//   const config = await Firedev.init({
+//   const config = await Taon.init({
 //     host,
 //     controllers: [TaskController],
 //     entities: [Task],
