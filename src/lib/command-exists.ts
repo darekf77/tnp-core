@@ -1,6 +1,7 @@
 const exec = require('child_process').exec;
 const execSync = require('child_process').execSync;
-import { Helpers, fse } from "tnp-core/src";
+import { Helpers } from "./index";
+import { fse } from "./core-imports";
 const access = fse.access;
 const accessSync = fse.accessSync;
 const constants = fse.constants;

@@ -26,7 +26,7 @@ import type { ChildProcess } from 'child_process';
 import { Subject, Subscription } from 'rxjs';
 //#endregion
 //#region @backend
-import * as json5Write from 'json10-writer/src';
+import * as json5Write from 'json10-writer/lib';
 import { Blob } from 'buffer';
 import { ipcMain, screen } from 'electron';
 //#endregion

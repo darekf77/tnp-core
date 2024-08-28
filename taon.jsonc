@@ -54,7 +54,7 @@
   "required": [],
   "version": "v18",
   "additionalNpmNames": [
-    "firedev-core"
+    "taon-core"
   ],
   "isGenerated": false,
   "requiredServers": [],
