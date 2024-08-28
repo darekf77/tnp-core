@@ -1,6 +1,6 @@
 .vscode
 /dist
-/lib
+/src
 /app
 /source
 /docs

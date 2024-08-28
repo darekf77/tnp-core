@@ -55,7 +55,7 @@
     "required": [],
     "version": "v18",
     "additionalNpmNames": [
-      "firedev-core"
+      "taon-core"
     ],
     "isGenerated": false,
     "requiredServers": [],
@@ -369,7 +369,7 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "18.0.30",
+  "version": "18.0.31",
   "lastBuildTagHash": "c53173fed90f36d5e04017e0794dc430808fcee2",
   "main": "dist/app.electron.js"
 }
