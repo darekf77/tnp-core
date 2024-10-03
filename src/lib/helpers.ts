@@ -758,6 +758,10 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / mkdirp
   //#region @backend
+  public createFolder(folderPath: string | string[]): void {
+    return Helpers.mkdirp(folderPath);
+  }
+
   public mkdirp(folderPath: string | string[]): void {
     if (_.isArray(folderPath)) {
       folderPath = crossPlatformPath(folderPath);
