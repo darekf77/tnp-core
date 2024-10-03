@@ -2,12 +2,12 @@
 import {
   _,
   path,
+  crossPlatformPath,
   //#region @backend
   fse,
   os,
   rimraf,
   child_process,
-  crossPlatformPath,
   json5,
   chalk,
   dateformat,
@@ -267,6 +267,10 @@ export class HelpersCore extends HelpersMessages {
     //#endregion
   }
   //#endregion
+
+  relative(cwd: string, to: string) {
+    return crossPlatformPath(path.relative(cwd, to));
+  }
 
   //#region methods / remove file if exists
   removeFileIfExists(absoluteFilePath: string | string[]) {
@@ -1525,7 +1529,9 @@ export class HelpersCore extends HelpersMessages {
               for (let index = 0; index < stdoutMsg.length; index++) {
                 const m = stdoutMsg[index];
                 if (data.search(m) !== -1) {
-                  console.info(`[unitlOutputContains][is resolved] Move to next step...`);
+                  console.info(
+                    `[unitlOutputContains][is resolved] Move to next step...`,
+                  );
                   stdoutOutputContainsCallback &&
                     stdoutOutputContainsCallback();
                   break;
@@ -1930,8 +1936,10 @@ export class HelpersCore extends HelpersMessages {
     //#endregion
 
     command = Helpers._fixCommand(command);
-    const { stderr:stderResolvePromiseMsgCallback,
-       stdout:stdoutResolvePromiseMsgCallback }  =resolvePromiseMsgCallback || {};
+    const {
+      stderr: stderResolvePromiseMsgCallback,
+      stdout: stdoutResolvePromiseMsgCallback,
+    } = resolvePromiseMsgCallback || {};
 
     let childProcess: ChildProcess;
     // let {
@@ -2016,7 +2024,8 @@ export class HelpersCore extends HelpersMessages {
               const m = resolvePromiseMsg.stdout[index];
               if (data.search(m) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Move to next step...`)
-                stdoutResolvePromiseMsgCallback && stdoutResolvePromiseMsgCallback();
+                stdoutResolvePromiseMsgCallback &&
+                  stdoutResolvePromiseMsgCallback();
                 isResolved = true;
                 resolve(void 0);
                 break;
@@ -2035,7 +2044,8 @@ export class HelpersCore extends HelpersMessages {
               const rejectm = resolvePromiseMsg.stderr[index];
               if (data.search(rejectm) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
-                stdoutResolvePromiseMsgCallback && stdoutResolvePromiseMsgCallback();
+                stdoutResolvePromiseMsgCallback &&
+                  stdoutResolvePromiseMsgCallback();
                 isResolved = true;
                 reject();
                 proc.kill('SIGINT');
@@ -2128,7 +2138,8 @@ export class HelpersCore extends HelpersMessages {
               const rejectm = resolvePromiseMsg.stderr[index];
               if (data.search(rejectm) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
-                stderResolvePromiseMsgCallback && stderResolvePromiseMsgCallback();
+                stderResolvePromiseMsgCallback &&
+                  stderResolvePromiseMsgCallback();
                 isResolved = true;
                 reject();
                 proc.kill('SIGINT');
@@ -2537,6 +2548,16 @@ command: ${command}
       ) {
         fse.unlinkSync(path.dirname(absoluteFilePath));
       }
+    }
+
+    if (
+      fse.existsSync(absoluteFilePath) &&
+      fse.lstatSync(absoluteFilePath).isDirectory()
+    ) {
+      Helpers.warn(
+        `[taon-core] Trying to write file content into directory: ${absoluteFilePath}`,
+      );
+      return false;
     }
 
     if (!fse.existsSync(path.dirname(absoluteFilePath))) {

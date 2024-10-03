@@ -11,6 +11,8 @@ import * as net from 'net';
 import chalkBase from 'chalk';
 import * as spawn from 'cross-spawn';
 import * as glob from 'glob';
+import * as fg from 'fast-glob';
+import { minimatch } from 'minimatch';
 import * as fse from 'fs-extra';
 import * as rimraf from 'rimraf';
 import * as chokidar from 'chokidar';
@@ -23,6 +25,7 @@ import * as portfinder from 'portfinder';
 const isRoot = require('is-root');
 const isAdmin = require('is-admin');
 forceTrace = global.hideLog === false;
+
 //#endregion
 //#region @browser
 import jQuery from 'jquery';
@@ -199,6 +202,8 @@ export {
 export {
   spawn,
   glob,
+  minimatch,
+  fg,
   isElevated,
   chokidar,
   mkdirp,

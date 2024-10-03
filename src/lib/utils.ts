@@ -10,6 +10,20 @@ import { Blob } from 'buffer';
 const BLOB_SUPPORTED_IN_SQLJS = false;
 
 export namespace Utils {
+  export const uniqArray = <T = any>(
+    array: any[],
+    uniqueProperty?: keyof T,
+  ) => {
+    var seen = {};
+    return array
+      .filter(f => !!f)
+      .filter(function (item) {
+        return seen.hasOwnProperty(uniqueProperty ? item[uniqueProperty] : item)
+          ? false
+          : (seen[uniqueProperty ? item[uniqueProperty] : item] = true);
+      }) as T[];
+  };
+
   /**
    * Example:
    * new RegExp(escapeStringForRegEx('a.b.c'),'g') => /a\.b\.c/g
@@ -17,6 +31,14 @@ export namespace Utils {
   export const escapeStringForRegEx = (stringForRegExp: string) => {
     return stringForRegExp.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
   };
+
+  export function removeChalkSpecialChars(str: string): string {
+    // Regex to match ANSI escape sequences used by Chalk
+    const ansiRegex = /\u001b\[[0-9;]*m/g;
+
+    // Replace all ANSI escape sequences with an empty string
+    return str.replace(ansiRegex, '');
+  }
 
   //#region json
   interface AttrJsoncProp {
@@ -603,4 +625,18 @@ export namespace Utils {
   }
 
   //#endregion
+}
+
+export namespace UtilsString {
+  export const kebabCaseNoSplitNumbers = (input: string): string => {
+    return (
+      input
+        // Match spaces or any kind of whitespace and replace with a hyphen
+        .replace(/\s+/g, '-')
+        // Match uppercase letters and replace them with a hyphen and the lowercase version of the letter
+        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+        // Convert everything to lowercase
+        .toLowerCase()
+    );
+  };
 }

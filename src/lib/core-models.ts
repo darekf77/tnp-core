@@ -140,6 +140,12 @@ export namespace CoreModels {
 
   //#region file extension
   export type ImageFileExtension = 'jpg' | 'jpeg' | 'png' | 'svg';
+  export const ImageFileExtensionArr: CoreModels.ImageFileExtension[] = [
+    'jpg',
+    'jpeg',
+    'png',
+    'svg',
+  ];
   //#endregion
 
   //#region file extension
@@ -148,6 +154,7 @@ export namespace CoreModels {
     | 'html'
     | ImageFileExtension
     | 'txt'
+    | 'md'
     | CutableFileExt;
   //#endregion
 
@@ -544,6 +551,18 @@ export namespace CoreModels {
     compileOnSave: boolean;
     compilerOptions: CompilerOptions;
     angularCompilerOptions: AngularCompilerOptions;
+  }
+
+
+  export interface TscCompileOptions {
+    cwd: string;
+    watch?: boolean;
+    outDir?: 'dist';
+    generateDeclarations?: boolean;
+    tsExe?: string;
+    diagnostics?: boolean;
+    hideErrors?: boolean;
+    debug?: boolean;
   }
   //#endregion
 
