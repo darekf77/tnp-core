@@ -1834,6 +1834,8 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / log process
   //#region @backend
+
+  //#region log process
   logProc(
     proc: ChildProcess,
     output = true,
@@ -1919,13 +1921,14 @@ export class HelpersCore extends HelpersMessages {
 
     return proc;
   }
+  //#endregion
 
   async execute(
     command: string,
     cwd: string,
     options?: Omit<CoreModels.ExecuteOptions, 'tryAgainWhenFailAfter'>,
   ) {
-    //#region options
+    //#region preapre options
     let {
       hideOutput,
       resolvePromiseMsg,
@@ -1937,7 +1940,6 @@ export class HelpersCore extends HelpersMessages {
       resolvePromiseMsgCallback,
       similarProcessKey,
     } = options || {};
-    //#endregion
 
     command = Helpers._fixCommand(command);
     const {
@@ -1968,43 +1970,18 @@ export class HelpersCore extends HelpersMessages {
       resolvePromiseMsg.stderr = [resolvePromiseMsg.stderr];
     }
 
+    //#endregion
+
     const handlProc = (proc: ChildProcess) => {
       return new Promise((resolve, reject) => {
-        // TODO UNCOMMENT + TEST
-        // if (
-        //   similarProcessKey &&
-        //   !Array.isArray(globalProcessStdout[similarProcessKey])
-        // ) {
-        //   globalProcessStdout[similarProcessKey] = [];
-        // }
-        // if (
-        //   similarProcessKey &&
-        //   !Array.isArray(globalProcessStder[similarProcessKey])
-        // ) {
-        //   globalProcessStder[similarProcessKey] = [];
-        // }
-        // let lastRawDataStdout = similarProcessKey
-        //   ? globalProcessStdout[similarProcessKey]
-        //   : [];
-        // let lastRawDataStder = similarProcessKey
-        //   ? globalProcessStder[similarProcessKey]
-        //   : [];
+        console.log(
+          `[execute] Process started...`,
+          (resolvePromiseMsg.stdout as string[]).map(c => `"${c}"`).join(','),
+        );
 
         //#region handle stdout data
-
         proc.stdout.on('data', rawData => {
           let data = rawData?.toString() || '';
-
-          // TODO UNCOMMENT + TEST
-          // if (data !== '' && lastRawDataStdout.includes(data.trim())) {
-          //   // console.warn(`[execute][stdout] Same data as last one, skip...`);
-          //   // process.stdout.write('-');
-          //   return;
-          // }
-          // lastRawDataStdout.push(data.trim());
-          // if (lastRawDataStdout.length > maxProcessHistoryLinesChekc) {
-          //   lastRawDataStdout.shift();
-          // }
 
           data = Helpers.modifyLineByLine(
             data, // @ts-ignore
@@ -2017,42 +1994,45 @@ export class HelpersCore extends HelpersMessages {
             process.stdout.write(data);
           }
 
-          if (!isResolved && _.isArray(resolvePromiseMsg.stdout)) {
-            // @ts-ignore
+          if (_.isArray(resolvePromiseMsg.stdout)) {
             for (
               let index = 0;
               index < resolvePromiseMsg.stdout.length;
               index++
             ) {
-              // @ts-ignore
-              const m = resolvePromiseMsg.stdout[index];
-              if (data.search(m) !== -1) {
-                // Helpers.info(`[unitlOutputContains] Move to next step...`)
+              // console.log(`DATA STDOUT: ${chalk.gray(data)}`);
+
+              const resolveCompilationMessage = resolvePromiseMsg.stdout[index];
+              if (data.search(resolveCompilationMessage) !== -1) {
+                // Helpers.info(`[unitlOutputContains] AAA...`);
                 stdoutResolvePromiseMsgCallback &&
                   stdoutResolvePromiseMsgCallback();
-                isResolved = true;
-                resolve(void 0);
+                if (!isResolved) {
+                  isResolved = true;
+                  resolve(void 0);
+                }
                 break;
               }
             }
           }
 
-          if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) {
-            // @ts-ignore
+          // TODO NOT NEEDED
+          if (_.isArray(resolvePromiseMsg.stderr)) {
             for (
               let index = 0;
               index < resolvePromiseMsg.stderr.length;
               index++
             ) {
-              // @ts-ignore
               const rejectm = resolvePromiseMsg.stderr[index];
               if (data.search(rejectm) !== -1) {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
                 stdoutResolvePromiseMsgCallback &&
                   stdoutResolvePromiseMsgCallback();
-                isResolved = true;
-                reject();
-                proc.kill('SIGINT');
+                if (!isResolved) {
+                  isResolved = true;
+                  reject();
+                  proc.kill('SIGINT');
+                }
                 break;
               }
             }
@@ -2091,17 +2071,6 @@ export class HelpersCore extends HelpersMessages {
         proc.stdout.on('error', rawData => {
           let data = rawData?.toString() || '';
 
-          // TODO UNCOMMENT + TEST
-          // if (data !== '' && lastRawDataStder.includes(data.trim())) {
-          //   // console.warn(`[execute][stder] Same data as last one, skip...`);
-          //   // process.stdout.write('-');
-          //   return;
-          // }
-          // lastRawDataStder.push(data.trim());
-          // if (lastRawDataStder.length > maxProcessHistoryLinesChekc) {
-          //   lastRawDataStder.shift();
-          // }
-
           data = Helpers.modifyLineByLine(
             data, // @ts-ignore
             outputLineReplace,
@@ -2131,7 +2100,7 @@ export class HelpersCore extends HelpersMessages {
             process.stderr.write(data);
           }
 
-          if (!isResolved && _.isArray(resolvePromiseMsg.stderr)) {
+          if (_.isArray(resolvePromiseMsg.stderr)) {
             // @ts-ignore
             for (
               let index = 0;
@@ -2144,9 +2113,11 @@ export class HelpersCore extends HelpersMessages {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
                 stderResolvePromiseMsgCallback &&
                   stderResolvePromiseMsgCallback();
-                isResolved = true;
-                reject();
-                proc.kill('SIGINT');
+                if (!isResolved) {
+                  isResolved = true;
+                  reject();
+                  proc.kill('SIGINT');
+                }
                 break;
               }
             }
