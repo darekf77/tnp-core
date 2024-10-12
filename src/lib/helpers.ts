@@ -1974,10 +1974,10 @@ export class HelpersCore extends HelpersMessages {
 
     const handlProc = (proc: ChildProcess) => {
       return new Promise((resolve, reject) => {
-        console.log(
-          `[execute] Process started...`,
-          (resolvePromiseMsg.stdout as string[]).map(c => `"${c}"`).join(','),
-        );
+        // console.log(
+        //   `[execute] Process started...`,
+        //   (resolvePromiseMsg.stdout as string[]).map(c => `"${c}"`).join(','),
+        // );
 
         //#region handle stdout data
         proc.stdout.on('data', rawData => {
