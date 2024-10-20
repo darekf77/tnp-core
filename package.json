@@ -373,5 +373,8 @@
   "name": "tnp-core",
   "version": "18.0.36",
   "lastBuildTagHash": "6650cb89a41df1d7788a1181b4c8d16c9109c23a",
-  "main": "dist/app.electron.js"
+  "main": "dist/app.electron.js",
+  "scripts": {
+    "mkdocs": "python3 -m mkdocs"
+  }
 }
