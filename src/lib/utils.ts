@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from 'axios';
 import { path, _ } from './core-imports';
 import { Helpers } from './index';
 //#region @backend
-import { fse } from './core-imports';
+import { fse, dateformat } from './core-imports';
 import { Blob } from 'buffer';
 //#endregion
 
@@ -39,6 +39,18 @@ export namespace Utils {
     // Replace all ANSI escape sequences with an empty string
     return str.replace(ansiRegex, '');
   }
+
+  export const fullDateTime = () => {
+    //#region @backendFunc
+    return dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss');
+    //#endregion
+  };
+
+  export const fullDate = () => {
+    //#region @backendFunc
+    return dateformat(new Date(), 'dd-mm-yyyy');
+    //#endregion
+  };
 
   //#region json
   interface AttrJsoncProp {
