@@ -582,62 +582,118 @@ export namespace Utils {
     //#endregion
   }
   //#endregion
+}
 
-  //#region process
-  export namespace process {
-    export interface ProcessStartOptions {
+//#region process
+export namespace UtilsProcess {
+  export interface ProcessStartOptions {
+    /**
+     * by default is process.cwd();
+     */
+    cwd?: string;
+    showCommand?: boolean;
+    /**
+     * Modify output line by line
+     */
+    outputLineReplace?: (outputLineStderOrStdout: string) => string;
+    resolvePromiseMsg?: {
       /**
-       * by default is process.cwd();
+       * unitil this string is in output of stdout
        */
-      cwd?: string;
-      showCommand?: boolean;
+      stdout?: string | string[];
       /**
-       * Modify output line by line
+       * unitil this string is in output of stderr
        */
-      outputLineReplace?: (outputLineStderOrStdout: string) => string;
-      resolvePromiseMsg?: {
-        /**
-         * unitil this string is in output of stdout
-         */
-        stdout?: string | string[];
-        /**
-         * unitil this string is in output of stderr
-         */
-        stderr?: string | string[];
-        /**
-         * by default only resolve when exit code is 0
-         */
-        resolveAfterAnyExitCode?: boolean;
-      };
+      stderr?: string | string[];
       /**
-       * Prefix messages output from child_prcess
+       * by default only resolve when exit code is 0
        */
-      prefix?: string;
-      /**
-       * Try command again after fail after n miliseconds
-       */
-      tryAgainWhenFailAfter?: number;
-      askToTryAgainOnError?: boolean;
-      exitOnErrorCallback?: (code: number) => void;
-      /**
-       * Use big buffer for big webpack logs
-       */
-      biggerBuffer?: boolean;
-      hideOutput?: {
-        stdout?: boolean;
-        stderr?: boolean;
-      };
-    }
-
-    export async function startAsync(
-      command: string,
-      options?: ProcessStartOptions & { detach?: boolean },
-    ) {}
-    export function startSync(command: string, options?: ProcessStartOptions) {}
+      resolveAfterAnyExitCode?: boolean;
+    };
+    /**
+     * Prefix messages output from child_prcess
+     */
+    prefix?: string;
+    /**
+     * Try command again after fail after n miliseconds
+     */
+    tryAgainWhenFailAfter?: number;
+    askToTryAgainOnError?: boolean;
+    exitOnErrorCallback?: (code: number) => void;
+    /**
+     * Use big buffer for big webpack logs
+     */
+    biggerBuffer?: boolean;
+    hideOutput?: {
+      stdout?: boolean;
+      stderr?: boolean;
+    };
   }
 
-  //#endregion
+  /**
+   * TODO IMPLEMENT
+   */
+  export async function startAsync(
+    command: string,
+    options?: ProcessStartOptions & { detach?: boolean },
+  ) {
+    // TODO @LAST
+  }
+
+  /**
+   * TODO IMPLEMENT
+   */
+  export function startSync(command: string, options?: ProcessStartOptions) {
+    // TODO @LAST
+  }
+
+  export const getBashOrShellName = ():
+    | 'cmd'
+    | 'powershell'
+    | 'gitbash'
+    | 'cygwin'
+    | 'unknown'
+    | 'bash'
+    | 'zsh'
+    | 'fish'
+    | 'sh' => {
+    //#region @backendFunc
+    const platform = process.platform; // Identify the platform: 'win32', 'darwin', 'linux'
+    const shell = process.env.SHELL || process.env.ComSpec || ''; // Common shell environment variables
+
+    if (platform === 'win32') {
+      if (shell.includes('cmd.exe')) return 'cmd';
+      if (shell.includes('powershell.exe') || shell.includes('pwsh'))
+        return 'powershell';
+
+      // Heuristic for Git Bash
+      if (
+        process.env.MSYSTEM &&
+        process.env.MSYSTEM.toLowerCase().includes('mingw')
+      ) {
+        return 'gitbash';
+      }
+
+      // Heuristic for Cygwin
+      if (shell.includes('cygwin')) {
+        return 'cygwin';
+      }
+
+      return 'unknown'; // Default for unrecognized shells on Windows
+    } else {
+      // For macOS and Linux
+      if (shell.includes('bash')) return 'bash';
+      if (shell.includes('zsh')) return 'zsh';
+      if (shell.includes('fish')) return 'fish';
+      if (shell.includes('sh')) return 'sh';
+
+      return 'unknown'; // Default for unrecognized shells on Unix-based systems
+    }
+    //#endregion
+  };
 }
+
+//#endregion
 
 export namespace UtilsString {
   export const kebabCaseNoSplitNumbers = (input: string): string => {
