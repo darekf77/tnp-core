@@ -1,15 +1,26 @@
 import { CoreModels } from './core-models';
 import axios, { AxiosResponse } from 'axios';
-import { path, _ } from './core-imports';
+import {
+  path,
+  _,
+  crossPlatformPath,
+  //#region @backend
+  portfinder,
+  os,
+  //#endregion
+} from './core-imports';
 import { Helpers } from './index';
 //#region @backend
+import { spawn, child_process } from './core-imports';
 import { fse, dateformat } from './core-imports';
 import { Blob } from 'buffer';
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
 
+//#region utils
 export namespace Utils {
+  //#region utils / uniq array
   export const uniqArray = <T = any>(
     array: any[],
     uniqueProperty?: keyof T,
@@ -23,7 +34,9 @@ export namespace Utils {
           : (seen[uniqueProperty ? item[uniqueProperty] : item] = true);
       }) as T[];
   };
+  //#endregion
 
+  //#region utils / escape string for reg exp
   /**
    * Example:
    * new RegExp(escapeStringForRegEx('a.b.c'),'g') => /a\.b\.c/g
@@ -31,7 +44,9 @@ export namespace Utils {
   export const escapeStringForRegEx = (stringForRegExp: string) => {
     return stringForRegExp.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
   };
+  //#endregion
 
+  //#region utils / remove chalk special chars
   export function removeChalkSpecialChars(str: string): string {
     // Regex to match ANSI escape sequences used by Chalk
     const ansiRegex = /\u001b\[[0-9;]*m/g;
@@ -39,18 +54,66 @@ export namespace Utils {
     // Replace all ANSI escape sequences with an empty string
     return str.replace(ansiRegex, '');
   }
+  //#endregion
 
+  //#region utils / full date time
   export const fullDateTime = () => {
     //#region @backendFunc
     return dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss');
     //#endregion
   };
+  //#endregion
 
+  //#region utils / full date
   export const fullDate = () => {
     //#region @backendFunc
     return dateformat(new Date(), 'dd-mm-yyyy');
     //#endregion
   };
+  //#endregion
+
+  //#region utils / get free port
+  const takenPorts = [];
+  export const getFreePort = async (options?: {
+    startFrom?: number;
+    howManyFreePortsAfterThatPort?: number;
+  }): Promise<number> => {
+    //#region @backendFunc
+    options = options || ({} as any);
+    options.startFrom = options.startFrom || 3000;
+    let startFrom = options.startFrom;
+    const howManyFreePortsAfterThatPort =
+      options.howManyFreePortsAfterThatPort || 1;
+    const max = 5000;
+    let i = 0;
+    if (_.isNumber(startFrom)) {
+      while (takenPorts.includes(startFrom)) {
+        startFrom += 1 + howManyFreePortsAfterThatPort;
+      }
+    }
+
+    while (true) {
+      try {
+        const port = await portfinder.getPortPromise({ port: startFrom });
+        takenPorts.push(port);
+        return port;
+      } catch (err) {
+        console.log(err);
+        Helpers.warn(
+          `Trying to assign port  :${startFrom} but already in use.`,
+          false,
+        );
+      }
+      startFrom += 1;
+      if (i++ === max) {
+        Helpers.error(
+          `[taon-helpers]] failed to assign free port after ${max} trys...`,
+        );
+      }
+    }
+    //#endregion
+  };
+  //#endregion
 
   //#region json
   interface AttrJsoncProp {
@@ -583,14 +646,19 @@ export namespace Utils {
   }
   //#endregion
 }
+//#endregion
 
-//#region process
+//#region utils process
 export namespace UtilsProcess {
+  //#region utils process / process start options
   export interface ProcessStartOptions {
     /**
      * by default is process.cwd();
      */
     cwd?: string;
+    /**
+     * by default is false
+     */
     showCommand?: boolean;
     /**
      * Modify output line by line
@@ -598,11 +666,11 @@ export namespace UtilsProcess {
     outputLineReplace?: (outputLineStderOrStdout: string) => string;
     resolvePromiseMsg?: {
       /**
-       * unitil this string is in output of stdout
+       * until this string is in output of stdout
        */
       stdout?: string | string[];
       /**
-       * unitil this string is in output of stderr
+       * until this string is in output of stderr
        */
       stderr?: string | string[];
       /**
@@ -611,17 +679,18 @@ export namespace UtilsProcess {
       resolveAfterAnyExitCode?: boolean;
     };
     /**
-     * Prefix messages output from child_prcess
+     * Prefix messages output from child_process
      */
     prefix?: string;
     /**
-     * Try command again after fail after n miliseconds
+     * Try command again after fail after n milliseconds
      */
     tryAgainWhenFailAfter?: number;
     askToTryAgainOnError?: boolean;
     exitOnErrorCallback?: (code: number) => void;
     /**
      * Use big buffer for big webpack logs
+     * (it may slow down smaller processes execution)
      */
     biggerBuffer?: boolean;
     hideOutput?: {
@@ -629,25 +698,171 @@ export namespace UtilsProcess {
       stderr?: boolean;
     };
   }
+  //#endregion
 
+  //#region utils process  / TODO start async
   /**
    * TODO IMPLEMENT
+   * start async node process
    */
   export async function startAsync(
     command: string,
-    options?: ProcessStartOptions & { detach?: boolean },
+    options?: ProcessStartOptions,
   ) {
     // TODO @LAST
   }
+  //#endregion
 
+  //#region utils process  / TODO start sync
   /**
    * TODO IMPLEMENT
    */
   export function startSync(command: string, options?: ProcessStartOptions) {
     // TODO @LAST
   }
+  //#endregion
 
+  //#region utils process  / get git bash path
+  export const getGitBashPath = () => {
+    //#region @backendFunc
+    if (process.platform !== 'win32') {
+      return null;
+    }
+    try {
+      // Execute the 'where' command to find bash.exe
+      const gitBashPath = child_process
+        .execSync('where bash.exe', { encoding: 'utf8' })
+        .split('\n')[0]
+        .trim();
+
+      if (gitBashPath) {
+        return crossPlatformPath(gitBashPath);
+      }
+      return null; // Return the first match
+    } catch (err) {
+      return null;
+    }
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils process  / start process in new graphical terminal window
+  /**
+   * TODO IMPLEMENT
+   * start async node process
+   */
+  export const startInNewTerminalWindow = (
+    command: string,
+    options?: Pick<ProcessStartOptions, 'cwd' | 'hideOutput'>,
+  ) => {
+    //#region @backendFunc
+    const platform = process.platform;
+    options = options || {};
+    options.cwd = options.cwd || process.cwd();
+
+    if (platform === 'win32') {
+      const gitBashPath = getGitBashPath();
+      // const currentBash = getBashOrShellName();
+      // console.log('gitBashPath', gitBashPath);
+      // console.log('currentBash', currentBash);
+
+      if (gitBashPath) {
+        return spawn(
+          'start bash',
+          ['-c', `${command}`], // Use '-c' to execute a single command in Git Bash
+          {
+            detached: true, // Detached process
+            stdio: 'ignore', // Ignore stdio
+            cwd: options?.cwd,
+          },
+        ).unref(); // Ensure the parent process can exit independently
+      }
+      console.error(
+        `
+
+
+        Please install git bash to use this cli (https://gitforwindows.org/)
+
+
+        `,
+      );
+      // For Windows
+      return spawn('cmd', ['/c', 'start', 'cmd', '/k', `${command}`], {
+        detached: true,
+        stdio: 'ignore',
+        cwd: options?.cwd,
+      }).unref();
+    } else if (platform === 'darwin') {
+      // For macOS
+      return spawn(
+        'osascript',
+        ['-e', `tell application "Terminal" to do script "${command}"`],
+        {
+          detached: true,
+          stdio: 'ignore',
+          cwd: options?.cwd,
+        },
+      ).unref();
+    } else if (platform === 'linux') {
+      if (!UtilsOs.isRunningInLinuxGraphicsCapableEnvironment()) {
+        const child = child_process.spawn(command, {
+          detached: true,
+          cwd: options?.cwd,
+          stdio: 'ignore',
+        });
+        child.unref();
+        return;
+      }
+      // For Linux (gnome-terminal as an example)
+      const terminals = [
+        { cmd: 'gnome-terminal', args: ['--'] },
+        { cmd: 'konsole', args: ['-e'] },
+        { cmd: 'xfce4-terminal', args: ['-e'] },
+        { cmd: 'xterm', args: ['-e'] },
+        { cmd: 'lxterminal', args: ['-e'] },
+        { cmd: 'mate-terminal', args: ['-e'] },
+        { cmd: 'terminator', args: ['-e'] },
+        { cmd: 'tilix', args: ['-e'] },
+        { cmd: 'alacritty', args: ['-e'] },
+        { cmd: 'urxvt', args: ['-e'] },
+      ];
+
+      let terminalCommand = '';
+      let terminalArgs: string[] = [];
+      for (const term of terminals) {
+        try {
+          child_process.execSync(`which ${term.cmd}`, {
+            stdio: 'ignore',
+            cwd: options?.cwd,
+          });
+          terminalCommand = term.cmd;
+          terminalArgs = [...term.args, command];
+          break;
+        } catch (err) {
+          // Terminal not found, continue to the next
+        }
+      }
+
+      if (!terminalCommand) {
+        console.error('No supported terminal emulator found.');
+        return;
+      }
+      const child = spawn(terminalCommand, terminalArgs, {
+        detached: true,
+        stdio: 'ignore',
+      });
+
+      child.unref();
+    } else {
+      Helpers.throw(`Unsupported platform: ${platform}`);
+    }
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils process / get bash or shell name
   export const getBashOrShellName = ():
+    | 'browser'
     | 'cmd'
     | 'powershell'
     | 'gitbash'
@@ -657,6 +872,9 @@ export namespace UtilsProcess {
     | 'zsh'
     | 'fish'
     | 'sh' => {
+    //#region @browser
+    return 'browser';
+    //#endregion
     //#region @backendFunc
     const platform = process.platform; // Identify the platform: 'win32', 'darwin', 'linux'
     const shell = process.env.SHELL || process.env.ComSpec || ''; // Common shell environment variables
@@ -691,11 +909,155 @@ export namespace UtilsProcess {
     }
     //#endregion
   };
+  //#endregion
 }
 
 //#endregion
 
+//#region utils os
+export namespace UtilsOs {
+  //#region utils os / is running in browser
+  /**
+   * check if script is running in client browser
+   * (websql model -> is also considered as browser
+   * because it is running in browser)
+   */
+  export const isRunningInBrowser = (): boolean => {
+    //#region @backend
+    return false;
+    //#endregion
+    return true;
+  };
+  //#endregion
+
+  //#region utils os / is running in node
+  /**
+   * check if script is running in nodejs
+   * (backend script or electron script)
+   */
+  export const isRunningInNode = (): boolean => {
+    //#region @backend
+    return true;
+    //#endregion
+    return false;
+  };
+  //#endregion
+
+  //#region utils os / is running in websql
+  /**
+   * check if script is running special
+   * browser mode that has sql.js backend
+   * and executes sql queries in browser
+   */
+  export const isRunningInWebSQL = (): boolean => {
+    //#region @backend
+    return false;
+    //#endregion
+
+    //#region @websqlOnly
+    return true;
+    //#endregion
+    return false;
+  };
+  //#endregion
+
+  //#region utils os / is running in electron
+  /**
+   * check whether the current process is running inside
+   * Electron backend or browser.
+   */
+  export const isRunningInElectron = (): boolean => {
+    // Renderer process
+    // @ts-ignore
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.process === 'object' &&
+      window.process.type === 'renderer'
+    ) {
+      return true;
+    }
+
+    // Main process
+    // @ts-ignore
+    if (
+      typeof process !== 'undefined' &&
+      typeof process.versions === 'object' &&
+      !!process.versions.electron
+    ) {
+      return true;
+    }
+
+    // Detect the user agent when the `nodeIntegration` option is set to false
+    if (
+      typeof navigator === 'object' &&
+      typeof navigator.userAgent === 'string' &&
+      navigator.userAgent.indexOf('Electron') >= 0
+    ) {
+      return true;
+    }
+
+    return false;
+  };
+  //#endregion
+
+  //#region utils os / is running in wsl
+  /**
+   * Check wether the current process is running inside
+   * windows subsystem for linux (WSL).
+   */
+  export const isRunningInWsl = (): boolean => {
+    //#region @backendFunc
+    if (process.platform !== 'linux') {
+      return false;
+    }
+
+    if (os.release().toLowerCase().includes('microsoft')) {
+      return true;
+    }
+
+    try {
+      return fse
+        .readFileSync('/proc/version', 'utf8')
+        .toLowerCase()
+        .includes('microsoft');
+    } catch (_) {
+      return false;
+    }
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils os / is running in docker
+  export const isRunningInDocker = (): boolean => {
+    //#region @backendFunc
+    try {
+      const cgroup = fse.readFileSync('/proc/1/cgroup', 'utf8');
+      return /docker|kubepods|containerd/.test(cgroup);
+    } catch (e) {
+      return false; // If the file does not exist or cannot be read, assume not running in Docker
+    }
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils os / is running in linux graphics capable environment
+  export const isRunningInLinuxGraphicsCapableEnvironment = (): boolean => {
+    //#region @backendFunc
+    if (os.platform() !== 'linux') {
+      return false;
+    }
+
+    // Check for the DISPLAY environment variable
+    return !!process.env.DISPLAY;
+    //#endregion
+  };
+  //#endregion
+}
+//#endregion
+
+//#region utils string
 export namespace UtilsString {
+  //#region utils string / kebab case no split numbers
   export const kebabCaseNoSplitNumbers = (input: string): string => {
     return (
       input
@@ -707,4 +1069,6 @@ export namespace UtilsString {
         .toLowerCase()
     );
   };
+  //#endregion
 }
+//#endregion

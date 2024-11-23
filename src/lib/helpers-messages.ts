@@ -95,6 +95,27 @@ export class HelpersMessages extends HelpersIsomorphic {
     }
   }
 
+  /**
+   * Throw error and exit process
+   * make sure browser or nodejs will not continue
+   * @param details
+   */
+  throw(details: string) {
+    if (this.isBrowser) {
+      //#region @browser
+      document.body.innerHTML =
+        '<h1>Application has encountered an error and stopped.</h1>';
+      document.body.style.pointerEvents = 'none';
+      //#endregion
+      //#region @backend
+      setTimeout(() => {
+        process.exit(1);
+      });
+      //#endregion
+    }
+    throw new Error(details);
+  }
+
   error(details: any, noExit = false, noTrace = false) {
     //#region browser mode
     if (Helpers.isBrowser) {

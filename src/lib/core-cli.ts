@@ -11,7 +11,7 @@ const commandExistsSync = checkSyncIfCommandExists;
 const check = require('check-node-version');
 // @ts-ignore
 import isElevated from 'is-elevated';
-import { requiredForDev } from './required';
+import { requiredForDev } from './required-global-npm-packages';
 //#endregion
 
 

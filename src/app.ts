@@ -1,5 +1,5 @@
 //#region imports
-import { Taon, BaseContext } from 'taon';
+import { Taon, BaseContext } from 'taon/src';
 import { Observable, map } from 'rxjs';
 import { HOST_BACKEND_PORT } from './app.hosts';
 //#region @browser

@@ -1,61 +1,42 @@
+import { UtilsOs } from './utils';
+
 export class HelpersIsomorphic {
+  /**
+   * @deprecated
+   * use UtilsOs.isRunningInBrowser() instead
+   */
   get isBrowser() {
-    //#region @backend
-    return false;
-    //#endregion
-    return true;
+    return UtilsOs.isRunningInBrowser();
   }
 
+  /**
+   * @deprecated
+   * use UtilsOs.isRunningInWebSQL() instead
+   */
   get isWebSQL() {
-    //#region @backend
-    return false;
-    //#endregion
-
-    //#region @websqlOnly
-    return true;
-    //#endregion
-    return false;
+    return UtilsOs.isRunningInWebSQL();
   }
+
+  /**
+   * @deprecated
+   * use UtilsOs.isRunningInNode() instead
+   */
   get isNode() {
-    //#region @backend
-    return true;
-    //#endregion
-    return false;
+    return UtilsOs.isRunningInNode();
   }
 
+  /**
+   * @deprecated
+   * use UtilsOs.isRunningInElectron() instead
+   */
   get isElectron() {
-    // Renderer process
-    // @ts-ignore
-    if (
-      typeof window !== 'undefined' &&
-      typeof window.process === 'object' &&
-      window.process.type === 'renderer'
-    ) {
-      return true;
-    }
-
-    // Main process
-    // @ts-ignore
-    if (
-      typeof process !== 'undefined' &&
-      typeof process.versions === 'object' &&
-      !!process.versions.electron
-    ) {
-      return true;
-    }
-
-    // Detect the user agent when the `nodeIntegration` option is set to false
-    if (
-      typeof navigator === 'object' &&
-      typeof navigator.userAgent === 'string' &&
-      navigator.userAgent.indexOf('Electron') >= 0
-    ) {
-      return true;
-    }
-
-    return false;
+    return UtilsOs.isRunningInElectron();
   }
 
+  /**
+   * TODO what is the purpose of this function?
+   * @deprecated
+   */
   contain(arr: any[], item: any): boolean {
     return (
       arr.filter(l => {

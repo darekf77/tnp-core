@@ -1,13 +1,20 @@
-export const requiredForDev =  {
+/**
+ * TODO slowly refactor this.. only actually globally needed are:
+ * pm2, yarn, npm-run, ts-node ???
+ */
+export const requiredForDev = {
   npm: [
     //#region @backend
     // { name: '@angular/cli', version: '13' },
+    { name: 'pm2', version: '5.4.3' },
+    // TODO: not needed globally - refactor
     { name: 'ncc', version: '0.36.0', installName: '@vercel/ncc' },
     { name: 'extract-zip', version: '1.6.7' },
     // { name: 'watch', version: '1.0.2' },
     { name: 'cpr' },
     { name: 'check-node-version' },
     { name: 'npm-run', version: '4.1.2' },
+    // TODO: not needed globally - refactor
     { name: 'rimraf', version: '3.0.2' },
     { name: 'mkdirp' },
     // { name: 'renamer', version: '2.0.1' },

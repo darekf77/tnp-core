@@ -17,7 +17,7 @@ import {
   fkill,
   //#endregion
 } from './core-imports';
-import { Helpers } from './index';
+import { Helpers, Utils, UtilsOs } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
 import { ipcRenderer, webFrame } from 'electron';
@@ -107,38 +107,29 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / is wsl
+  /**
+   * @deprecated use UtilsOs.isRunningInsideWsl()
+   */
   get isWsl() {
-    //#region @backendFunc
-    if (process.platform !== 'linux') {
-      return false;
-    }
-
-    if (os.release().toLowerCase().includes('microsoft')) {
-      return true;
-    }
-
-    try {
-      return fse
-        .readFileSync('/proc/version', 'utf8')
-        .toLowerCase()
-        .includes('microsoft');
-    } catch (_) {
-      return false;
-    }
-    //#endregion
+    return UtilsOs.isRunningInWsl();
   }
   //#endregion
 
-  //#region methods / is runnning in docker
+  //#region methods / is running in docker
+  /**
+   * @deprecated use UtilsOs.isRunningInDocker
+   */
   isRunningInDocker() {
-    //#region @backendFunc
-    try {
-      const cgroup = fse.readFileSync('/proc/1/cgroup', 'utf8');
-      return /docker|kubepods|containerd/.test(cgroup);
-    } catch (e) {
-      return false; // If the file does not exist or cannot be read, assume not running in Docker
-    }
-    //#endregion
+    return UtilsOs.isRunningInDocker();
+  }
+  //#endregion
+
+  //#region methods / is running in docker
+  /**
+   * @deprecated use UtilsOs.isRunningInLinuxGraphicEnvironment
+   */
+  isRunningInLinuxGraphicsCapableEnvironment() {
+    return UtilsOs.isRunningInLinuxGraphicsCapableEnvironment();
   }
   //#endregion
 
@@ -268,9 +259,14 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
+  //#region methods / relative
+  /**
+   * path.relative that return cross platform path
+   */
   relative(cwd: string, to: string) {
     return crossPlatformPath(path.relative(cwd, to));
   }
+  //#endregion
 
   //#region methods / remove file if exists
   removeFileIfExists(absoluteFilePath: string | string[]) {
@@ -405,7 +401,7 @@ export class HelpersCore extends HelpersMessages {
   }
   //#endregion
 
-  //#region methods / clean exit proces
+  //#region methods / clean exit process
   //#region @backend
   cleanExit() {
     Helpers.processes.forEach(p => {
