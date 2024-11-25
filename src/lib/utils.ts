@@ -815,16 +815,16 @@ export namespace UtilsProcess {
       }
       // For Linux (gnome-terminal as an example)
       const terminals = [
-        { cmd: 'gnome-terminal', args: ['--'] },
-        { cmd: 'konsole', args: ['-e'] },
-        { cmd: 'xfce4-terminal', args: ['-e'] },
-        { cmd: 'xterm', args: ['-e'] },
-        { cmd: 'lxterminal', args: ['-e'] },
-        { cmd: 'mate-terminal', args: ['-e'] },
-        { cmd: 'terminator', args: ['-e'] },
-        { cmd: 'tilix', args: ['-e'] },
-        { cmd: 'alacritty', args: ['-e'] },
-        { cmd: 'urxvt', args: ['-e'] },
+        { cmd: 'gnome-terminal', args: ['--', 'bash', '-c'] }, // GNOME Terminal
+        { cmd: 'konsole', args: ['-e', 'bash', '-c'] },        // Konsole
+        { cmd: 'xfce4-terminal', args: ['-e', 'bash', '-c'] }, // XFCE4 Terminal
+        { cmd: 'xterm', args: ['-e', 'bash', '-c'] },          // Xterm
+        { cmd: 'lxterminal', args: ['-e', 'bash', '-c'] },     // LXTerminal
+        { cmd: 'mate-terminal', args: ['-e', 'bash', '-c'] },  // MATE Terminal
+        { cmd: 'terminator', args: ['-x', 'bash', '-c'] },     // Terminator
+        { cmd: 'tilix', args: ['-e', 'bash', '-c'] },          // Tilix
+        { cmd: 'alacritty', args: ['-e', 'bash', '-c'] },      // Alacritty
+        { cmd: 'urxvt', args: ['-e', 'bash', '-c'] },          // URxvt
       ];
 
       let terminalCommand = '';
