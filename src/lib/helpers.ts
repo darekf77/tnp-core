@@ -1076,6 +1076,11 @@ export class HelpersCore extends HelpersMessages {
       }, second * 1000);
     });
   }
+
+  public async timeout(seconds: number): Promise<void> {
+    return await Helpers.wait(seconds);
+  }
+
   //#endregion
 
   //#region methods / command output as string async
