@@ -67,6 +67,27 @@ const forceTrace = global.hideLog === false;
 
 const LIMIT = 10;
 
+//#region transformData
+/**
+ * @param details any data to be transformed
+ * @returns string ready to be displayed
+ */
+const transformData = (details: any): string => {
+  if (typeof details === 'object') {
+    // if (Array.isArray(details)) {
+    //   return details.join('\n');
+    // }
+    try {
+      const json = JSON.stringify(details, null, 2);
+      details = json;
+    } catch (error) {
+      return details;
+    }
+  }
+  return details;
+};
+//#endregion
+
 export class HelpersMessages extends HelpersIsomorphic {
   msgCacheClear() {
     //#region @backend
@@ -114,6 +135,10 @@ export class HelpersMessages extends HelpersIsomorphic {
       //#endregion
     }
     throw new Error(details);
+  }
+
+  tryCatchError(error: any) {
+    Helpers.error(error, true, true);
   }
 
   error(details: any, noExit = false, noTrace = false) {
@@ -399,7 +424,19 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
   //#endregion
 
+  get isVerboseMode() {
+    //#region @browser
+    return true; // TODO what it means in browser
+    //#endregion
+    //#region @backend
+    return forceTrace;
+    //#endregion
+  }
+
   //#region log
+  /**
+   * log messages only available in verbose mode
+   */
   log(details: any, debugLevel = 0) {
     if (Helpers.isBrowser) {
       console.log(details);
@@ -570,19 +607,4 @@ export class HelpersMessages extends HelpersIsomorphic {
     //#endregion
   }
   //#endregion
-}
-
-function transformData(details: any) {
-  if (typeof details === 'object') {
-    if (Array.isArray(details)) {
-      return details.join('\n');
-    }
-    try {
-      const json = JSON.stringify(details);
-      details = json;
-    } catch (error) {
-      return details;
-    }
-  }
-  return details;
 }
