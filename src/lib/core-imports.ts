@@ -217,6 +217,9 @@ export {
   net,
   ps,
   fkill,
+  /**
+   * @deprecated use ports worker and taon app instead
+   */
   portfinder,
   psList,
 };
