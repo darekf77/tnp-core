@@ -10,9 +10,10 @@ import {
   //#endregion
 } from './core-imports';
 import { Helpers } from './index';
+import { dateformat } from './core-imports';
 //#region @backend
 import { spawn, child_process } from './core-imports';
-import { fse, dateformat } from './core-imports';
+import { fse } from './core-imports';
 import { Blob } from 'buffer';
 //#endregion
 
@@ -816,15 +817,15 @@ export namespace UtilsProcess {
       // For Linux (gnome-terminal as an example)
       const terminals = [
         { cmd: 'gnome-terminal', args: ['--', 'bash', '-c'] }, // GNOME Terminal
-        { cmd: 'konsole', args: ['-e', 'bash', '-c'] },        // Konsole
+        { cmd: 'konsole', args: ['-e', 'bash', '-c'] }, // Konsole
         { cmd: 'xfce4-terminal', args: ['-e', 'bash', '-c'] }, // XFCE4 Terminal
-        { cmd: 'xterm', args: ['-e', 'bash', '-c'] },          // Xterm
-        { cmd: 'lxterminal', args: ['-e', 'bash', '-c'] },     // LXTerminal
-        { cmd: 'mate-terminal', args: ['-e', 'bash', '-c'] },  // MATE Terminal
-        { cmd: 'terminator', args: ['-x', 'bash', '-c'] },     // Terminator
-        { cmd: 'tilix', args: ['-e', 'bash', '-c'] },          // Tilix
-        { cmd: 'alacritty', args: ['-e', 'bash', '-c'] },      // Alacritty
-        { cmd: 'urxvt', args: ['-e', 'bash', '-c'] },          // URxvt
+        { cmd: 'xterm', args: ['-e', 'bash', '-c'] }, // Xterm
+        { cmd: 'lxterminal', args: ['-e', 'bash', '-c'] }, // LXTerminal
+        { cmd: 'mate-terminal', args: ['-e', 'bash', '-c'] }, // MATE Terminal
+        { cmd: 'terminator', args: ['-x', 'bash', '-c'] }, // Terminator
+        { cmd: 'tilix', args: ['-e', 'bash', '-c'] }, // Tilix
+        { cmd: 'alacritty', args: ['-e', 'bash', '-c'] }, // Alacritty
+        { cmd: 'urxvt', args: ['-e', 'bash', '-c'] }, // URxvt
       ];
 
       let terminalCommand = '';
@@ -1006,6 +1007,9 @@ export namespace UtilsOs {
    * windows subsystem for linux (WSL).
    */
   export const isRunningInWsl = (): boolean => {
+     //#region @browser
+     return false;
+     //#endregion
     //#region @backendFunc
     if (process.platform !== 'linux') {
       return false;
@@ -1029,6 +1033,9 @@ export namespace UtilsOs {
 
   //#region utils os / is running in docker
   export const isRunningInDocker = (): boolean => {
+    //#region @browser
+    return false;
+    //#endregion
     //#region @backendFunc
     try {
       const cgroup = fse.readFileSync('/proc/1/cgroup', 'utf8');
@@ -1070,5 +1077,45 @@ export namespace UtilsString {
     );
   };
   //#endregion
+}
+//#endregion
+
+//#region utils migrations
+/**
+ * Taon migration utilities
+ */
+export namespace UtilsMigrations {
+  export const getTimestampFromClassName = (
+    className: string,
+  ): number | undefined => {
+    const [maybeTimestamp1, maybeTimestamp2] = className.split('_') || [];
+    // console.log({ maybeTimestamp1, maybeTimestamp2 });
+    const timestamp1 = parseInt(maybeTimestamp1);
+    const timestamp2 = parseInt(maybeTimestamp2);
+    const timestamp = !_.isNaN(timestamp1) ? timestamp1 : timestamp2;
+    return isValidTimestamp(timestamp) ? timestamp : void 0;
+  };
+
+  export const getFormattedTimestampFromClassName = (
+    className: string,
+  ): string | undefined => {
+    const timestamp = getTimestampFromClassName(className);
+    if (!timestamp) {
+      return void 0;
+    }
+    const dateFromTimestamp: Date = new Date(timestamp);
+    return `${dateformat(dateFromTimestamp, 'dd-mm-yyyy HH:MM:ss')}`;
+  };
+
+  export const isValidTimestamp = (value: any): boolean => {
+    if (typeof value !== 'number') {
+      return false; // Must be a number
+    }
+
+    const minTimestamp = 0; // Minimum possible timestamp (Unix epoch)
+    const maxTimestamp = 8640000000000000; // Max safe timestamp in JS (represents year ~275760)
+
+    return value >= minTimestamp && value <= maxTimestamp;
+  };
 }
 //#endregion
