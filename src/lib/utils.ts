@@ -1103,9 +1103,13 @@ export namespace UtilsMigrations {
     if (!timestamp) {
       return void 0;
     }
+    return formatTimestamp(timestamp);
+  };
+
+  export const formatTimestamp = (timestamp: number): string => {
     const dateFromTimestamp: Date = new Date(timestamp);
     return `${dateformat(dateFromTimestamp, 'dd-mm-yyyy HH:MM:ss')}`;
-  };
+  }
 
   export const isValidTimestamp = (value: any): boolean => {
     if (typeof value !== 'number') {
