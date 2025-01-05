@@ -1007,9 +1007,9 @@ export namespace UtilsOs {
    * windows subsystem for linux (WSL).
    */
   export const isRunningInWsl = (): boolean => {
-     //#region @browser
-     return false;
-     //#endregion
+    //#region @browser
+    return false;
+    //#endregion
     //#region @backendFunc
     if (process.platform !== 'linux') {
       return false;
@@ -1056,6 +1056,34 @@ export namespace UtilsOs {
 
     // Check for the DISPLAY environment variable
     return !!process.env.DISPLAY;
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils os / is running in cli mode
+  /**
+   * Check whether the current process is running in CLI mode.
+   */
+  export const isRunningInCliMode = (): boolean => {
+    //#region @browser
+    return false;
+    //#endregion
+    //#region @backendFunc
+    return !!global['globalSystemToolMode'];
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils os / is running in cli mode
+  /**
+   * Check whether the current process is running in mocha test.
+   */
+  export const isRunningInMochaTest = (): boolean => {
+    //#region @browser
+    return false;
+    //#endregion
+    //#region @backendFunc
+    return typeof global['it'] === 'function';
     //#endregion
   };
   //#endregion
@@ -1109,7 +1137,7 @@ export namespace UtilsMigrations {
   export const formatTimestamp = (timestamp: number): string => {
     const dateFromTimestamp: Date = new Date(timestamp);
     return `${dateformat(dateFromTimestamp, 'dd-mm-yyyy HH:MM:ss')}`;
-  }
+  };
 
   export const isValidTimestamp = (value: any): boolean => {
     if (typeof value !== 'number') {

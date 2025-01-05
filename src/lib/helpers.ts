@@ -83,13 +83,22 @@ export class HelpersCore extends HelpersMessages {
   readonly bigMaxBuffer = 2024 * 500;
 
   //#region @backend
+  /**
+   * @deprecated use UtilsOs
+   */
   get isRunningIn() {
     return {
+      /**
+       * @deprecated use UtilsOs.isRunningInMochaTest()
+       */
       mochaTest() {
-        return typeof global['it'] === 'function';
+        return UtilsOs.isRunningInMochaTest();
       },
+      /**
+       * @deprecated use UtilsOs.isRunningInCliMode()
+       */
       cliMode() {
-        return !!global['globalSystemToolMode'];
+        return UtilsOs.isRunningInCliMode();
       },
     };
   }
