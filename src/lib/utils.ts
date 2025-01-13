@@ -1562,7 +1562,36 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
+  //#region press any key to continue
+  export const pressAnyKeyToContinueAsync = (options?: {
+    message?: string;
+  }): Promise<void> => {
+    //#region @backendFunc
+    options = options || {};
+    options.message =
+      options.message || chalk.bold('Press any key to continue...');
+    const { message } = options;
+    const readline = require('readline');
+    return new Promise(resolve => {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      // Prompt user with the question
+      rl.question(message, answer => {
+        rl.close();
+        resolve(answer);
+      });
+    });
+    //#endregion
+  };
+  //#endregion
+
   //#region press any key
+  /**
+   * @deprecated use UtilsTerminal.pressAnyKeyToContinueAsync()
+   */
   export const pressAnyKey = (options?: { message?: string }) => {
     //#region @backendFunc
     options = options || {};
