@@ -1,9 +1,6 @@
 //#region import
+//#region @backend
 import {
-  _,
-  path,
-  crossPlatformPath,
-  //#region @backend
   fse,
   os,
   rimraf,
@@ -15,21 +12,25 @@ import {
   win32Path,
   glob,
   fkill,
-  //#endregion
 } from './core-imports';
+import * as json5Write from 'json10-writer/src';
+import { Blob } from 'buffer';
+import { ipcMain, screen } from 'electron';
+//#endregion
+//#region @browser
+import { Subject, Subscription } from 'rxjs';
+//#endregion
+import {
+  _,
+  path,
+  crossPlatformPath
+} from './core-imports';
+import { UtilsTerminal } from './utils';
 import { Helpers, Utils, UtilsOs } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
 import { ipcRenderer, webFrame } from 'electron';
 import type { ChildProcess } from 'child_process';
-//#region @browser
-import { Subject, Subscription } from 'rxjs';
-//#endregion
-//#region @backend
-import * as json5Write from 'json10-writer/src';
-import { Blob } from 'buffer';
-import { ipcMain, screen } from 'electron';
-//#endregion
 //#endregion
 
 //#region constants
@@ -37,7 +38,6 @@ declare const global: any;
 const encoding = 'utf8';
 //#region @backend
 const forceTrace = !global.hideLog;
-const prompts = require('prompts');
 //#endregion
 const WEBSQL_PROC_MOCK_PROCESSES_PID = {};
 const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
@@ -143,16 +143,11 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region clear console
+  /**
+   * @deprecated use UtilsTerminal.clearConsole
+   */
   clearConsole() {
-    Helpers.msgCacheClear();
-    console.log('\x1Bc');
-
-    // process.stdout.write('\033c\033[3J');
-    // try {
-    //   run('clear').sync()
-    // } catch (error) {
-    //   console.log('clear console not succedd')
-    // }
+    return UtilsTerminal.clearConsole();
   }
   //#endregion
 
@@ -1686,42 +1681,22 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / question yest no
+  /**
+   * @deprecated use UtilsTerminal.confirm
+   */
   async questionYesNo(
     message: string,
     callbackTrue?: () => any,
     callbackFalse?: () => any,
-    defaultValue = true,
-    /**
-     * in non interactive mode
-     */
-    mustAnswerQuestion = false,
+    defaultValue = true
   ) {
     //#region @backendFunc
-    let response = {
-      value: defaultValue,
-    };
-    if (global.tnpNonInteractive && !mustAnswerQuestion) {
-      Helpers.info(`${message} - AUTORESPONSE: ${defaultValue ? 'YES' : 'NO'}`);
-    } else {
-      response = await prompts({
-        type: 'toggle',
-        name: 'value',
-        message,
-        initial: defaultValue,
-        active: 'yes',
-        inactive: 'no',
-      });
-    }
-    if (response.value) {
-      if (callbackTrue) {
-        await Helpers.runSyncOrAsync({ functionFn: callbackTrue });
-      }
-    } else {
-      if (callbackFalse) {
-        await Helpers.runSyncOrAsync({ functionFn: callbackFalse });
-      }
-    }
-    return response.value;
+    return await UtilsTerminal.confirm({
+      message,
+      callbackTrue,
+      callbackFalse,
+      defaultValue,
+    })
     //#endregion
   }
   //#endregion

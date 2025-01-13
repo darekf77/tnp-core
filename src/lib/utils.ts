@@ -7,6 +7,7 @@ import {
   //#region @backend
   portfinder,
   os,
+  chalk,
   //#endregion
 } from './core-imports';
 import { Helpers } from './index';
@@ -15,6 +16,7 @@ import { dateformat } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { fse } from './core-imports';
 import { Blob } from 'buffer';
+
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
@@ -1074,7 +1076,7 @@ export namespace UtilsOs {
   };
   //#endregion
 
-  //#region utils os / is running in cli mode
+  //#region utils os / is running in mocha test
   /**
    * Check whether the current process is running in mocha test.
    */
@@ -1149,5 +1151,513 @@ export namespace UtilsMigrations {
 
     return value >= minTimestamp && value <= maxTimestamp;
   };
+}
+//#endregion
+
+//#region utils terminal
+export namespace UtilsTerminal {
+  //#region clear
+  export const clearConsole = (): void => {
+    //#region @backendFunc
+    Helpers.msgCacheClear();
+    console.log('\x1Bc');
+    // process.stdout.write('\033c\033[3J');
+    // try {
+    //   run('clear').sync()
+    // } catch (error) {
+    //   console.log('clear console not succedd')
+    // }
+    //#endregion
+  };
+  //#endregion
+
+  //#region transform choices
+  const transformChoices = (
+    choices: any,
+  ): { name: string; value: string }[] => {
+    //#region @backendFunc
+    if (!_.isArray(choices) && _.isObject(choices)) {
+      choices = Object.keys(choices)
+        .map(key => {
+          return {
+            name: choices[key].name,
+            value: key,
+          };
+        })
+        .reduce((a, b) => a.concat(b), []);
+    }
+    return choices.map(c => ({ name: c.name, value: c.value }));
+    //#endregion
+  };
+  //#endregion
+
+  //#region multiselect
+  export const multiselect = async <T = string>(options: {
+    question: string;
+    /**
+     * If true, then only one choice can be selected
+     */
+    onlyOneChoice?: boolean;
+    choices:
+      | { name: string; value: T }[]
+      | { [choice: string]: { name: string } };
+    autocomplete?: boolean;
+    defaultSelected?: string[];
+  }): Promise<T[]> => {
+    //#region @backendFunc
+    const { select } = await import('inquirer-select-pro');
+    const fuzzy = await import('fuzzy');
+    options = _.cloneDeep(options);
+    options.autocomplete = _.isNil(options.autocomplete)
+      ? true
+      : options.autocomplete;
+    const choices = transformChoices(options.choices);
+
+    const defaultValue = options.defaultSelected || [];
+    // console.log({ defaultValue, choices });
+    const res = await select({
+      message: options.question,
+      // options: choices,
+      clearInputWhenSelected: true,
+      emptyText: '<< No results >>',
+      multiple: !options.onlyOneChoice,
+      canToggleAll: true,
+      pageSize: 10,
+      loop: true,
+      defaultValue,
+      options: !options.autocomplete
+        ? choices
+        : (input = '') => {
+            if (!input) {
+              return choices;
+            }
+            const fuzzyResult = fuzzy.filter(
+              input,
+              choices.map(f => f.name),
+            );
+            return fuzzyResult.map(el => {
+              return {
+                name: el.original,
+                value: choices.find(c => c.name === el.original).value,
+              };
+            });
+          },
+    });
+
+    return (Array.isArray(res) ? res : [res]) as T[];
+
+    //#region old autocomplete
+    // const prompt = new AutoComplete({
+    //   name: 'value',
+    //   message: question,
+    //   limit: 10,
+    //   multiple: true,
+    //   choices,
+    //   initial: (selected || []).map(s => s.name),
+    //   // selected,
+    //   hint: '- Space to select. Return to submit',
+    //   footer() {
+    //     return CLI.chalk.green('(Scroll up and down to reveal more choices)');
+    //   },
+    //   result(names) {
+    //     return _.values(this.map(names)) || [];
+    //   },
+    // });
+
+    // const res = await prompt.run();
+    //#endregion
+
+    //#region old inquirer
+    // const res = (await inquirer.prompt({
+    //   type: 'checkbox',
+    //   name: 'value',
+    //   message: question,
+    //   default: selected.map(s => s.name),
+    //   choices,
+    //   pageSize: 10,
+    //   loop: false,
+    // } as any)) as any;
+    // return res.value;
+    //#endregion
+    //#endregion
+  };
+  //#endregion
+
+  //#region select and execute
+  type SelectActionChoice = {
+    [choice: string]: {
+      /**
+       * Title of the choice
+       */
+      name: string;
+      /**
+       * Action to execute
+       */
+      action?: () => any;
+    };
+  };
+  /**
+   * Similar to select but executes action if provided
+   * @returns selected and executed value
+   */
+  export const selectActionAndExecute = async <
+    CHOICE extends SelectActionChoice = SelectActionChoice,
+  >(
+    choices: CHOICE,
+    options?: {
+      question?: string;
+      autocomplete?: boolean;
+      defaultSelected?: string;
+      hint?: string;
+      executeActionOnDefault?: boolean;
+    },
+  ) => {
+    //#region @backendFunc
+    options = options || ({} as any);
+    options.question = options.question || 'Select action to execute';
+    options.executeActionOnDefault = _.isBoolean(options.executeActionOnDefault)
+      ? options.executeActionOnDefault
+      : true;
+    const res = await select<keyof typeof choices>({
+      ...(options as any),
+      choices,
+    });
+    // clearConsole();
+    if (
+      res &&
+      choices[res] &&
+      _.isFunction(choices[res].action) &&
+      options.executeActionOnDefault
+    ) {
+      await choices[res].action();
+    }
+    // console.log(`Response from select: "${res}"`);
+    // pipeEnterToStdin();
+    return { selected: res, action: async () => await choices[res].action() };
+    //#endregion
+  };
+  //#endregion
+
+  //#region select
+  export const select = async <T = string>(options: {
+    question: string;
+    choices:
+      | { name: string; value: T }[]
+      | { [choice: string]: { name: string } };
+    autocomplete?: boolean;
+    defaultSelected?: string;
+    hint?: string;
+  }): Promise<T> => {
+    //#region @backendFunc
+    options = _.cloneDeep(options);
+    options.hint = _.isNil(options.hint)
+      ? '- Space to select. Return to submit'
+      : options.hint;
+    options.autocomplete = _.isNil(options.autocomplete)
+      ? true
+      : options.autocomplete;
+    const choices = transformChoices(options.choices);
+
+    let preselectedIndex =
+      choices.findIndex(c => c.value === options.defaultSelected) || 0;
+    if (preselectedIndex === -1) {
+      preselectedIndex = 0;
+    }
+    let prompt;
+    // console.log({ choicesBefore: choices });
+
+    if (options.autocomplete) {
+      const { AutoComplete } = require('enquirer');
+      prompt = new AutoComplete({
+        name: 'value',
+        message: options.question,
+        limit: 10,
+        multiple: false,
+        initial: preselectedIndex,
+        choices,
+        hint: options.hint,
+        footer() {
+          return chalk.green('(Scroll up and down to reveal more choices)');
+        },
+      });
+      const res = await prompt.run();
+      // console.log({choices})
+      // console.log(`Selected!!!: "${res}" `);
+      return res;
+    } else {
+      const { Select } = require('enquirer');
+      prompt = new Select({
+        // name: 'value',
+        message: options.question,
+        choices,
+      });
+      const res = await prompt.run();
+      return choices.find(c => c.name === res)?.value as any;
+    }
+
+    //#region does not work
+    // const choice = await multiselect<T>({
+    //   ...{
+    //     question,
+    //     choices,
+    //     autocomplete,
+    //     defaultSelected: [defaultSelected],
+    //   },
+    //   onlyOneChoice: true,
+    // });
+    // return _.first(choice) as T;
+    //#endregion
+
+    //#endregion
+  };
+
+  //#endregion
+
+  //#region pipe enter to stdin
+  export const pipeEnterToStdin = (): void => {
+    //#region @backendFunc
+    process.stdin.push('\n');
+    //#endregion
+  };
+  //#endregion
+
+  //#region input
+  export const input = async ({
+    defaultValue,
+    question,
+    required, // TODO something is werid with required
+  }: {
+    defaultValue?: string;
+    question: string;
+    required?: boolean;
+    validate?: (value: string) => boolean;
+  }): Promise<string> => {
+    //#region @backendFunc
+    const initial = defaultValue || '';
+    const inquirer = await import('inquirer');
+    while (true) {
+      try {
+        // Create an input prompt
+        const response = await inquirer.prompt({
+          type: 'input',
+          name: 'name',
+          message: question,
+          default: initial,
+          // required: _.isNil(required) ? true : required,
+        });
+        const anwser = response.name;
+        if (required && !anwser) {
+          console.warn(`Answer is required...`);
+          continue;
+        }
+        return anwser;
+      } catch (error) {
+        console.error(error);
+        if (required) {
+          console.warn(`Something went wrong, please try again...`);
+          continue;
+        } else {
+          return '';
+        }
+      }
+    }
+
+    //#endregion
+  };
+  //#endregion
+
+  //#region confirm
+  export const confirm = async (options?: {
+    /**
+     * default: Are you sure?
+     */
+    message?: string;
+    callbackTrue?: () => any;
+    callbackFalse?: () => any;
+    /**
+     * default: true
+     */
+    defaultValue?: boolean;
+    engine?: 'inquirer-toggle' | 'prompts' | 'enquirer' | '@inquirer/prompts';
+  }) => {
+    //#region @backendFunc
+    options = options || ({} as any);
+    options.defaultValue = _.isBoolean(options.defaultValue)
+      ? options.defaultValue
+      : true;
+
+    options.message = options.message || 'Are you sure?';
+    options.engine = options.engine || 'inquirer-toggle';
+    const {
+      defaultValue,
+      message,
+      // mustAnswerQuestion,
+      callbackFalse,
+      callbackTrue,
+    } = options;
+
+    let response = {
+      value: defaultValue,
+    };
+    if (global.tnpNonInteractive) {
+      Helpers.info(`${message} - AUTORESPONSE: ${defaultValue ? 'YES' : 'NO'}`);
+    } else {
+      if (options.engine === 'inquirer-toggle') {
+        const inquirerToggle = (await import('inquirer-toggle')).default;
+        const answer = await inquirerToggle({
+          message,
+          default: defaultValue,
+          theme: {
+            style: {
+              highlight: chalk.bold.cyan.underline,
+            },
+          },
+        });
+        response = {
+          value: answer,
+        };
+      } else if (options.engine === '@inquirer/prompts') {
+        const { confirm } = await import('@inquirer/prompts');
+        const answer = await confirm({
+          message,
+          default: defaultValue,
+        });
+        response = {
+          value: answer,
+        };
+      } else if (options.engine === 'prompts') {
+        const prompts = require('prompts');
+        response = await prompts({
+          type: 'toggle',
+          name: 'value',
+          message,
+          initial: defaultValue,
+          active: 'yes',
+          inactive: 'no',
+        });
+      } else if (options.engine === 'enquirer') {
+        const { Select } = require('enquirer');
+        const choices = defaultValue ? ['yes', 'no'] : ['no', 'yes'];
+        const prompt = new Select({
+          name: 'question',
+          message,
+          choices,
+        });
+        response = {
+          value: (await prompt.run()) === 'yes',
+        };
+      }
+    }
+    if (response.value) {
+      if (callbackTrue) {
+        await Helpers.runSyncOrAsync({ functionFn: callbackTrue });
+      }
+    } else {
+      if (callbackFalse) {
+        await Helpers.runSyncOrAsync({ functionFn: callbackFalse });
+      }
+    }
+    return response.value;
+    //#endregion
+  };
+  //#endregion
+
+  //#region press any key
+  export const pressAnyKey = (options?: { message?: string }) => {
+    //#region @backendFunc
+    options = options || {};
+    options.message = options.message || 'Press any key to continue...';
+    const { message } = options;
+    if (process.platform === 'win32') {
+      const terminal = UtilsProcess.getBashOrShellName();
+      // console.log({ terminal });
+      if (terminal === 'gitbash') {
+        const getGitBashPath = UtilsProcess.getGitBashPath();
+        // console.log({ getGitBashPath });
+        const gitbashCommand = `read -p "${chalk.bold(message)}"`;
+        child_process.execSync(gitbashCommand, {
+          stdio: 'inherit',
+          shell: getGitBashPath,
+        });
+      } else {
+        console.log(chalk.bold(message));
+        spawn.sync('pause', '', { shell: true, stdio: [0, 1, 2] });
+      }
+      return;
+    }
+
+    console.log(chalk.bold(message));
+    require('child_process').spawnSync('read _ ', {
+      shell: true,
+      stdio: [0, 1, 2],
+    });
+    //#endregion
+  };
+  //#endregion
+
+  //#region preview long list as select
+  export const previewLongList = async (
+    list: string | string[],
+    listName = 'List',
+  ): Promise<void> => {
+    //#region @backendFunc
+    if (!Array.isArray(list)) {
+      list = list.split('\n');
+    }
+    const choices = list.reduce((a, b) => {
+      return _.merge(a, {
+        [b]: {
+          name: b,
+          // action: () => {},
+        },
+      });
+    }, {});
+    await selectActionAndExecute(choices, {
+      autocomplete: true,
+      question: listName,
+      hint: 'Press enter to return',
+    });
+    //#endregion
+  };
+  //#endregion
+
+  //#region preview long list with 'less' (git log like)
+  /**
+   * Displays a long list in the console using a pager like `less`.
+   * Returns a Promise that resolves when the user exits the pager.
+   *
+   * @param {string} list - The long string content to display.
+   * @returns {Promise<void>} A Promise that resolves when the pager exits.
+   */
+  export const previewLongListGitLogLike = (
+    list: string | string[],
+  ): Promise<void> => {
+    //#region @backendFunc
+    if (Array.isArray(list)) {
+      list = list.join('\n');
+    }
+    return new Promise((resolve, reject) => {
+      const less = spawn('less', [], {
+        stdio: ['pipe', process.stdout, process.stderr],
+      });
+
+      less.stdin.write(list); // Write the list content to the less process
+      less.stdin.end(); // Signal that writing is complete
+
+      less.on('close', code => {
+        if (code === 0) {
+          resolve(void 0);
+        } else {
+          reject(new Error(`less process exited with code ${code}`));
+        }
+      });
+
+      less.on('error', err => {
+        reject(err);
+      });
+    });
+    //#endregion
+  };
+  //#endregion
 }
 //#endregion
