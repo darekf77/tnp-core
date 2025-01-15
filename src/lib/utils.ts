@@ -1139,7 +1139,7 @@ export namespace UtilsOs {
     options = options || {};
     const hostArr = options.checkForSpecificOnlyHost
       ? [options.checkForSpecificOnlyHost]
-      : ['::', '0.0.0.0', '127.0.0.1'];
+      : ['::', '::1', '0.0.0.0', '127.0.0.1', 'localhost'];
 
     // console.log({ hostArr });
     for (const host of hostArr) {
