@@ -16,7 +16,7 @@ import { dateformat } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { fse } from './core-imports';
 import { Blob } from 'buffer';
-
+import * as net from 'net';
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
@@ -1086,6 +1086,68 @@ export namespace UtilsOs {
     //#endregion
     //#region @backendFunc
     return typeof global['it'] === 'function';
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils os / is port in use
+  const isPortInUseOnHost = (port: number, host: string): Promise<boolean> => {
+    //#region @backendFunc
+    return new Promise(async (resolve, reject) => {
+      const server = net.createServer();
+
+      // If the port is already in use, you'll get an EADDRINUSE error.
+      server.once('error', (err: NodeJS.ErrnoException) => {
+        // console.log('error', err);
+        if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
+          resolve(true); // Port is in use
+        } else {
+          reject(err); // Some other error occurred
+        }
+      });
+
+      // If the server successfully starts listening, the port is free.
+      server.once('listening', () => {
+        server.close(() => {
+          // console.log(`closing ${port} on ${host}`);
+          resolve(false); // Port is not in use
+        });
+      });
+
+      server.listen(port, host);
+    });
+    //#endregion
+  };
+
+  /**
+   * Checks if a given port is already in use (bound by another process).
+   *
+   * @param port - The port number to check.
+   * @param host - The hostname or IP address to bind to (default: '127.0.0.1').
+   * @returns Promise<boolean> - Resolves to `true` if the port is in use, otherwise `false`.
+   */
+  export const isPortInUse = async (
+    port: number,
+    options?: {
+      /**
+       * '127.0.0.1' etc..
+       */
+      checkForSpecificOnlyHost?: string;
+    },
+  ): Promise<boolean> => {
+    //#region @backendFunc
+    options = options || {};
+    const hostArr = options.checkForSpecificOnlyHost
+      ? [options.checkForSpecificOnlyHost]
+      : ['::', '0.0.0.0', '127.0.0.1'];
+
+    // console.log({ hostArr });
+    for (const host of hostArr) {
+      if (await isPortInUseOnHost(port, host)) {
+        return true;
+      }
+    }
+    return false;
     //#endregion
   };
   //#endregion
