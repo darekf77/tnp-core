@@ -654,6 +654,21 @@ export namespace Utils {
 //#region utils process
 export namespace UtilsProcess {
   //#region utils process / process start options
+  interface ResolvePromiseMsg {
+    /**
+     * until this string is in output of stdout
+     */
+    stdout?: string | string[];
+    /**
+     * until this string is in output of stderr
+     */
+    stderr?: string | string[];
+    /**
+     * by default only resolve when exit code is 0
+     */
+    resolveAfterAnyExitCode?: boolean;
+  }
+
   export interface ProcessStartOptions {
     /**
      * by default is process.cwd();
@@ -667,20 +682,7 @@ export namespace UtilsProcess {
      * Modify output line by line
      */
     outputLineReplace?: (outputLineStderOrStdout: string) => string;
-    resolvePromiseMsg?: {
-      /**
-       * until this string is in output of stdout
-       */
-      stdout?: string | string[];
-      /**
-       * until this string is in output of stderr
-       */
-      stderr?: string | string[];
-      /**
-       * by default only resolve when exit code is 0
-       */
-      resolveAfterAnyExitCode?: boolean;
-    };
+    resolvePromiseMsg?: ResolvePromiseMsg;
     /**
      * Prefix messages output from child_process
      */
@@ -708,21 +710,105 @@ export namespace UtilsProcess {
    * TODO IMPLEMENT
    * start async node process
    */
-  export async function startAsync(
-    command: string,
-    options?: ProcessStartOptions,
-  ) {
-    // TODO @LAST
-  }
+  // export async function startAsync(
+  //   command: string,
+  //   options?: ProcessStartOptions,
+  // ) {
+  // TODO @LAST
+  // }
   //#endregion
 
   //#region utils process  / TODO start sync
+  // /**
+  //  * TODO IMPLEMENT
+  //  */
+  // export function startSync(command: string, options?: ProcessStartOptions) {
+  // TODO @LAST
+  // }
+  //#endregion
+
+  //#region utils process  / start async child process command until
   /**
-   * TODO IMPLEMENT
+   * This let you start child process and resolve promise when some
+   * condition is met. It is useful for example when you want to start
+   * process and wait until some output is in stdout or stderr.
    */
-  export function startSync(command: string, options?: ProcessStartOptions) {
-    // TODO @LAST
-  }
+  export const startAsyncChildProcessCommandUntil = async ( command: string,options: {
+    /**
+     * tels when to resolve promise
+     */
+    untilOptions: ResolvePromiseMsg;
+    displayOutputInParentProcess?: boolean;
+    resolveAfterAnyExitCode?: boolean;
+    cwd?: string;
+  }): Promise<void> => {
+    //#region @backendFunc
+    options = options || ({} as any);
+    const { stdout, stderr, resolveAfterAnyExitCode } =
+      options.untilOptions || {};
+    options.cwd = options.cwd || process.cwd();
+
+    return new Promise((resolve, reject) => {
+      const childProc = child_process.exec(command, {
+        cwd: options.cwd,
+        maxBuffer: Helpers.bigMaxBuffer,
+      });
+
+      const stdoutConditions = Array.isArray(stdout)
+        ? stdout
+        : stdout
+          ? [stdout]
+          : [];
+      const stderrConditions = Array.isArray(stderr)
+        ? stderr
+        : stderr
+          ? [stderr]
+          : [];
+
+      const checkConditions = (output: string, conditions: string[]) => {
+        const conditionReady = conditions.some(condition => output.includes(condition));
+        // if(conditionReady){
+        //   console.log('conditionReady MOVE ON', conditionReady);
+        // }
+        return conditionReady;
+      };
+
+      childProc.stdout?.on('data', data => {
+        if (options.displayOutputInParentProcess) {
+          process.stdout?.write(data);
+        }
+
+        if (checkConditions(data, stdoutConditions)) {
+          resolve();
+          childProc.kill();
+        }
+      });
+
+      childProc.stderr?.on('data', data => {
+        if (options.displayOutputInParentProcess) {
+          process.stderr?.write(data);
+        }
+
+        if (checkConditions(data, stderrConditions)) {
+          resolve();
+          childProc.kill();
+        }
+      });
+
+      childProc.on('close', exitCode => {
+        if (resolveAfterAnyExitCode || exitCode === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Process exited with code ${exitCode}`));
+        }
+      });
+
+      childProc.on('error', error => {
+        reject(error);
+      });
+    });
+    //#endregion
+  };
   //#endregion
 
   //#region utils process  / get git bash path
