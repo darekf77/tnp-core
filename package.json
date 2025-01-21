@@ -348,7 +348,7 @@
     "threads": "1.7.0",
     "tnp": "~18.0.23",
     "tnp-config": "~18.0.20",
-    "tnp-core": "~18.0.45",
+    "tnp-core": "~18.0.46",
     "tnp-helpers": "~18.0.18",
     "tnp-models": "~18.0.19",
     "ts-debug": "1.3.0",
@@ -382,8 +382,8 @@
   "license": "MIT",
   "private": false,
   "name": "tnp-core",
-  "version": "18.0.45",
-  "lastBuildTagHash": "1e7046476ea174c863e38e7119d694a8c44a379f",
+  "version": "18.0.46",
+  "lastBuildTagHash": "2d1a1df33ac8196bc4336e57ac1c7bdc95ec1657",
   "main": "dist/app.electron.js",
   "scripts": {
     "mkdocs": "python3 -m mkdocs"
