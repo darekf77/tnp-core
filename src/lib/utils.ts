@@ -5,7 +5,6 @@ import {
   _,
   crossPlatformPath,
   //#region @backend
-  portfinder,
   os,
   chalk,
   //#endregion
@@ -79,25 +78,21 @@ export namespace Utils {
   const takenPorts = [];
   export const getFreePort = async (options?: {
     startFrom?: number;
-    howManyFreePortsAfterThatPort?: number;
   }): Promise<number> => {
     //#region @backendFunc
     options = options || ({} as any);
     options.startFrom = options.startFrom || 3000;
     let startFrom = options.startFrom;
-    const howManyFreePortsAfterThatPort =
-      options.howManyFreePortsAfterThatPort || 1;
     const max = 5000;
     let i = 0;
-    if (_.isNumber(startFrom)) {
-      while (takenPorts.includes(startFrom)) {
-        startFrom += 1 + howManyFreePortsAfterThatPort;
-      }
-    }
 
     while (true) {
       try {
-        const port = await portfinder.getPortPromise({ port: startFrom });
+        if (await UtilsOs.isPortInUse(startFrom)) {
+          startFrom += 1;
+          continue;
+        }
+        const port = startFrom;
         takenPorts.push(port);
         return port;
       } catch (err) {
@@ -733,15 +728,18 @@ export namespace UtilsProcess {
    * condition is met. It is useful for example when you want to start
    * process and wait until some output is in stdout or stderr.
    */
-  export const startAsyncChildProcessCommandUntil = async ( command: string,options: {
-    /**
-     * tels when to resolve promise
-     */
-    untilOptions: ResolvePromiseMsg;
-    displayOutputInParentProcess?: boolean;
-    resolveAfterAnyExitCode?: boolean;
-    cwd?: string;
-  }): Promise<void> => {
+  export const startAsyncChildProcessCommandUntil = async (
+    command: string,
+    options: {
+      /**
+       * tels when to resolve promise
+       */
+      untilOptions: ResolvePromiseMsg;
+      displayOutputInParentProcess?: boolean;
+      resolveAfterAnyExitCode?: boolean;
+      cwd?: string;
+    },
+  ): Promise<void> => {
     //#region @backendFunc
     options = options || ({} as any);
     const { stdout, stderr, resolveAfterAnyExitCode } =
@@ -766,7 +764,9 @@ export namespace UtilsProcess {
           : [];
 
       const checkConditions = (output: string, conditions: string[]) => {
-        const conditionReady = conditions.some(condition => output.includes(condition));
+        const conditionReady = conditions.some(condition =>
+          output.includes(condition),
+        );
         // if(conditionReady){
         //   console.log('conditionReady MOVE ON', conditionReady);
         // }
@@ -1361,6 +1361,13 @@ export namespace UtilsTerminal {
       : options.autocomplete;
     const choices = transformChoices(options.choices);
 
+    if (Object.keys(choices || {}).length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: 'No choices available. Press any key to continue...',
+      });
+      return [];
+    }
+
     const defaultValue = options.defaultSelected || [];
     // console.log({ defaultValue, choices });
     const res = await select({
@@ -1442,6 +1449,11 @@ export namespace UtilsTerminal {
        * Action to execute
        */
       action?: () => any;
+      /**
+       * If choice is visible
+       *  default: true
+       */
+      visible?: boolean;
     };
   };
   /**
@@ -1466,22 +1478,35 @@ export namespace UtilsTerminal {
     options.executeActionOnDefault = _.isBoolean(options.executeActionOnDefault)
       ? options.executeActionOnDefault
       : true;
+
+    if (Object.keys(choices || {}).length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: 'No choices available. Press any key to continue...',
+      });
+      return { selected: void 0, action: async () => void 0 };
+    }
+
     const res = await select<keyof typeof choices>({
       ...(options as any),
       choices,
     });
     // clearConsole();
+    let actionResult: unknown;
     if (
       res &&
       choices[res] &&
       _.isFunction(choices[res].action) &&
       options.executeActionOnDefault
     ) {
-      await choices[res].action();
+      actionResult = await choices[res].action();
     }
     // console.log(`Response from select: "${res}"`);
     // pipeEnterToStdin();
-    return { selected: res, action: async () => await choices[res].action() };
+    return {
+      selected: res,
+      actionResult,
+      action: async () => await choices[res].action(),
+    };
     //#endregion
   };
   //#endregion
