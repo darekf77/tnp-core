@@ -62,9 +62,10 @@ export namespace CoreModels {
   export type LibraryType = 'angular' | 'typescript';
   //#endregion
 
-  //#region release type
-  export type ReleaseType = 'major' | 'minor' | 'patch';
-  export type PreReleaseType = 'alpha' | 'beta' | 'rc' | 'next';
+  //#region release version type
+  export type ReleaseProcessType = 'manual' | 'local' | 'cloud';
+  export type ReleaseVersionType = 'major' | 'minor' | 'patch';
+  export type PreReleaseVersionTag = 'alpha' | 'beta' | 'rc' | 'next';
   export const NpmSpecialVersions = [
     'latest',
     'next',

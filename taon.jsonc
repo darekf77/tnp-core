@@ -23,7 +23,6 @@
       "@types/q",
       "json5",
       "is-elevated",
-      "portfinder",
       "cross-spawn",
       "chalk",
       "copy-paste",
