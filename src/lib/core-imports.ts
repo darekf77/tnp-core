@@ -21,7 +21,6 @@ import * as ncp from 'copy-paste';
 import * as ps from 'ps-node';
 import * as psList from 'ps-list';
 import * as fkill from 'fkill';
-import * as portfinder from 'portfinder';
 const isRoot = require('is-root');
 const isAdmin = require('is-admin');
 forceTrace = global.hideLog === false;
@@ -217,10 +216,6 @@ export {
   net,
   ps,
   fkill,
-  /**
-   * @deprecated use ports worker and taon app instead
-   */
-  portfinder,
   psList,
 };
 //#endregion
