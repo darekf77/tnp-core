@@ -1304,6 +1304,26 @@ export namespace UtilsMigrations {
 
 //#region utils terminal
 export namespace UtilsTerminal {
+  //#region models
+  type SelectActionChoice = {
+    [choice: string]: {
+      /**
+       * Title of the choice
+       */
+      name: string;
+      /**
+       * Action to execute
+       */
+      action?: () => any;
+      /**
+       * If choice is visible
+       *  default: true
+       */
+      visible?: boolean;
+    };
+  };
+  //#endregion
+
   //#region clear
   export const clearConsole = (): void => {
     //#region @backendFunc
@@ -1344,6 +1364,7 @@ export namespace UtilsTerminal {
     question: string;
     /**
      * If true, then only one choice can be selected
+     * @deprecated use select instead
      */
     onlyOneChoice?: boolean;
     choices:
@@ -1439,23 +1460,67 @@ export namespace UtilsTerminal {
   //#endregion
 
   //#region select and execute
-  type SelectActionChoice = {
-    [choice: string]: {
+  /**
+   * Similar to select but executes action if provided
+   * @returns selected and executed value
+   */
+  export const multiselectActionAndExecute = async <
+    CHOICE extends SelectActionChoice = SelectActionChoice,
+  >(
+    choices: CHOICE,
+    options?: {
+      question?: string;
+      autocomplete?: boolean;
+      defaultSelected?: string;
+      hint?: string;
+      executeActionsOnDefault?: boolean;
+    },
+  ) => {
+    //#region @backendFunc
+    options = options || ({} as any);
+    options.question = options.question || 'Select actions to execute';
+    options.executeActionsOnDefault = _.isBoolean(
+      options.executeActionsOnDefault,
+    )
+      ? options.executeActionsOnDefault
+      : true;
+
+    if (Object.keys(choices || {}).length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: 'No choices available. Press any key to continue...',
+      });
+      return { selected: [] as (keyof CHOICE)[], action: async () => void 0 };
+    }
+
+    const res = await multiselect<keyof typeof choices>({
+      ...(options as any),
+      choices,
+    });
+
+    // clearConsole();
+    let actionResults: unknown[] = [];
+    if (options.executeActionsOnDefault) {
+      for (const key in res) {
+        if (res[key] && choices[key] && _.isFunction(choices[key].action)) {
+          actionResults.push(await choices[key].action());
+        }
+      }
+    }
+    // console.log(`Response from select: "${res}"`);
+    // pipeEnterToStdin();
+    return {
+      selected: res as (keyof CHOICE)[],
+      actionResults,
       /**
-       * Title of the choice
+       * object containing all selected actions
        */
-      name: string;
-      /**
-       * Action to execute
-       */
-      action?: () => any;
-      /**
-       * If choice is visible
-       *  default: true
-       */
-      visible?: boolean;
+      actions: res.map(r => choices[r].action),
     };
+    //#endregion
   };
+  //#endregion
+
+  //#region select and execute
   /**
    * Similar to select but executes action if provided
    * @returns selected and executed value
