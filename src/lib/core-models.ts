@@ -64,6 +64,23 @@ export namespace CoreModels {
 
   //#region release version type
   export type ReleaseProcessType = 'manual' | 'local' | 'cloud';
+
+  export type ReleaseArtifact =
+    | 'npm-lib-cli-package'
+    | 'angular-nodejs-webapp'
+    | 'angular-electron-app'
+    | 'angular-ionic-app'
+    | 'vscode-extension'
+    | 'mkdocs-docs-webapp';
+
+  export const ReleaseArtifactsArr = [
+    'npm-lib-cli-package',
+    'angular-nodejs-webapp',
+    'angular-electron-app',
+    'angular-ionic-app',
+    'vscode-extension',
+    'mkdocs-docs-webapp',
+  ];
   export type ReleaseVersionType = 'major' | 'minor' | 'patch';
   export type PreReleaseVersionTag = 'alpha' | 'beta' | 'rc' | 'next';
   export const NpmSpecialVersions = [
@@ -198,6 +215,9 @@ export namespace CoreModels {
   //#endregion
 
   //#region lib type
+  /**
+   * @deprecated there will be only one lib type "isomorphic-lib"
+   */
   export type LibType =
     | BaseProjectType
     | 'isomorphic-lib' // + https://github.com/maximegris/angular-electron
@@ -553,7 +573,6 @@ export namespace CoreModels {
     compilerOptions: CompilerOptions;
     angularCompilerOptions: AngularCompilerOptions;
   }
-
 
   export interface TscCompileOptions {
     cwd: string;
