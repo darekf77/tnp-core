@@ -1485,12 +1485,12 @@ export namespace UtilsTerminal {
       ? options.executeActionsOnDefault
       : true;
 
-    if (Object.keys(choices || {}).length === 0) {
-      await UtilsTerminal.pressAnyKeyToContinueAsync({
-        message: 'No choices available. Press any key to continue...',
-      });
-      return { selected: [] as (keyof CHOICE)[], action: async () => void 0 };
-    }
+    // if (Object.keys(choices || {}).length === 0) {
+    //   await UtilsTerminal.pressAnyKeyToContinueAsync({
+    //     message: 'No choices available. Press any key to continue...',
+    //   });
+    //   return { selected: [] as (keyof CHOICE)[], action: async () => void 0 };
+    // }
 
     const res = await multiselect<keyof typeof choices>({
       ...(options as any),
@@ -1509,7 +1509,7 @@ export namespace UtilsTerminal {
     // console.log(`Response from select: "${res}"`);
     // pipeEnterToStdin();
     return {
-      selected: res as (keyof CHOICE)[],
+      selected: res,
       actionResults,
       /**
        * object containing all selected actions
