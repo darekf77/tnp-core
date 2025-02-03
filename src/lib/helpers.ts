@@ -20,11 +20,7 @@ import { ipcMain, screen } from 'electron';
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
 //#endregion
-import {
-  _,
-  path,
-  crossPlatformPath
-} from './core-imports';
+import { _, path, crossPlatformPath } from './core-imports';
 import { UtilsTerminal } from './utils';
 import { Helpers, Utils, UtilsOs } from './index';
 import { HelpersMessages } from './helpers-messages';
@@ -689,7 +685,18 @@ export class HelpersCore extends HelpersMessages {
       // console.log(`resolved target from ${targetExisted} = ${resolvedTarget}, isFile: ${targetIsFile}`)
       if (Helpers.isSymlinkFileExitedOrUnexisted(targetExisted)) {
         //   Helpers.info(`FIXING TARGET FOR WINDOWS`)
-        targetExisted = crossPlatformPath(fse.realpathSync(targetExisted));
+        try {
+          targetExisted = crossPlatformPath(fse.realpathSync(targetExisted));
+        } catch (error) {
+          Helpers.warn(
+            `[tnp-helpers] Error while resolving target for windows link
+          target: "${targetExisted}"
+          link: "${linkDest}"
+          `,
+            true,
+          );
+        }
+
         // TODO QUICK_FIX on windows you can't create link to link
       }
       // targetExisted = path.win32.normalize(targetExisted).replace(/\\$/, '');
@@ -1688,7 +1695,7 @@ export class HelpersCore extends HelpersMessages {
     message: string,
     callbackTrue?: () => any,
     callbackFalse?: () => any,
-    defaultValue = true
+    defaultValue = true,
   ) {
     //#region @backendFunc
     return await UtilsTerminal.confirm({
@@ -1696,7 +1703,7 @@ export class HelpersCore extends HelpersMessages {
       callbackTrue,
       callbackFalse,
       defaultValue,
-    })
+    });
     //#endregion
   }
   //#endregion
