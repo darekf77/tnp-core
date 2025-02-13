@@ -43,7 +43,7 @@ export class CLI {
         })
         .join(' ');
       Helpers.info('Installing missing dependencies...')
-      const cmd = `npm install -g ${toInstall}`;
+      const cmd = `npm install -g -f ${toInstall}`;
       Helpers.run(cmd, { output: (frameworkName === 'tnp'), biggerBuffer: true }).sync();
     }
     Helpers.info(`[taon-cli] INSTALLING GLOBAL ENVIRONMENT FOR TAON...done`)
