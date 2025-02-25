@@ -1156,9 +1156,16 @@ export namespace UtilsOs {
    */
   export const isRunningInVscodeExtension = (): boolean => {
     //#region @backendFunc
-    return !!process.env.VSCODE_PID || process.execPath.includes('Code');
+    try {
+      const vscode = require('vscode');
+      return !!vscode;
+    } catch (error) {
+      return false;
+    }
+    // return !!process.env.VSCODE_PID || process.execPath.includes('Code');
     //#endregion
   };
+  //#endregion
 
   //#region utils os / is running in wsl
   /**
