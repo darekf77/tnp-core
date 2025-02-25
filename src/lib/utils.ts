@@ -1089,6 +1089,17 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  //#region utils os / is running in vscode extension
+  /**
+   * Check whether the current process is running inside
+   * a Visual Studio Code extension.
+   */
+  export const isRunningInVscodeExtension = (): boolean => {
+    //#region @backendFunc
+    return !!process.env.VSCODE_PID || process.execPath.includes('Code');
+    //#endregion
+  };
+
   //#region utils os / is running in wsl
   /**
    * Check wether the current process is running inside
