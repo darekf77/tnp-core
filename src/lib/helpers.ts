@@ -2528,7 +2528,12 @@ command: ${command}
     }
 
     if (!fse.existsSync(path.dirname(absoluteFilePath))) {
-      Helpers.mkdirp(path.dirname(absoluteFilePath));
+      try {
+        Helpers.mkdirp(path.dirname(absoluteFilePath));
+      } catch (error) {
+        Helpers.error(
+          `Not able to create directory: ${path.dirname(absoluteFilePath)}`);
+      }
     }
 
     if (Helpers.isBuffer(input)) {
