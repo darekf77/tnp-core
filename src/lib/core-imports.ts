@@ -3,17 +3,17 @@ let forceTrace = false;
 //#region @backend
 import * as cheerio from 'cheerio';
 import * as pathBase from 'path';
-import * as os from 'os';
+import * as osBase from 'os';
 import * as child_process from 'child_process';
 import * as http from 'http';
 import * as https from 'https';
 import * as net from 'net';
 import chalkBase from 'chalk';
 import * as spawn from 'cross-spawn';
-import * as glob from 'glob';
+import * as globBase from 'glob';
 import * as fg from 'fast-glob';
 import { minimatch } from 'minimatch';
-import * as fse from 'fs-extra';
+import * as fseBase from 'fs-extra';
 import * as rimraf from 'rimraf';
 import * as chokidar from 'chokidar';
 import * as mkdirp from 'mkdirp';
@@ -40,6 +40,9 @@ import * as json5 from 'json5';
 import type jQueryType from 'jquery';
 import type chalkBaseType from 'chalk';
 import type * as pathBaseType from 'path';
+import type * as globBaseType from 'glob';
+import type * as fseBaseType from 'fs-extra';
+import type * as osBaseType from 'os';
 //#endregion
 import { Helpers } from './index';
 
@@ -78,6 +81,36 @@ chalk = chalkBase as any;
 //#region @browser
 // @ts-ignore
 chalk = chalkMock;
+//#endregion
+//#endregion
+
+//#region mock glob
+let glob = void 0 as typeof globBaseType;
+//#region @backend
+glob = globBase;
+//#endregion
+//#region @browser
+// TODO: implement browser glob
+//#endregion
+//#endregion
+
+//#region mock fse
+let fse = void 0 as typeof fseBaseType;
+//#region @backend
+fse = fseBase;
+//#endregion
+//#region @browser
+// TODO: implement browser fse
+//#endregion
+//#endregion
+
+//#region mock os
+let os = void 0 as typeof osBaseType;
+//#region @backend
+os = osBase;
+//#endregion
+//#region @browser
+// TODO: implement browser os
 //#endregion
 //#endregion
 
@@ -195,20 +228,20 @@ export {
   chalk,
   json5,
   $,
+  glob,
+  fse,
+  os,
 };
 
 //#region @backend
 export {
   spawn,
-  glob,
   minimatch,
   fg,
   isElevated,
   chokidar,
   mkdirp,
   ncp,
-  fse,
-  os,
   child_process,
   http,
   https,
