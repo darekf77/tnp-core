@@ -31,8 +31,6 @@ app.hosts.ts
 # System Files
 .DS_Store
 Thumbs.db
-
-
 /node_modules
 /tmp*
 /dist*
@@ -60,6 +58,7 @@ Thumbs.db
 /run.js
 /run-org.js
 /update-vscode-package-json.js
+/eslint.config.js
 /projects/tmp*
 !tsconfig*
 !webpack.*
@@ -67,8 +66,6 @@ Thumbs.db
 # =====================
 !taon.jsonc
 *.filetemplate
-
-
 
 /.vscode/launch.json
 /*.sqlite
