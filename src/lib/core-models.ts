@@ -1,3 +1,5 @@
+import { PackageJson } from "type-fest";
+
 export namespace CoreModels {
   //#region package
   export type Package = {
@@ -557,37 +559,61 @@ export namespace CoreModels {
   //#endregion
 
   //#region taon json
+
+  export interface CliLibReleaseOptions {
+    cliBuildObscure?: boolean;
+    cliBuildUglify?: boolean;
+    cliBuildNoDts?: boolean;
+    cliBuildIncludeNodeModules?: boolean;
+    libBuildUglify?: boolean;
+    libBuildObscure?: boolean;
+  }
+
   export interface TaonJson {
+
     type: CoreModels.LibType;
     /**
      * Static resurces for standalone project, that are
      * going to be included in release dist
      */
     resources?: string[];
+
+    /**
+     * so I can release same npm lib
+     * with different name
+     */
+    additionalNpmNames?: string[];
+    /**
+     * version of taon framework for project
+     */
     version?: CoreModels.FrameworkVersion;
+    /**
+     * Main project for smart container
+     * command "taon start" will start this project
+     */
     smartContainerBuildTarget?: string;
+    /**
+     * Project is using own node_modules instead of core container
+     */
     isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
+    /**
+     * Project is smart container
+     * for organization npm project
+     */
     smart?: boolean;
+    /**
+     * Project is monorepo
+     */
     monorepo?: boolean;
-    libReleaseOptions: {
-      cliBuildObscure?: boolean;
-      cliBuildUglify?: boolean;
-      cliBuildNoDts?: boolean;
-      cliBuildIncludeNodeModules?: boolean;
-    };
+    /**
+     * options what to do with cli tool
+     */
+    cliLibReleaseOptions: CliLibReleaseOptions;
     /**
      * project is template for other project
      */
     isCoreProject: boolean;
-    scripts?: { [script in string]: string };
-    description?: string;
-    license?: string;
-    private?: boolean;
-    author?: string;
-    homepage?: string;
-    overrided: {
-      dependencies?: { [name: string]: string };
-    };
+    packageJsonOverride:Partial<PackageJson>;
   }
   //#endregion
 }
