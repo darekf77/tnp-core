@@ -176,8 +176,8 @@ export namespace CoreModels {
     | 'typescript'
     | 'angular'
     | 'angular-lib'
-    | 'unknow'
-    | 'unknow-npm-project';
+    | 'unknown'
+    | 'unknown-npm-project';
   //#endregion
 
   //#region base project type arr
@@ -185,20 +185,17 @@ export namespace CoreModels {
     'typescript',
     'angular',
     'angular-lib',
-    'unknow',
-    'unknow-npm-project',
+    'unknown',
+    'unknown-npm-project',
   ];
   //#endregion
 
   //#region lib type
-  /**
-   * @deprecated there will be only one lib type "isomorphic-lib"
-   */
   export type LibType =
     | BaseProjectType
     | 'isomorphic-lib' // + https://github.com/maximegris/angular-electron
     | 'container'
-    | 'unknow-npm-project';
+    | 'unknown-npm-project';
   //#endregion
 
   //#region new factory type
@@ -562,8 +559,14 @@ export namespace CoreModels {
   //#region taon json
   export interface TaonJson {
     type: CoreModels.LibType;
+    /**
+     * Static resurces for standalone project, that are
+     * going to be included in release dist
+     */
+    resources?: string[];
     version?: CoreModels.FrameworkVersion;
     smartContainerBuildTarget?: string;
+    isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
     smart?: boolean;
     monorepo?: boolean;
     libReleaseOptions: {

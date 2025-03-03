@@ -2276,29 +2276,28 @@ command: ${command}
   //#endregion
 
   //#region methods / is file
-  //#region @backend
   /**
    * does not make sense
    * @deprecated
    */
   private isFile(pathToFileOrMaybeFolder: string) {
+    //#region @backendFunc
     return (
       pathToFileOrMaybeFolder &&
       fse.existsSync(pathToFileOrMaybeFolder) &&
       !fse.lstatSync(pathToFileOrMaybeFolder).isDirectory()
     );
+    //#endregion
   }
-  //#endregion
   //#endregion
 
   //#region methods / read file
-  //#region @backend
-
   async tryReadFile(
     absoluteFilePath: string | string[], // @ts-ignore
     defaultValueWhenNotExists = void 0 as string,
     notTrim = false,
   ): Promise<string | undefined> {
+    //#region @backendFunc
     if (process.platform === 'win32') {
       while (true) {
         try {
@@ -2323,6 +2322,7 @@ command: ${command}
       defaultValueWhenNotExists,
       notTrim,
     );
+    //#endregion
   }
 
   /**
@@ -2333,6 +2333,7 @@ command: ${command}
     defaultValueWhenNotExists = void 0 as string,
     notTrim = false,
   ): string | undefined {
+    //#region @backendFunc
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -2357,12 +2358,11 @@ command: ${command}
       })
       .toString()
       .trim();
+    //#endregion
   }
-  //#endregion
   //#endregion
 
   //#region methods / read json
-  //#region @backend
   /**
    * read json from absolute path
    * @returns json object
@@ -2372,6 +2372,7 @@ command: ${command}
     defaultValue = {},
     useJson5 = false,
   ): any {
+    //#region @backendFunc
     if (_.isArray(absoluteFilePath)) {
       absoluteFilePath = path.join.apply(this, absoluteFilePath);
     }
@@ -2392,22 +2393,26 @@ command: ${command}
     } catch (error) {
       return defaultValue;
     }
+    //#endregion
   }
   public readJson5(
     absoluteFilePath: string | string[],
     defaultValue: any = {},
   ): any {
+    //#region @backendFunc
     return Helpers.readJson(absoluteFilePath, defaultValue, true);
+    //#endregion
   }
 
   public readJsonC(
     absoluteFilePath: string | string[],
     defaultValue: any = {},
   ): any {
+    //#region @backendFunc
     return this.readJson5(absoluteFilePath, defaultValue);
+    //#endregion
   }
 
-  //#endregion
   //#endregion
 
   //#region methods / parse
@@ -2532,7 +2537,8 @@ command: ${command}
         Helpers.mkdirp(path.dirname(absoluteFilePath));
       } catch (error) {
         Helpers.error(
-          `Not able to create directory: ${path.dirname(absoluteFilePath)}`);
+          `Not able to create directory: ${path.dirname(absoluteFilePath)}`,
+        );
       }
     }
 
