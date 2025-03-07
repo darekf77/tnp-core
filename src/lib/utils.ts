@@ -1833,6 +1833,7 @@ export namespace UtilsTerminal {
           value: answer,
         };
       } else if (options.engine === '@inquirer/prompts') {
+        // @ts-ignore
         const { confirm } = await import('@inquirer/prompts');
         const answer = await confirm({
           message,

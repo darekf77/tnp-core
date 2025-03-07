@@ -2,6 +2,7 @@
   "resources": [
     "README.md"
   ],
+
   "overrided": {
     "ignoreDepsPattern": [],
     "includeAsDev": [],
@@ -34,8 +35,10 @@
     "linkedFolders": [],
     "npmFixes": []
   },
+
   "smartContainerBuildTarget": "",
   "linkedRepos": [],
+
   "libReleaseOptions": {
     "nodts": false,
     "obscure": false,
@@ -46,19 +49,23 @@
     "cliBuildIncludeNodeModules": false,
     "cliBuildUglify": false
   },
+
   "smartContainerTarget": "",
   "type": "isomorphic-lib",
   "isCoreProject": false,
   "useFramework": false,
   "required": [],
   "version": "v18",
+
   "additionalNpmNames": [
     "taon-core"
   ],
+
   "isGenerated": false,
   "requiredServers": [],
   "license": "MIT",
   "private": false,
   "main": "index.js",
-  "workerPlugins": {}
+  "workerPlugins": {},
+  "packageJsonOverride": {}
 }

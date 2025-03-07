@@ -1,3 +1,5 @@
+import { PackageJson } from "type-fest";
+
 export namespace CoreModels {
   //#region package
   export type Package = {
@@ -43,20 +45,7 @@ export namespace CoreModels {
   export const InstalationTypeArr = ['-g', '--save', '--save-dev'];
   //#endregion
 
-  //#region package json dependency obj
-  export type PackageJsonDependencyObj =
-    | 'dependencies'
-    | 'devDependencies'
-    | 'peerDependencies'
-    | 'resolutions';
 
-  export const PackageJsonDependencyObjArr = [
-    'dependencies',
-    'devDependencies',
-    'peerDependencies',
-    'resolutions',
-  ] as PackageJsonDependencyObj[];
-  //#endregion
 
   export type ReleaseVersionType = 'major' | 'minor' | 'patch';
   export type PreReleaseVersionTag = 'alpha' | 'beta' | 'rc' | 'next';
@@ -176,8 +165,8 @@ export namespace CoreModels {
     | 'typescript'
     | 'angular'
     | 'angular-lib'
-    | 'unknow'
-    | 'unknow-npm-project';
+    | 'unknown'
+    | 'unknown-npm-project';
   //#endregion
 
   //#region base project type arr
@@ -185,20 +174,17 @@ export namespace CoreModels {
     'typescript',
     'angular',
     'angular-lib',
-    'unknow',
-    'unknow-npm-project',
+    'unknown',
+    'unknown-npm-project',
   ];
   //#endregion
 
   //#region lib type
-  /**
-   * @deprecated there will be only one lib type "isomorphic-lib"
-   */
   export type LibType =
     | BaseProjectType
     | 'isomorphic-lib' // + https://github.com/maximegris/angular-electron
     | 'container'
-    | 'unknow-npm-project';
+    | 'unknown-npm-project';
   //#endregion
 
   //#region new factory type
@@ -560,31 +546,82 @@ export namespace CoreModels {
   //#endregion
 
   //#region taon json
+
+  export interface CliLibReleaseOptions {
+    cliBuildObscure?: boolean;
+    cliBuildUglify?: boolean;
+    cliBuildNoDts?: boolean;
+    cliBuildIncludeNodeModules?: boolean;
+    libBuildUglify?: boolean;
+    libBuildObscure?: boolean;
+  }
+
   export interface TaonJson {
+
     type: CoreModels.LibType;
+    /**
+     * Static resurces for standalone project, that are
+     * going to be included in release dist
+     */
+    resources?: string[];
+
+    /**
+     * deps will be inlcude
+     * in npm lib as dependencies
+     */
+    dependenciesNamesForNpmLib: string[];
+
+    /**
+     * so I can release same npm lib
+     * with different name
+     */
+    additionalNpmNames?: string[];
+    /**
+     * version of taon framework for project
+     */
     version?: CoreModels.FrameworkVersion;
+    /**
+     * Main project for smart container
+     * command "taon start" will start this project
+     */
     smartContainerBuildTarget?: string;
+    /**
+     * Project is using own node_modules instead of core container
+     */
+    isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
+    /**
+     * @deprecated
+     * use isUsingOwnNodeModulesInsteadCoreContainer
+     */
+    usesItsOwnNodeModules?: boolean;
+    /**
+     * Project is smart container
+     * for organization npm project
+     */
     smart?: boolean;
+    /**
+     * Project is monorepo
+     */
     monorepo?: boolean;
-    libReleaseOptions: {
-      cliBuildObscure?: boolean;
-      cliBuildUglify?: boolean;
-      cliBuildNoDts?: boolean;
-      cliBuildIncludeNodeModules?: boolean;
-    };
+    /**
+     * options what to do with cli tool
+     */
+    cliLibReleaseOptions: CliLibReleaseOptions;
     /**
      * project is template for other project
      */
     isCoreProject: boolean;
-    scripts?: { [script in string]: string };
-    description?: string;
-    license?: string;
-    private?: boolean;
-    author?: string;
-    homepage?: string;
-    overrided: {
-      dependencies?: { [name: string]: string };
-    };
+    packageJsonOverride:Partial<PackageJson>;
+
+    /**
+     * @deprecated
+     */
+    overrided?: {
+      /**
+     * @deprecated
+     */
+      includeOnly?:string[]
+    }
   }
   //#endregion
 }

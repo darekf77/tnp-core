@@ -1,31 +1,32 @@
-//#region imports
 let forceTrace = false;
 //#region @backend
-import * as cheerio from 'cheerio';
-import * as pathBase from 'path';
-import * as osBase from 'os';
-import * as child_process from 'child_process';
-import * as http from 'http';
-import * as https from 'https';
-import * as net from 'net';
-import chalkBase from 'chalk';
-import * as spawn from 'cross-spawn';
-import * as globBase from 'glob';
-import * as fg from 'fast-glob';
-import { minimatch } from 'minimatch';
 import * as fseBase from 'fs-extra';
-import * as rimraf from 'rimraf';
-import * as chokidar from 'chokidar';
-import * as mkdirp from 'mkdirp';
-import * as ncp from 'copy-paste';
-import * as ps from 'ps-node';
-import * as psList from 'ps-list';
-import * as fkill from 'fkill';
-const isRoot = require('is-root');
-const isAdmin = require('is-admin');
-forceTrace = global.hideLog === false;
-
+import * as osBase from 'os';
+import * as pathBase from 'path';
+import chalkBase from 'chalk';
+import * as cheerio from 'cheerio';
+import * as child_processBase from 'child_process';
+import * as httpBase from 'http';
+import * as httpsBase from 'https';
+const isRootBase = require('is-root');
+const isAdminBase = require('is-admin');
+const isElevatedBase = async (): Promise<boolean> => {
+  return process.platform === 'win32' ? isAdminBase() : isRootBase();
+};
+import * as fkillBase from 'fkill';
+import * as psListBase from 'ps-list';
+import * as netBase from 'net';
+import * as spawnBase from 'cross-spawn';
+import * as globBase from 'glob';
+import * as fgBase from 'fast-glob';
+import { minimatch as minimatchBase } from 'minimatch';
+import * as rimrafBase from 'rimraf';
+import * as chokidarBase from 'chokidar';
+import * as mkdirpBase from 'mkdirp';
+import * as ncpBase from 'copy-paste';
+import * as psBase from 'ps-node';
 //#endregion
+
 //#region @browser
 import jQuery from 'jquery';
 import { chalk as chalkMock } from './node-chalk-mock';
@@ -43,12 +44,29 @@ import type * as pathBaseType from 'path';
 import type * as globBaseType from 'glob';
 import type * as fseBaseType from 'fs-extra';
 import type * as osBaseType from 'os';
-//#endregion
+import type * as child_processType from 'child_process';
+import type * as httpBaseType from 'http';
+import type * as httpsBaseType from 'https';
+import type * as fkillBaseType from 'fkill';
+import type * as psListBaseType from 'ps-list';
+import type * as netBaseType from 'net';
+import type * as spawnBaseType from 'cross-spawn';
+import type * as fgBaseType from 'fast-glob';
+import type { minimatch as minimatchBaseType } from 'minimatch';
+import type * as rimrafBaseType from 'rimraf';
+import type * as chokidarBaseType from 'chokidar';
+import type * as mkdirpBaseType from 'mkdirp';
+import type * as ncpBaseType from 'copy-paste';
+import type * as psBaseType from 'ps-node';
 import { Helpers } from './index';
+
+//#region constants
+forceTrace = global.hideLog === false;
+//#endregion
 
 //#region set up browser mocks
 
-//#region mock jquery
+//#region set up browser mocks / mock jquery
 let $: jQueryType;
 //#region @browser
 $ = jQuery;
@@ -58,7 +76,7 @@ $ = cheerio;
 //#endregion
 //#endregion
 
-//#region mock path
+//#region set up browser mocks / mock path
 
 let path = void 0 as typeof pathBaseType;
 // #region @backend
@@ -71,7 +89,7 @@ path = pathMock;
 //#endregion
 //#endregion
 
-//#region mock chalk
+//#region set up browser mocks / mock chalk
 
 let chalk: Chalk = void 0 as typeof chalkBaseType;
 // #region @backend
@@ -84,7 +102,7 @@ chalk = chalkMock;
 //#endregion
 //#endregion
 
-//#region mock glob
+//#region set up browser mocks / mock glob
 let glob = void 0 as typeof globBaseType;
 //#region @backend
 glob = globBase;
@@ -94,7 +112,7 @@ glob = globBase;
 //#endregion
 //#endregion
 
-//#region mock fse
+//#region set up browser mocks / mock fse
 let fse = void 0 as typeof fseBaseType;
 //#region @backend
 fse = fseBase;
@@ -104,7 +122,7 @@ fse = fseBase;
 //#endregion
 //#endregion
 
-//#region mock os
+//#region set up browser mocks / mock os
 let os = void 0 as typeof osBaseType;
 //#region @backend
 os = osBase;
@@ -114,15 +132,133 @@ os = osBase;
 //#endregion
 //#endregion
 
+//#region set up browser mocks / mock child_process
+let child_process = void 0 as typeof child_processType;
+//#region @backend
+child_process = child_processBase;
+//#endregion
 //#endregion
 
-//#region is elevated
+//#region set up browser mocks / mock http
+let http = void 0 as typeof httpBaseType;
 //#region @backend
-async function isElevated(): Promise<boolean> {
-  return process.platform === 'win32' ? isAdmin() : isRoot();
-}
+http = httpBase;
 //#endregion
 //#endregion
+
+//#region set up browser mocks / mock https
+let https = void 0 as typeof httpsBaseType;
+//#region @backend
+https = httpsBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock isRoot
+let isRoot = void 0 as () => Promise<boolean>;
+//#region @backend
+isRoot = isRootBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock isAdmin
+let isAdmin = void 0 as () => Promise<boolean>;
+//#region @backend
+isAdmin = isAdminBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock isElevated
+/**
+ * check if the current process is elevated
+ * - sudo in unix/macos
+ * - admin in windows
+ */
+let isElevated = void 0 as () => Promise<boolean>;
+//#region @backend
+isElevated = isElevatedBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock fkill
+let fkill = void 0 as typeof fkillBaseType;
+//#region @backend
+fkill = fkillBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock psList
+let psList = void 0 as typeof psListBaseType;
+//#region @backend
+psList = psListBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock net
+let net = void 0 as typeof netBaseType;
+//#region @backend
+net = netBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock spawn
+let spawn = void 0 as typeof spawnBaseType;
+//#region @backend
+spawn = spawnBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock minimatch
+let minimatch = void 0 as typeof minimatchBaseType;
+//#region @backend
+minimatch = minimatchBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock rimraf
+let rimraf = void 0 as typeof rimrafBaseType;
+//#region @backend
+rimraf = rimrafBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock chokidar
+let chokidar = void 0 as typeof chokidarBaseType;
+//#region @backend
+chokidar = chokidarBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock mkdirp
+let mkdirp = void 0 as typeof mkdirpBaseType;
+//#region @backend
+mkdirp = mkdirpBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock ncp
+let ncp = void 0 as typeof ncpBaseType;
+//#region @backend
+ncp = ncpBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock ps
+let ps = void 0 as typeof psBaseType;
+//#region @backend
+ps = psBase;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / mock fg
+let fg = void 0 as typeof fgBaseType;
+//#region @backend
+fg = fgBase;
+//#endregion
+//#endregion
+
+//#endregion
+
+//#region crossPlatformPath
 
 //#region transform unix path to win32 path
 /**
@@ -141,7 +277,6 @@ const win32Path = (p: string): string => {
 };
 //#endregion
 
-//#region crossPlatformPath
 /**
  * This funciton will replace // to /
  */
@@ -231,25 +366,21 @@ export {
   glob,
   fse,
   os,
-};
-
-//#region @backend
-export {
-  spawn,
-  minimatch,
-  fg,
-  isElevated,
-  chokidar,
-  mkdirp,
-  ncp,
   child_process,
   http,
   https,
+  isElevated,
+  fkill,
+  psList,
+  spawn,
+  minimatch,
+  fg,
+  chokidar,
+  mkdirp,
+  ncp,
   rimraf,
   net,
   ps,
-  fkill,
-  psList,
 };
-//#endregion
+
 //#endregion
