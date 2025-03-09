@@ -38,6 +38,26 @@ export namespace Utils {
   };
   //#endregion
 
+  //#region utils / recursive sort keys in object
+  /**
+   * @param anyObject
+   * @returns object with sorted keys
+   */
+  export const sortKeys = (anyObject: any): any => {
+    if (_.isArray(anyObject)) {
+      return anyObject.map(sortKeys);
+    }
+    if (_.isObject(anyObject)) {
+      return _.fromPairs(
+        _.keys(anyObject)
+          .sort()
+          .map(key => [key, sortKeys(anyObject[key])]),
+      );
+    }
+    return anyObject;
+  };
+  //#endregion
+
   //#region utils / escape string for reg exp
   /**
    * Example:
