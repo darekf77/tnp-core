@@ -62,7 +62,13 @@
     "private": false,
     "main": "index.js",
     "workerPlugins": {},
-    "packageJsonOverride": {}
+    "packageJsonOverride": {
+      "license": "MIT",
+      "private": false,
+      "scripts": {
+        "mkdocs": "python3 -m mkdocs"
+      }
+    }
   },
   "dependencies": {},
   "devDependencies": {
