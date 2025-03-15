@@ -1,4 +1,48 @@
 {
+  "tnp": {
+    "resources": [
+      "README.md"
+    ],
+    "type": "isomorphic-lib",
+    "version": "v18",
+    "dependenciesNamesForNpmLib": [
+      "axios",
+      "glob",
+      "moment",
+      "fkill",
+      "copy-paste",
+      "chokidar",
+      "fs-extra",
+      "rimraf",
+      "mkdirp",
+      "lodash",
+      "@types/lodash",
+      "ps-list",
+      "ps-node",
+      "q",
+      "@types/q",
+      "json5",
+      "is-elevated",
+      "cross-spawn",
+      "chalk",
+      "copy-paste",
+      "is-root",
+      "is-admin",
+      "dateformat"
+    ],
+    "additionalNpmNames": [
+      "taon-core"
+    ],
+    "isCoreProject": false,
+    "packageJsonOverride": {
+      "author": "Dariusz Filipiak",
+      "license": "MIT",
+      "private": false,
+      "scripts": {
+        "mkdocs": "python3 -m mkdocs"
+      }
+    }
+  },
   "name": "tnp-core",
   "version": "18.0.47",
   "scripts": {

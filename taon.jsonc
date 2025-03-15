@@ -1,5 +1,9 @@
 {
+  "resources": [
+    "README.md"
+  ],
   "type": "isomorphic-lib",
+
   "version": "v18",
 
   "dependenciesNamesForNpmLib": [
@@ -33,10 +37,6 @@
   ],
 
   "isCoreProject": false,
-
-  "resources": [
-    "README.md"
-  ],
 
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
