@@ -129,16 +129,16 @@ module.exports = [
       // 'no-void': 'error',
       // "no-unused-vars": "warn",
       // TODO modify in future for TAON use case
-      // "import/order": [
-      //   "warn",
-      //   {
-      //     "newlines-between": "always",
-      //     "alphabetize": {
-      //       "order": "asc",
-      //       "caseInsensitive": true
-      //     }
-      //   }
-      // ],
+      "import/order": [
+        "warn",
+        {
+          "newlines-between": "always",
+          "alphabetize": {
+            "order": "asc",
+            "caseInsensitive": true
+          }
+        }
+      ],
       '@typescript-eslint/explicit-function-return-type': [
           'warn',
           {
