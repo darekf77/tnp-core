@@ -1,32 +1,42 @@
 //#region imports
-import { Taon, BaseContext } from 'taon/src';
-import { Observable, map } from 'rxjs';
-import { HOST_BACKEND_PORT } from './app.hosts';
-//#region @browser
+import { CommonModule } from '@angular/common';
 import { NgModule, inject, Injectable } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { VERSION } from '@angular/core';
-//#endregion
+import { Observable, map } from 'rxjs';
+import { Taon, BaseContext } from 'taon/src';
+import { Helpers } from 'tnp-core/src';
+
+import { CLIENT_DEV_WEBSQL_APP_PORT, HOST_BACKEND_PORT } from './app.hosts';
 //#endregion
 
+
 console.log('hello world');
-console.log('Your server will start on port '+ HOST_BACKEND_PORT);
+console.log('Your server will start on port ' + HOST_BACKEND_PORT);
 const host = 'http://localhost:' + HOST_BACKEND_PORT;
+
+const frontendHost =
+  'http://localhost:' +
+  (Helpers.isWebSQL ? CLIENT_DEV_WEBSQL_APP_PORT : CLIENT_DEV_WEBSQL_APP_PORT);
 
 //#region tnp-core component
 //#region @browser
 @Component({
   selector: 'app-tnp-core',
-  template: `hello from tnp-core<br>
-    Angular version: {{ angularVersion }}<br>
-    <br>
+  template: `hello from tnp-core<br />
+    Angular version: {{ angularVersion }}<br />
+    <br />
     users from backend
     <ul>
-      <li *ngFor="let user of (users$ | async)"> {{ user | json }} </li>
-    </ul>
-  `,
-  styles: [` body { margin: 0px !important; } `],
+      <li *ngFor="let user of users$ | async">{{ user | json }}</li>
+    </ul> `,
+  styles: [
+    `
+      body {
+        margin: 0px !important;
+      }
+    `,
+  ],
 })
 export class TnpCoreComponent {
   angularVersion = VERSION.full;
@@ -39,15 +49,14 @@ export class TnpCoreComponent {
 //#region  tnp-core api service
 //#region @browser
 @Injectable({
-  providedIn:'root'
+  providedIn: 'root',
 })
 export class UserApiService {
-  userControlller = Taon.inject(()=> MainContext.getClass(UserController))
+  userControlller = Taon.inject(() => MainContext.getClass(UserController));
   getAll() {
-    return this.userControlller.getAll()
-      .received
-      .observable
-      .pipe(map(r => r.body.json));
+    return this.userControlller
+      .getAll()
+      .received.observable.pipe(map(r => r.body.json));
   }
 }
 //#endregion
@@ -60,7 +69,7 @@ export class UserApiService {
   imports: [CommonModule],
   declarations: [TnpCoreComponent],
 })
-export class TnpCoreModule { }
+export class TnpCoreModule {}
 //#endregion
 //#endregion
 
@@ -77,7 +86,7 @@ class User extends Taon.Base.AbstractEntity {
 //#region  tnp-core controller
 @Taon.Controller({ className: 'UserController' })
 class UserController extends Taon.Base.CrudController<User> {
-  entityClassResolveFn = ()=> User;
+  entityClassResolveFn = () => User;
   //#region @websql
   async initExampleDbData(): Promise<void> {
     const superAdmin = new User();
@@ -89,10 +98,11 @@ class UserController extends Taon.Base.CrudController<User> {
 //#endregion
 
 //#region  tnp-core context
-var MainContext = Taon.createContext(()=>({
+var MainContext = Taon.createContext(() => ({
   host,
+  frontendHost,
   contextName: 'MainContext',
-  contexts:{ BaseContext },
+  contexts: { BaseContext },
   controllers: {
     UserController,
     // PUT FIREDEV CONTORLLERS HERE
@@ -107,12 +117,12 @@ var MainContext = Taon.createContext(()=>({
 //#endregion
 
 async function start() {
-
   await MainContext.initialize();
 
   if (Taon.isBrowser) {
-    const users = (await MainContext.getClassInstance(UserController).getAll().received)
-      .body?.json;
+    const users = (
+      await MainContext.getClassInstance(UserController).getAll().received
+    ).body?.json;
     console.log({
       'users from backend': users,
     });
