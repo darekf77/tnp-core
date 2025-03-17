@@ -61,7 +61,9 @@ import type * as psBaseType from 'ps-node';
 import { Helpers } from './index';
 
 //#region constants
+//#region @backend
 forceTrace = global.hideLog === false;
+//#endregion
 //#endregion
 
 //#region set up browser mocks
