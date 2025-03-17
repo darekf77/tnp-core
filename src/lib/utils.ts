@@ -193,6 +193,21 @@ export namespace Utils {
 
   //#endregion
 
+  //#region utils / camelize
+  /**
+   * similar to camelCase but remove
+   * all non word / repeated characters
+   */
+  export const camelize = (str: string = '') => {
+    str = str.replace(/\W/g, '').toLowerCase();
+    return str
+      .replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
+        return index == 0 ? word.toLowerCase() : word.toUpperCase();
+      })
+      .replace(/\s+/g, '');
+  };
+  //#endregion
+
   //#region json
   interface AttrJsoncProp {
     name: string;
