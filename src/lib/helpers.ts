@@ -555,8 +555,21 @@ export class HelpersCore extends HelpersMessages {
     existedFileOrFolder: string,
     destinationPath: string,
     options?: {
+      /**
+       * try to remove destination path before create link
+       */
+      tryRemoveDesPath?: boolean,
+      /**
+       * if folder doesn't exist, just continue
+       */
       continueWhenExistedFolderDoesntExists?: boolean;
+      /**
+       * create windows hard link instead of symlink
+       */
       windowsHardLink?: boolean;
+      /**
+       * don't rename destination path when slash at the end
+       */
       dontRenameWhenSlashAtEnd?: boolean;
       allowNotAbsolutePathes?: boolean;
       /**
@@ -595,6 +608,23 @@ export class HelpersCore extends HelpersMessages {
     if (_.isUndefined(options.allowNotAbsolutePathes)) {
       options.allowNotAbsolutePathes = false;
     }
+
+    if (options.dontRenameWhenSlashAtEnd) {
+      destinationPath = Helpers.removeSlashAtEnd(destinationPath);
+    }
+
+    if(options.tryRemoveDesPath) {
+      try {
+        fse.unlinkSync(destinationPath);
+      } catch (error) {
+        try {
+          fse.removeSync(destinationPath);
+        } catch (error) {
+          
+        }
+      }
+    }
+
     //#endregion
 
     const {
