@@ -11,11 +11,16 @@ import {
 } from './core-imports';
 import { Helpers } from './index';
 import { dateformat } from './core-imports';
+
+// import psTree from 'ps-tree';
 //#region @backend
+var pidusage = require('pidusage');
+import { promisify } from 'util';
 import { spawn, child_process } from './core-imports';
 import { fse } from './core-imports';
 import { Blob } from 'buffer';
 import * as net from 'net';
+const execAsync = promisify(child_process.exec);
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
@@ -1094,6 +1099,130 @@ export namespace UtilsProcess {
     //#endregion
   };
   //#endregion
+
+  /**
+   * Get CPU and memory usage for a single PID.
+   */
+  export const getUsageForPid = async (
+    pid: number,
+  ): Promise<{ cpu: number; memoryInGB: number; memoryInMB: number }> => {
+    //#region @backendFunc
+    // pidusage returns cpu usage as a percentage (e.g., 10.0 for ~10%)
+    // memory usage is returned in bytes.
+    try {
+      const stat = await pidusage(pid);
+      const memoryInMB = stat.memory / (1024 * 1024);
+      const memoryInGB = stat.memory / (1024 * 1024 * 1024);
+      return {
+        cpu: stat.cpu, // CPU usage (percent)
+        memoryInMB,
+        memoryInGB,
+      };
+    } catch (error) {
+      return {
+        cpu: NaN, // CPU usage (percent)
+        memoryInMB: NaN, // Memory usage (bytes)
+        memoryInGB: NaN, // Memory usage
+      };
+    }
+
+    //#endregion
+  };
+
+  /**
+   * Return a list of direct child PIDs for the given PID on a Unix-like system.
+   * Uses `ps -o pid= --ppid <pid>` to find child processes.
+   */
+  async function getChildPidsUnix(pid: number): Promise<number[]> {
+    //#region @backendFunc
+    const cmd = `ps -o pid= --ppid ${pid}`;
+    try {
+      const { stdout } = await execAsync(cmd);
+      // Each line should contain just the PID
+      return stdout
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '')
+        .map(line => Number(line))
+        .filter(n => !isNaN(n));
+    } catch {
+      return [];
+    }
+    //#endregion
+  }
+
+  /**
+   * Return a list of direct child PIDs for the given PID on Windows.
+   * Uses `wmic process where (ParentProcessId=<pid>) get ProcessId` to find child processes.
+   */
+  async function getChildPidsWindows(pid: number): Promise<number[]> {
+    //#region @backendFunc
+    const cmd = `wmic process where (ParentProcessId=${pid}) get ProcessId`;
+    try {
+      const { stdout } = await execAsync(cmd);
+      // The output generally has lines, including one that says "ProcessId" and then the PIDs
+      // We'll parse out any numeric lines
+      return stdout
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => /^\d+$/.test(line)) // only keep pure digits
+        .map(line => Number(line))
+        .filter(n => !isNaN(n));
+    } catch {
+      return [];
+    }
+    //#endregion
+  }
+
+  /**
+   * Cross-platform function to list *direct* child PIDs of a given PID.
+   * Uses the appropriate command depending on `process.platform`.
+   */
+  export async function getChildPidsOnce(pid: number): Promise<number[]> {
+    //#region @backendFunc
+    if (process.platform === 'win32') {
+      return getChildPidsWindows(pid);
+    } else {
+      return getChildPidsUnix(pid);
+    }
+    //#endregion
+  }
+
+  /**
+   * Get CPU and memory usage for the current process (the Node.js process itself),
+   * plus any child processes spawned by it.
+   */
+  export const getCurrentProcessAndChildUsage = async (): Promise<{
+    current: { cpu: number; memoryInMB: number };
+    children: Array<{ pid: number; cpu: number; memoryInMB: number }>;
+  }> => {
+    //#region @backendFunc
+    const currentPid = process.pid;
+
+    // Get stats for current Node.js process
+    const currentUsage = await getUsageForPid(currentPid);
+
+    // Get list of child PIDs
+    const childPids = await getChildPidsOnce(currentPid);
+
+    // Gather usage for each child
+    const childrenUsage = await Promise.all(
+      childPids.map(async pid => {
+        const usage = await getUsageForPid(pid);
+        return {
+          pid,
+          cpu: usage.cpu,
+          memoryInMB: usage.memoryInMB,
+        };
+      }),
+    );
+
+    return {
+      current: currentUsage,
+      children: childrenUsage,
+    };
+    //#endregion
+  };
 }
 
 //#endregion
