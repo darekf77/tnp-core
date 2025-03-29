@@ -14,7 +14,7 @@
 import { Helpers } from 'tnp-core';
 ```
 
-- in any frontend browser apps (except taon lib/apps)
+- in any frontend browser apps (except taon libs/apps)
 ```ts
 import { Helpers } from 'tnp-core/browser';
 ```
