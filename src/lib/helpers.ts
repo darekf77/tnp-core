@@ -558,7 +558,7 @@ export class HelpersCore extends HelpersMessages {
       /**
        * try to remove destination path before create link
        */
-      tryRemoveDesPath?: boolean,
+      tryRemoveDesPath?: boolean;
       /**
        * if folder doesn't exist, just continue
        */
@@ -613,15 +613,13 @@ export class HelpersCore extends HelpersMessages {
       destinationPath = Helpers.removeSlashAtEnd(destinationPath);
     }
 
-    if(options.tryRemoveDesPath) {
+    if (options.tryRemoveDesPath) {
       try {
         fse.unlinkSync(destinationPath);
       } catch (error) {
         try {
           fse.removeSync(destinationPath);
-        } catch (error) {
-          
-        }
+        } catch (error) {}
       }
     }
 
@@ -1110,12 +1108,11 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / wait
-  public wait(second: number): Promise<void> {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(void 0);
-      }, second * 1000);
-    });
+  /**
+   * @deprecated use UtilsTerminal.wait
+   */
+  public async wait(second: number): Promise<void> {
+    await UtilsTerminal.wait(second);
   }
 
   public async timeout(seconds: number): Promise<void> {
@@ -1961,12 +1958,18 @@ export class HelpersCore extends HelpersMessages {
       askToTryAgainOnError,
       resolvePromiseMsgCallback,
       similarProcessKey,
+      onChildProcessChange,
+      outputBuffer,
+      outputBufferMaxSize
     } = options || {};
+
+    outputBufferMaxSize = outputBufferMaxSize || 1000;
 
     command = Helpers._fixCommand(command);
     const {
       stderr: stderResolvePromiseMsgCallback,
       stdout: stdoutResolvePromiseMsgCallback,
+      exitCode: exitCodeResolvePromiseMsgCallback,
     } = resolvePromiseMsgCallback || {};
 
     let childProcess: ChildProcess;
@@ -2011,6 +2014,13 @@ export class HelpersCore extends HelpersMessages {
             prefix,
             extractFromLine,
           );
+
+          if(!_.isUndefined(outputBuffer))           {
+            outputBuffer.push(data);
+            if (outputBuffer.length > outputBufferMaxSize) {
+              outputBuffer.shift();
+            }
+          }
 
           if (!hideOutput.stdout) {
             process.stdout.write(data);
@@ -2066,6 +2076,7 @@ export class HelpersCore extends HelpersMessages {
         proc.on('exit', async code => {
           // console.log(`Command exit code: ${code}`)
           if (hideOutput.acceptAllExitCodeAsSuccess) {
+            exitCodeResolvePromiseMsgCallback && exitCodeResolvePromiseMsgCallback(code);
             resolve(void 0);
           } else {
             if (code !== 0) {
@@ -2100,6 +2111,13 @@ export class HelpersCore extends HelpersMessages {
             extractFromLine,
           );
 
+          if(!_.isUndefined(outputBuffer))           {
+            outputBuffer.push(data);
+            if (outputBuffer.length > outputBufferMaxSize) {
+              outputBuffer.shift();
+            }
+          }
+
           if (!hideOutput.stdout) {
             process.stdout.write(JSON.stringify(data));
           }
@@ -2117,6 +2135,13 @@ export class HelpersCore extends HelpersMessages {
             prefix,
             extractFromLine,
           );
+
+          if(!_.isUndefined(outputBuffer))           {
+            outputBuffer.push(data);
+            if (outputBuffer.length > outputBufferMaxSize) {
+              outputBuffer.shift();
+            }
+          }
 
           if (!hideOutput.stderr) {
             process.stderr.write(data);
@@ -2157,6 +2182,13 @@ export class HelpersCore extends HelpersMessages {
             extractFromLine,
           );
 
+          if(!_.isUndefined(outputBuffer))           {
+            outputBuffer.push(data);
+            if (outputBuffer.length > outputBufferMaxSize) {
+              outputBuffer.shift();
+            }
+          }
+
           // @ts-ignore
           if (!hideOutput.stderr) {
             process.stderr.write(JSON.stringify(data));
@@ -2169,6 +2201,7 @@ export class HelpersCore extends HelpersMessages {
 
     while (true) {
       childProcess = child_process.exec(command, { cwd });
+      onChildProcessChange && onChildProcessChange(childProcess);
       try {
         await handlProc(childProcess);
         break;

@@ -1,4 +1,6 @@
-import { PackageJson } from "type-fest";
+import type { ChildProcess } from 'child_process';
+
+import { PackageJson } from 'type-fest';
 
 export namespace CoreModels {
   //#region package
@@ -44,8 +46,6 @@ export namespace CoreModels {
 
   export const InstalationTypeArr = ['-g', '--save', '--save-dev'];
   //#endregion
-
-
 
   export type ReleaseVersionType = 'major' | 'minor' | 'patch';
   export type PreReleaseVersionTag = 'alpha' | 'beta' | 'rc' | 'next';
@@ -251,6 +251,7 @@ export namespace CoreModels {
     resolvePromiseMsgCallback?: {
       stdout?: () => any;
       stderr?: () => any;
+      exitCode?: (exitCode: number) => any;
     };
     prefix?: string;
     detach?: boolean;
@@ -272,6 +273,7 @@ export namespace CoreModels {
      */
     biggerBuffer?: boolean;
     askToTryAgainOnError?: boolean;
+    onChildProcessChange?: (childProcess: ChildProcess) => void;
     exitOnErrorCallback?: (code: number) => void;
     /**
      * From displaying in console
@@ -281,6 +283,8 @@ export namespace CoreModels {
       stderr?: boolean;
       acceptAllExitCodeAsSuccess?: boolean;
     };
+    outputBuffer?: string[];
+    outputBufferMaxSize?: number;
   }
   //#endregion
 
