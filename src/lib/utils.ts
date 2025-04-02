@@ -12,6 +12,7 @@ import { fse } from './core-imports';
 import { CoreModels } from './core-models';
 
 import { Helpers } from './index';
+import { ChildProcess } from 'child_process';
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
@@ -796,12 +797,299 @@ export namespace UtilsProcess {
    * TODO IMPLEMENT
    * start async node process
    */
-  // export async function startAsync(
-  //   command: string,
-  //   options?: ProcessStartOptions,
-  // ) {
-  // TODO @LAST
-  // }
+  export const startAsync = async (
+    command: string,
+    cwd: string,
+    // options?: ProcessStartOptions, // TODO change to this
+    options?: Omit<CoreModels.ExecuteOptions, 'tryAgainWhenFailAfter'>,
+  ): Promise<void> => {
+    //#region @backendFunc
+
+    //#region preapre options
+    let {
+      hideOutput,
+      resolvePromiseMsg,
+      outputLineReplace,
+      prefix,
+      extractFromLine,
+      exitOnErrorCallback,
+      askToTryAgainOnError,
+      resolvePromiseMsgCallback,
+      similarProcessKey,
+      onChildProcessChange,
+      outputBuffer,
+      outputBufferMaxSize,
+    } = options || {};
+
+    outputBufferMaxSize = outputBufferMaxSize || 1000;
+
+    command = Helpers._fixCommand(command);
+    const {
+      stderr: stderResolvePromiseMsgCallback,
+      stdout: stdoutResolvePromiseMsgCallback,
+      exitCode: exitCodeResolvePromiseMsgCallback,
+    } = resolvePromiseMsgCallback || {};
+
+    let childProcess: ChildProcess;
+    // let {
+    //   stderMsgForPromiseResolve,
+    //   stdoutMsgForPromiseResolve
+    // } = resolvePromiseMsg || {};
+
+    // processes.push(proc);
+    if (!resolvePromiseMsg) {
+      resolvePromiseMsg = {};
+    }
+    if (!hideOutput) {
+      hideOutput = {};
+    }
+
+    let isResolved = false;
+
+    if (_.isString(resolvePromiseMsg.stdout)) {
+      resolvePromiseMsg.stdout = [resolvePromiseMsg.stdout];
+    }
+    if (_.isString(resolvePromiseMsg.stderr)) {
+      resolvePromiseMsg.stderr = [resolvePromiseMsg.stderr];
+    }
+
+    //#endregion
+
+    const handlProc = (proc: ChildProcess) => {
+      return new Promise((resolve, reject) => {
+        // console.log(
+        //   `[execute] Process started...`,
+        //   (resolvePromiseMsg.stdout as string[]).map(c => `"${c}"`).join(','),
+        // );
+
+        //#region handle stdout data
+        proc.stdout.on('data', rawData => {
+          let data = rawData?.toString() || '';
+
+          data = Helpers.modifyLineByLine(
+            data, // @ts-ignore
+            outputLineReplace,
+            prefix,
+            extractFromLine,
+          );
+
+          if (!_.isUndefined(outputBuffer)) {
+            outputBuffer.push(data);
+            if (outputBuffer.length > outputBufferMaxSize) {
+              outputBuffer.shift();
+            }
+          }
+
+          if (!hideOutput.stdout) {
+            process.stdout.write(data);
+          }
+
+          if (_.isArray(resolvePromiseMsg.stdout)) {
+            for (
+              let index = 0;
+              index < resolvePromiseMsg.stdout.length;
+              index++
+            ) {
+              // console.log(`DATA STDOUT: ${chalk.gray(data)}`);
+
+              const resolveCompilationMessage = resolvePromiseMsg.stdout[index];
+              if (data.search(resolveCompilationMessage) !== -1) {
+                // Helpers.info(`[unitlOutputContains] AAA...`);
+                stdoutResolvePromiseMsgCallback &&
+                  stdoutResolvePromiseMsgCallback();
+                if (!isResolved) {
+                  isResolved = true;
+                  resolve(void 0);
+                }
+                break;
+              }
+            }
+          }
+
+          // TODO NOT NEEDED
+          if (_.isArray(resolvePromiseMsg.stderr)) {
+            for (
+              let index = 0;
+              index < resolvePromiseMsg.stderr.length;
+              index++
+            ) {
+              const rejectm = resolvePromiseMsg.stderr[index];
+              if (data.search(rejectm) !== -1) {
+                // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
+                stdoutResolvePromiseMsgCallback &&
+                  stdoutResolvePromiseMsgCallback();
+                if (!isResolved) {
+                  isResolved = true;
+                  reject();
+                  proc.kill('SIGINT');
+                }
+                break;
+              }
+            }
+          }
+        });
+        //#endregion
+
+        //#region handle exit process
+        proc.on('exit', async code => {
+          // console.log(`Command exit code: ${code}`)
+          if (hideOutput.acceptAllExitCodeAsSuccess) {
+            exitCodeResolvePromiseMsgCallback &&
+              exitCodeResolvePromiseMsgCallback(code);
+            resolve(void 0);
+          } else {
+            if (code !== 0) {
+              if (_.isFunction(exitOnErrorCallback)) {
+                try {
+                  await exitOnErrorCallback(code as any);
+                  // await this.runSyncOrAsync({
+                  //   functionFn: exitOnErrorCallback,
+                  //   arrayOfParams: [code],
+                  // });
+                  reject(`Command failed with code=${code}`);
+                } catch (error) {
+                  reject(error);
+                }
+              } else {
+                reject(`Command failed with code=${code}`);
+              }
+            } else {
+              resolve(void 0);
+            }
+          }
+        });
+        //#endregion
+
+        //#region handle stdout error
+        proc.stdout.on('error', rawData => {
+          let data = rawData?.toString() || '';
+
+          data = Helpers.modifyLineByLine(
+            data, // @ts-ignore
+            outputLineReplace,
+            prefix,
+            extractFromLine,
+          );
+
+          if (!_.isUndefined(outputBuffer)) {
+            outputBuffer.push(data);
+            if (outputBuffer.length > outputBufferMaxSize) {
+              outputBuffer.shift();
+            }
+          }
+
+          if (!hideOutput.stdout) {
+            process.stdout.write(JSON.stringify(data));
+          }
+
+          // console.log(data);
+        });
+        //#endregion
+
+        //#region handle stder data
+        proc.stderr.on('data', rawData => {
+          let data = rawData?.toString() || '';
+          data = Helpers.modifyLineByLine(
+            data, // @ts-ignore
+            outputLineReplace,
+            prefix,
+            extractFromLine,
+          );
+
+          if (!_.isUndefined(outputBuffer)) {
+            outputBuffer.push(data);
+            if (outputBuffer.length > outputBufferMaxSize) {
+              outputBuffer.shift();
+            }
+          }
+
+          if (!hideOutput.stderr) {
+            process.stderr.write(data);
+          }
+
+          if (_.isArray(resolvePromiseMsg.stderr)) {
+            // @ts-ignore
+            for (
+              let index = 0;
+              index < resolvePromiseMsg.stderr.length;
+              index++
+            ) {
+              // @ts-ignore
+              const rejectm = resolvePromiseMsg.stderr[index];
+              if (data.search(rejectm) !== -1) {
+                // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
+                stderResolvePromiseMsgCallback &&
+                  stderResolvePromiseMsgCallback();
+                if (!isResolved) {
+                  isResolved = true;
+                  reject();
+                  proc.kill('SIGINT');
+                }
+                break;
+              }
+            }
+          }
+        });
+        //#endregion
+
+        //#region handle stder error
+        proc.stderr.on('error', rawData => {
+          let data = rawData?.toString() || '';
+          data = Helpers.modifyLineByLine(
+            data, // @ts-ignore
+            outputLineReplace,
+            prefix,
+            extractFromLine,
+          );
+
+          if (!_.isUndefined(outputBuffer)) {
+            outputBuffer.push(data);
+            if (outputBuffer.length > outputBufferMaxSize) {
+              outputBuffer.shift();
+            }
+          }
+
+          // @ts-ignore
+          if (!hideOutput.stderr) {
+            process.stderr.write(JSON.stringify(data));
+          }
+          // console.log(data);
+        });
+        //#endregion
+      });
+    };
+
+    while (true) {
+      const maxBuffer = options?.biggerBuffer ? Helpers.bigMaxBuffer : void 0;
+      const env = { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'development' };
+      childProcess = child_process.exec(command, { cwd, env, maxBuffer });
+      onChildProcessChange && onChildProcessChange(childProcess);
+      try {
+        await handlProc(childProcess);
+        break;
+      } catch (error) {
+        Helpers.error(
+          `Command failed:
+
+${command}
+
+in location: ${cwd}
+
+        `,
+          true,
+          true,
+        );
+        if (askToTryAgainOnError) {
+          if (!(await Helpers.questionYesNo(`Try again this command ?`))) {
+            throw error;
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+    //#endregion
+  };
   //#endregion
 
   //#region utils process  / TODO start sync
