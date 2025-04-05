@@ -69,7 +69,7 @@ export namespace CoreModels {
   export const EnvironmentName =  Object.freeze({
     /**
      * Default environment, typically for artifact without application
-     * or for storring common data
+     * or for storing common data
      */
     __ : '__',
 
