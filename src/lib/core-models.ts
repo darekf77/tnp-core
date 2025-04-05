@@ -63,16 +63,80 @@ export namespace CoreModels {
   //#endregion
 
   //#region environment name
-  export type EnvironmentName =
-    | 'local'
-    | 'static'
-    | 'dev'
-    | 'stage'
-    | 'prod'
-    | 'online'
-    | 'test'
-    | 'qa'
-    | 'custom';
+  /**
+   * Available application environments.
+   */
+  export const EnvironmentName =  Object.freeze({
+    /**
+     * Default environment, typically for artifact without application
+     * or for storring common data
+     */
+    __ : '__',
+
+    /**
+     * Local development environment, typically the developer's machine.
+     */
+    LOCALHOST : 'localhost',
+
+    /**
+     * Development environment used by engineers to deploy and test new features.
+     */
+    DEV : 'dev',
+
+    /**
+     * Staging environment used for final validations before production.
+     */
+    STAGE :'stage',
+
+    /**
+     * Production environment serving live users.
+     */
+    PROD : 'prod',
+
+    /**
+     * Automated test environment for running unit, integration, or automated tests.
+     */
+    TEST: 'test',
+
+    /**
+     * Quality assurance environment designated for manual and exploratory testing.
+     */
+    QA : 'qa',
+
+    /**
+     * Sandbox environment for experimenting and integration without affecting other environments.
+     */
+    SANDBOX : 'sandbox',
+
+    /**
+     * User Acceptance Testing environment where clients or stakeholders validate the release candidate.
+     */
+    UAT : 'uat',
+
+    /**
+     * Pre-production environment, closely mirroring production for final testing and validation.
+     */
+    PREPROD : 'preprod',
+
+    /**
+     * Demonstration environment specifically configured for client presentations and demos.
+     */
+    DEMO : 'demo',
+
+    /**
+     * Continuous Integration environment used by CI/CD pipelines for automated builds and deployments.
+     */
+    CI :'ci',
+
+    /**
+     * Training environment dedicated to internal team onboarding and training activities.
+     */
+    TRAINING : 'training',
+  });
+
+  export type EnvironmentNameTaon =
+  (typeof EnvironmentName)[keyof typeof EnvironmentName];
+
   //#endregion
 
   //#region push type
