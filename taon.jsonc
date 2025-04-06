@@ -32,6 +32,10 @@
     "taon-core"
   ],
 
+  "autoReleaseConfigAllowedItems": [{
+    "artifactName": "npm-lib-and-cli-tool"
+  }],
+
   "isCoreProject": false,
 
   "resources": [
