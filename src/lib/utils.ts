@@ -1643,6 +1643,18 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  //#region utils os / is running in windows cmd
+  export const isRunningInWindowsCmd: () => boolean = () => {
+    //#region @browser
+    return false;
+    //#endregion
+    //#region @backendFunc
+    const shell = process.env.ComSpec || process.env.SHELL;
+    return shell && shell.toLowerCase().includes('cmd.exe');
+    //#endregion
+  };
+  //#endregion
+
   //#region utils os / is running in docker
   export const isRunningInDocker = (): boolean => {
     //#region @browser
