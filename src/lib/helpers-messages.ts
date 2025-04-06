@@ -117,11 +117,17 @@ export class HelpersMessages extends HelpersIsomorphic {
   }
 
   /**
-   * Throw error and exit process
-   * make sure browser or nodejs will not continue
-   * @param details
+   * throw error
    */
   throw(details: string) {
+    throw new Error(details);
+  }
+
+  /**
+   * throw error and stop application
+   * @param details
+   */
+  stopApplication(details: string) {
     if (this.isBrowser) {
       //#region @browser
       document.body.innerHTML =
