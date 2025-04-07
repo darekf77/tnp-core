@@ -27,6 +27,7 @@
     "is-admin",
     "dateformat",
     "cheerio",
+    "fast-glob",
   ],
 
   "additionalNpmNames": [
