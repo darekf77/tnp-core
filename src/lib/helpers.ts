@@ -15,7 +15,7 @@ import {
 } from './core-imports';
 import * as json5Write from 'json10-writer/src';
 import { Blob } from 'buffer';
-import { ipcMain, screen } from 'electron';
+// import { ipcMain, screen } from 'electron';
 //#endregion
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
@@ -25,7 +25,7 @@ import { UtilsProcess, UtilsTerminal } from './utils';
 import { Helpers, Utils, UtilsOs } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
-import { ipcRenderer, webFrame } from 'electron';
+// import { ipcRenderer, webFrame } from 'electron';
 import type { ChildProcess } from 'child_process';
 //#endregion
 
@@ -149,9 +149,10 @@ export class HelpersCore extends HelpersMessages {
 
   //#region methods / electron ipc renderer
   /**
+   * @deprecated
    * get electron browser ipc renderer
    */
-  get ipcRenderer(): typeof ipcRenderer {
+  get ipcRenderer(): any { // typeof ipcRenderer
     //#region @backend
     return;
     //#endregion
@@ -159,8 +160,9 @@ export class HelpersCore extends HelpersMessages {
     if (!this.isElectron) {
       return;
     }
-    return (window as any).require('electron')
-      .ipcRenderer as typeof ipcRenderer;
+    return void 0;
+    // return (window as any).require('electron')
+    //   .ipcRenderer as typeof ipcRenderer;
     //#endregion
   }
   //#endregion
@@ -169,7 +171,8 @@ export class HelpersCore extends HelpersMessages {
   /**
    * get electron web frame
    */
-  get webFrame(): typeof webFrame {
+  get webFrame(): any { //  typeof webFrame
+    //typeof webFrame
     //#region @backend
     return;
     //#endregion
@@ -177,13 +180,15 @@ export class HelpersCore extends HelpersMessages {
     if (!this.isElectron) {
       return;
     }
-    return (window as any).require('electron').webFrame as typeof webFrame;
+    return void 0;
+    // return (window as any).require('electron').webFrame as typeof webFrame;
     //#endregion
   }
   //#endregion
 
   //#region methods / electron ipc renderer
   /**
+   * @deprecated
    * get electron backend ipc main proces
    */
   get ipcMain() {
@@ -191,7 +196,7 @@ export class HelpersCore extends HelpersMessages {
     if (!this.isElectron) {
       return;
     }
-    return ipcMain;
+    return void 0;
     //#endregion
   }
   //#endregion

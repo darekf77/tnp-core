@@ -1567,6 +1567,7 @@ export namespace UtilsOs {
     if (
       typeof window !== 'undefined' &&
       typeof window.process === 'object' &&
+      // @ts-ignore
       window.process.type === 'renderer'
     ) {
       return true;
