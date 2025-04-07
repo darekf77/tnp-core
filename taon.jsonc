@@ -25,7 +25,8 @@
     "copy-paste",
     "is-root",
     "is-admin",
-    "dateformat"
+    "dateformat",
+    "cheerio",
   ],
 
   "additionalNpmNames": [
