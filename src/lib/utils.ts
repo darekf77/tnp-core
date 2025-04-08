@@ -1,5 +1,6 @@
 //#region imports
 import { Blob } from 'buffer';
+import { ChildProcess } from 'child_process';
 import * as net from 'net';
 import { promisify } from 'util';
 
@@ -12,7 +13,6 @@ import { fse } from './core-imports';
 import { CoreModels } from './core-models';
 
 import { Helpers } from './index';
-import { ChildProcess } from 'child_process';
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
@@ -1567,6 +1567,7 @@ export namespace UtilsOs {
     if (
       typeof window !== 'undefined' &&
       typeof window.process === 'object' &&
+      // @ts-ignore
       window.process.type === 'renderer'
     ) {
       return true;
@@ -1874,7 +1875,9 @@ export namespace UtilsTerminal {
   export const clearConsole = (): void => {
     //#region @backendFunc
     Helpers.msgCacheClear();
-    console.log('\x1Bc');
+    console.clear();
+
+    // console.log('\x1Bc');
     // process.stdout.write('\033c\033[3J');
     // try {
     //   run('clear').sync()
@@ -2218,34 +2221,20 @@ export namespace UtilsTerminal {
   }): Promise<string> => {
     //#region @backendFunc
     const initial = defaultValue || '';
-    const inquirer = await import('inquirer');
-    while (true) {
-      try {
-        // Create an input prompt
-        const response = await inquirer.prompt({
-          type: 'input',
-          name: 'name',
-          message: question,
-          default: initial,
-          // required: _.isNil(required) ? true : required,
-        });
-        const anwser = response.name;
-        if (required && !anwser) {
-          console.warn(`Answer is required...`);
-          continue;
-        }
-        return anwser;
-      } catch (error) {
-        console.error(error);
-        if (required) {
-          console.warn(`Something went wrong, please try again...`);
-          continue;
-        } else {
-          return '';
-        }
-      }
-    }
 
+    const inquirer = await import('inquirer');
+
+    // Create an input prompt
+    const response = await inquirer.prompt({
+      type: 'input',
+      name: 'name',
+      message: question,
+      required,
+      default: initial,
+      // required: _.isNil(required) ? true : required,
+    });
+    const anwser = response.name;
+    return anwser;
     //#endregion
   };
   //#endregion
