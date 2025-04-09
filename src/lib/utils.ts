@@ -1644,14 +1644,62 @@ export namespace UtilsOs {
   };
   //#endregion
 
-  //#region utils os / is running in windows cmd
-  export const isRunningInWindowsCmd: () => boolean = () => {
+  //#region utils os / is running in Windows CMD
+  export const isRunningInWindowsCmd = (): boolean => {
     //#region @browser
     return false;
     //#endregion
+    if (process.platform !== 'win32') {
+      return false;
+    }
+
+    const shell = process.env.SHELL || '';
+    const parent = getParentProcessName();
+
+    return (
+      shell.toLowerCase().includes('cmd') ||
+      parent.toLowerCase().includes('cmd.exe')
+    );
+  };
+  //#endregion
+
+  //#region utils os / is running in Windows PowerShell
+  export const isRunningInWindowsPowerShell = (): boolean => {
+    //#region @browser
+    return false;
+    //#endregion
+    if (process.platform !== 'win32') {
+      return false;
+    }
     //#region @backendFunc
-    const shell = process.env.ComSpec || process.env.SHELL;
-    return shell && shell.toLowerCase().includes('cmd.exe');
+    const shell = process.env.SHELL || '';
+    const parent = getParentProcessName();
+
+    return (
+      shell.toLowerCase().includes('powershell') ||
+      parent.toLowerCase().includes('powershell.exe')
+    );
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils / get parent process name
+  const getParentProcessName = (): string => {
+    //#region @backendFunc
+    try {
+      if (process.platform === 'win32') {
+        const output = child_process
+          .execSync(
+            `wmic process where ProcessId=${process.ppid} get Name /value`,
+          )
+          .toString();
+        const match = output.match(/Name=(.*)/);
+        return match?.[1]?.trim() || '';
+      }
+    } catch (err) {
+      // fallback or ignore
+    }
+    return '';
     //#endregion
   };
   //#endregion

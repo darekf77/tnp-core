@@ -439,8 +439,19 @@ export class HelpersCore extends HelpersMessages {
    * Check if the current shell is supported by Taon framework.
    */
   get isSupportedTaonTerminal(): boolean {
+    //#region @browser
+    return false;
+    //#endregion
     //#region @backendFunc
-    return process.platform === 'win32' ? this.isRunningInGitBash : true;
+    if(process.platform === 'win32') {
+      if(UtilsOs.isRunningInWindowsCmd() ) {
+        return false;
+      }
+      if(UtilsOs.isRunningInWindowsPowerShell()) {
+        return true;
+      }
+    }
+    return true;
     //#endregion
   }
   //#endregion
@@ -840,7 +851,10 @@ export class HelpersCore extends HelpersMessages {
       //     Helpers.removeFileIfExists(path.dirname(folderPath));
       //   } catch (error) {}
       // }
-      Helpers.log(`[taon-core][mkdirp] ${folderPath}`, 1);
+      // console.log({
+      //   folderPath
+      // })
+      // Helpers.info(`[taon-core][mkdirp] "${folderPath}"`);
       fse.mkdirpSync(folderPath);
     }
   }
