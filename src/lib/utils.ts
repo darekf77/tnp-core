@@ -1644,63 +1644,72 @@ export namespace UtilsOs {
   };
   //#endregion
 
-  //#region utils os / is running in Windows CMD
-  export const isRunningInWindowsCmd = (): boolean => {
-    //#region @browser
-    return false;
-    //#endregion
-    if (process.platform !== 'win32') {
-      return false;
-    }
-
-    const shell = process.env.SHELL || '';
-    const parent = getParentProcessName();
-
-    return (
-      shell.toLowerCase().includes('cmd') ||
-      parent.toLowerCase().includes('cmd.exe')
-    );
-  };
-  //#endregion
-
-  //#region utils os / is running in Windows PowerShell
-  export const isRunningInWindowsPowerShell = (): boolean => {
-    //#region @browser
-    return false;
-    //#endregion
-    if (process.platform !== 'win32') {
-      return false;
-    }
+  //#region utils os / is running in windows / powershell / cmd
+  const getProcessTree = (): Record<
+    number,
+    { pid: number; ppid: number; name: string }
+  > => {
     //#region @backendFunc
-    const shell = process.env.SHELL || '';
-    const parent = getParentProcessName();
+    const tree: Record<number, { pid: number; ppid: number; name: string }> =
+      {};
 
-    return (
-      shell.toLowerCase().includes('powershell') ||
-      parent.toLowerCase().includes('powershell.exe')
-    );
-    //#endregion
-  };
-  //#endregion
-
-  //#region utils / get parent process name
-  const getParentProcessName = (): string => {
-    //#region @backendFunc
     try {
-      if (process.platform === 'win32') {
-        const output = child_process
-          .execSync(
-            `wmic process where ProcessId=${process.ppid} get Name /value`,
-          )
-          .toString();
-        const match = output.match(/Name=(.*)/);
-        return match?.[1]?.trim() || '';
+      const output = child_process
+        .execSync(`wmic process get ProcessId,ParentProcessId,Name`, {
+          stdio: ['pipe', 'pipe', 'ignore'],
+        })
+        .toString();
+
+      const lines = output
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('Name'));
+
+      for (const line of lines) {
+        const match = line.match(/^(.+?)\s+(\d+)\s+(\d+)$/);
+        if (match) {
+          const [, name, ppidStr, pidStr] = match;
+          const pid = Number(pidStr);
+          const ppid = Number(ppidStr);
+          tree[pid] = { name: name.trim().toLowerCase(), pid, ppid };
+        }
       }
     } catch (err) {
-      // fallback or ignore
+      console.error('WMIC parse error', err);
     }
-    return '';
+
+    return tree;
     //#endregion
+  };
+
+  const findAncestorProcessName = (targets: string[]): string | undefined => {
+    //#region @backendFunc
+    if (process.platform !== 'win32') return;
+
+    const tree = getProcessTree();
+    let currentPid = process.ppid;
+    let level = 0;
+
+    while (currentPid && level++ < 30) {
+      const proc = tree[currentPid];
+      if (!proc) break;
+
+      if (targets.includes(proc.name)) return proc.name;
+      currentPid = proc.ppid;
+    }
+
+    return;
+    //#endregion
+  };
+
+  export const isRunningInWindowsPowerShell = (): boolean => {
+    return (
+      findAncestorProcessName(['powershell.exe', 'pwsh.exe']) !== undefined
+    );
+  };
+
+  export const isRunningInWindowsCmd = (): boolean => {
+    return findAncestorProcessName(['cmd.exe']) !== undefined;
   };
   //#endregion
 
