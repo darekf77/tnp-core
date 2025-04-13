@@ -10,10 +10,6 @@
         "port=4504",
         "--ENVoverride=%7B%0A%20%20%20%20%22clientProjectName%22%3A%20%22tnp-core%22%0A%7D "
       ],
-      "outFiles": [
-        "${workspaceFolder}/dist/**/*.js",
-        "!**/node_modules/**"
-      ],
       "runtimeArgs": [
         "--preserve-symlinks"
       ]
@@ -57,9 +53,6 @@
       ],
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}/tmp-vscode-proj/development/tnp-core"
-      ],
-      "outFiles": [
-        "${workspaceFolder}/tmp-vscode-proj/development/tnp-core/out/**/*.js"
       ],
       "preLaunchTask": "Update package.json vscode metadata"
     }

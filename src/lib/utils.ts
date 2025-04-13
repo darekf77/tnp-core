@@ -1123,7 +1123,7 @@ in location: ${cwd}
     options = options || ({} as any);
     const { stdout, stderr, resolveAfterAnyExitCode } =
       options.untilOptions || {};
-    options.cwd = options.cwd || process.cwd();
+    options.cwd = crossPlatformPath(options.cwd || process.cwd());
 
     return new Promise((resolve, reject) => {
       const childProc = child_process.exec(command, {
@@ -1159,7 +1159,6 @@ in location: ${cwd}
 
         if (checkConditions(data, stdoutConditions)) {
           resolve();
-          childProc.kill();
         }
       });
 
@@ -1170,7 +1169,6 @@ in location: ${cwd}
 
         if (checkConditions(data, stderrConditions)) {
           resolve();
-          childProc.kill();
         }
       });
 
@@ -1226,43 +1224,48 @@ in location: ${cwd}
     //#region @backendFunc
     const platform = process.platform;
     options = options || {};
-    options.cwd = options.cwd || process.cwd();
+    options.cwd = crossPlatformPath(options.cwd || process.cwd());
 
     if (platform === 'win32') {
-      const gitBashPath = getGitBashPath();
-      // const currentBash = getBashOrShellName();
-      // console.log('gitBashPath', gitBashPath);
-      // console.log('currentBash', currentBash);
-
-      if (gitBashPath) {
-        return spawn(
-          'start bash',
-          ['-c', `${command}`], // Use '-c' to execute a single command in Git Bash
-          {
-            detached: true, // Detached process
-            stdio: 'ignore', // Ignore stdio
-            cwd: options?.cwd,
-          },
-        ).unref(); // Ensure the parent process can exit independently
-      }
-      console.error(
-        `
-
-
-        Please install git bash to use this cli (https://gitforwindows.org/)
-
-
-        `,
+      const child = spawn(
+        'cmd',
+        ['/c', 'start', 'powershell', '-NoExit', '-Command', command],
+        {
+          detached: true,
+          stdio: 'ignore',
+          cwd: options.cwd,
+          windowsHide: false,
+        },
       );
-      // For Windows
-      return spawn('cmd', ['/c', 'start', 'cmd', '/k', `${command}`], {
-        detached: true,
-        stdio: 'ignore',
-        cwd: options?.cwd,
-      }).unref();
+
+      child.unref();
+      return child;
+
+      //#region gitbash solution
+      // if (gitBashPath) {
+      //   console.log('using gitbash ', gitBashPath);
+      //   return spawn(
+      //     'start bash',
+      //     ['-c', `${command}; echo "Press any key to exit..."; read -n 1`], // Use '-c' to execute a single command in Git Bash
+      //     {
+      //       detached: true, // Detached process
+      //       stdio: 'ignore', // Ignore stdio
+      //       cwd: options?.cwd,
+      //     },
+      //   ).unref(); // Ensure the parent process can exit independently
+      // }
+      //#endregion
+
+      //#region cmd solution
+      // return spawn('cmd', ['/c', 'start', 'cmd', '/k', `${command}`], {
+      //   detached: true,
+      //   stdio: 'ignore',
+      //   cwd: options?.cwd,
+      // }).unref();
+      //#endregion
     } else if (platform === 'darwin') {
       // For macOS
-      return spawn(
+      const child = spawn(
         'osascript',
         ['-e', `tell application "Terminal" to do script "${command}"`],
         {
@@ -1270,7 +1273,9 @@ in location: ${cwd}
           stdio: 'ignore',
           cwd: options?.cwd,
         },
-      ).unref();
+      );
+      child.unref();
+      return child;
     } else if (platform === 'linux') {
       if (!UtilsOs.isRunningInLinuxGraphicsCapableEnvironment()) {
         const child = child_process.spawn(command, {
@@ -1279,7 +1284,7 @@ in location: ${cwd}
           stdio: 'ignore',
         });
         child.unref();
-        return;
+        return child;
       }
       // For Linux (gnome-terminal as an example)
       const terminals = [
@@ -1321,6 +1326,7 @@ in location: ${cwd}
       });
 
       child.unref();
+      return child;
     } else {
       Helpers.throw(`Unsupported platform: ${platform}`);
     }
