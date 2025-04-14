@@ -1,14 +1,12 @@
-//#region @backend
+
 declare const global: any;
 import { chalk, dateformat } from './core-imports';
-//#endregion
 import { _ } from './core-imports';
-// import { config } from 'tnp-config';
-// import { PROGRESS_DATA } from 'tnp-models';
-import { Helpers } from './index';
+import { frameworkName } from './framework-name';
 import { HelpersIsomorphic } from './helpers-isomorphic';
 import { PROGRESS_DATA } from './progress-data';
-import { frameworkName } from './framework-name';
+
+import { Helpers } from './index';
 
 // TODO handle global.testMode ?
 
