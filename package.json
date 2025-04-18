@@ -1,6 +1,6 @@
 {
   "name": "tnp-core",
-  "version": "18.0.64",
+  "version": "19.0.0",
   "scripts": {
     "mkdocs": "python3 -m mkdocs"
   },
