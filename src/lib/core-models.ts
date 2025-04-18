@@ -66,32 +66,32 @@ export namespace CoreModels {
   /**
    * Available application environments.
    */
-  export const EnvironmentName =  Object.freeze({
+  export const EnvironmentName = Object.freeze({
     /**
      * Default environment, typically for artifact without application
      * or for storing common data
      */
-    __ : '__',
+    __: '__',
 
     /**
      * Local development environment, typically the developer's machine.
      */
-    LOCALHOST : 'localhost',
+    LOCALHOST: 'localhost',
 
     /**
      * Development environment used by engineers to deploy and test new features.
      */
-    DEV : 'dev',
+    DEV: 'dev',
 
     /**
      * Staging environment used for final validations before production.
      */
-    STAGE :'stage',
+    STAGE: 'stage',
 
     /**
      * Production environment serving live users.
      */
-    PROD : 'prod',
+    PROD: 'prod',
 
     /**
      * Automated test environment for running unit, integration, or automated tests.
@@ -101,41 +101,41 @@ export namespace CoreModels {
     /**
      * Quality assurance environment designated for manual and exploratory testing.
      */
-    QA : 'qa',
+    QA: 'qa',
 
     /**
      * Sandbox environment for experimenting and integration without affecting other environments.
      */
-    SANDBOX : 'sandbox',
+    SANDBOX: 'sandbox',
 
     /**
      * User Acceptance Testing environment where clients or stakeholders validate the release candidate.
      */
-    UAT : 'uat',
+    UAT: 'uat',
 
     /**
      * Pre-production environment, closely mirroring production for final testing and validation.
      */
-    PREPROD : 'preprod',
+    PREPROD: 'preprod',
 
     /**
      * Demonstration environment specifically configured for client presentations and demos.
      */
-    DEMO : 'demo',
+    DEMO: 'demo',
 
     /**
      * Continuous Integration environment used by CI/CD pipelines for automated builds and deployments.
      */
-    CI :'ci',
+    CI: 'ci',
 
     /**
      * Training environment dedicated to internal team onboarding and training activities.
      */
-    TRAINING : 'training',
+    TRAINING: 'training',
   });
 
   export type EnvironmentNameTaon =
-  (typeof EnvironmentName)[keyof typeof EnvironmentName];
+    (typeof EnvironmentName)[keyof typeof EnvironmentName];
 
   //#endregion
 
@@ -170,7 +170,10 @@ export namespace CoreModels {
     | 'v4'
     | 'v16'
     | 'v18'
-    | 'v20';
+    | 'v19'
+    | 'v20'
+    | 'v21'
+    | 'v22';
   //#endregion
 
   //#region cuttable file exitension
