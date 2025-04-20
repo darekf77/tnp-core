@@ -2322,10 +2322,10 @@ command: ${command}
 
     if (preventParentFile) {
       if (
-        Helpers.isFile(path.dirname(absoluteFilePath)) &&
-        fse.existsSync(path.dirname(absoluteFilePath))
+        Helpers.isFile(path.dirname(absoluteFilePath as string)) &&
+        fse.existsSync(path.dirname(absoluteFilePath as string))
       ) {
-        fse.unlinkSync(path.dirname(absoluteFilePath));
+        fse.unlinkSync(path.dirname(absoluteFilePath as string));
       }
     }
 
@@ -2339,12 +2339,12 @@ command: ${command}
       return false;
     }
 
-    if (!fse.existsSync(path.dirname(absoluteFilePath))) {
+    if (!fse.existsSync(path.dirname(absoluteFilePath as string))) {
       try {
-        Helpers.mkdirp(path.dirname(absoluteFilePath));
+        Helpers.mkdirp(path.dirname(absoluteFilePath as string));
       } catch (error) {
         Helpers.error(
-          `Not able to create directory: ${path.dirname(absoluteFilePath)}`,
+          `Not able to create directory: ${path.dirname(absoluteFilePath as string)}`,
         );
       }
     }
