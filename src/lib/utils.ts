@@ -1905,21 +1905,24 @@ export namespace UtilsMigrations {
 //#region utils terminal
 export namespace UtilsTerminal {
   //#region models
+  export interface SelectChoice {
+    /**
+     * Title of the choice
+     */
+    name?: string;
+    disabled?: boolean;
+  }
+
+  export interface SelectChoiceValue<T = string> extends SelectChoice {
+    value?: T;
+  }
+
   type SelectActionChoice = {
-    [choice: string]: {
-      /**
-       * Title of the choice
-       */
-      name: string;
+    [choice: string]: SelectChoice & {
       /**
        * Action to execute
        */
       action?: () => any;
-      /**
-       * If choice is visible
-       *  default: true
-       */
-      visible?: boolean;
     };
   };
   //#endregion
@@ -1952,21 +1955,24 @@ export namespace UtilsTerminal {
   //#endregion
 
   //#region transform choices
-  const transformChoices = (
-    choices: any,
-  ): { name: string; value: string }[] => {
+  const transformChoices = (choices: any): SelectChoiceValue[] => {
     //#region @backendFunc
     if (!_.isArray(choices) && _.isObject(choices)) {
       choices = Object.keys(choices)
         .map(key => {
           return {
             name: choices[key].name,
+            disabled: !!choices[key].disabled,
             value: key,
           };
         })
         .reduce((a, b) => a.concat(b), []);
     }
-    return choices.map(c => ({ name: c.name, value: c.value }));
+    return choices.map(c => ({
+      name: c.name,
+      value: c.value,
+      disabled: c.disabled,
+    }));
     //#endregion
   };
   //#endregion
@@ -1979,9 +1985,7 @@ export namespace UtilsTerminal {
      * @deprecated use select instead
      */
     onlyOneChoice?: boolean;
-    choices:
-      | { name: string; value: T }[]
-      | { [choice: string]: { name: string } };
+    choices: SelectChoiceValue<T>[] | { [choice: string]: SelectChoice };
     autocomplete?: boolean;
     defaultSelected?: string[];
   }): Promise<T[]> => {
@@ -1992,7 +1996,7 @@ export namespace UtilsTerminal {
     options.autocomplete = _.isNil(options.autocomplete)
       ? true
       : options.autocomplete;
-    const choices = transformChoices(options.choices);
+    const choices = transformChoices(options.choices) as any;
 
     if (Object.keys(choices || {}).length === 0) {
       await UtilsTerminal.pressAnyKeyToContinueAsync({
@@ -2191,9 +2195,7 @@ export namespace UtilsTerminal {
   //#region select
   export const select = async <T = string>(options: {
     question: string;
-    choices:
-      | { name: string; value: T }[]
-      | { [choice: string]: { name: string } };
+    choices: SelectChoiceValue<T>[] | { [choice: string]: SelectChoice };
     autocomplete?: boolean;
     defaultSelected?: string;
     hint?: string;
