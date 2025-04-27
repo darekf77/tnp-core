@@ -124,6 +124,19 @@ export namespace CoreModels {
     DEMO: 'demo',
 
     /**
+     * Documentation environment for hosting and managing project documentation.
+     */
+    DOCS: 'docs',
+
+    /**
+     * Demonstration environment ONLY html files, typically used for static pages or documentation.
+     * This environment is not intended for dynamic content or server-side processing.
+     * Perfect to github pages or similar.
+     * It is not intended for production use and should not be used for any critical applications or services.
+     */
+    STATIC_PAGES: 'static-pages',
+
+    /**
      * Continuous Integration environment used by CI/CD pipelines for automated builds and deployments.
      */
     CI: 'ci',
