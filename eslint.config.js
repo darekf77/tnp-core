@@ -26,6 +26,8 @@ module.exports = [
       ...angularEslintRecommended.rules,
       ...angularTemplateProcessInlineTemplates.rules,
       ...prettierConfig.rules,
+      '@angular-eslint/prefer-standalone': 'off',
+      "@angular-eslint/no-empty-lifecycle-method": "off",
       '@angular-eslint/component-class-suffix': [
         'warn',
         {

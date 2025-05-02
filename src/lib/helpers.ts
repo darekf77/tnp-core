@@ -2141,9 +2141,7 @@ command: ${command}
     notTrim = false,
   ): string | undefined {
     //#region @backendFunc
-    if (_.isArray(absoluteFilePath)) {
-      absoluteFilePath = path.join.apply(this, absoluteFilePath);
-    }
+    absoluteFilePath = crossPlatformPath(absoluteFilePath);
     absoluteFilePath = absoluteFilePath as string;
 
     if (!fse.existsSync(absoluteFilePath)) {
