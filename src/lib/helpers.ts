@@ -1,5 +1,11 @@
 //#region import
-//#region @backend
+import { Blob } from 'buffer';
+import type { ChildProcess } from 'child_process';
+
+import { Stats } from 'fs-extra';
+import * as json5Write from 'json10-writer/src';
+import { Subject, Subscription } from 'rxjs';
+
 import {
   fse,
   os,
@@ -13,20 +19,15 @@ import {
   glob,
   fkill,
 } from './core-imports';
-import * as json5Write from 'json10-writer/src';
-import { Blob } from 'buffer';
-// import { ipcMain, screen } from 'electron';
-//#endregion
-//#region @browser
-import { Subject, Subscription } from 'rxjs';
-//#endregion
 import { _, path, crossPlatformPath } from './core-imports';
-import { UtilsProcess, UtilsTerminal } from './utils';
-import { Helpers, Utils, UtilsOs } from './index';
-import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
+import { HelpersMessages } from './helpers-messages';
+import { UtilsProcess, UtilsTerminal } from './utils';
+
+import { Helpers, Utils, UtilsOs } from './index';
+
 // import { ipcRenderer, webFrame } from 'electron';
-import type { ChildProcess } from 'child_process';
+
 //#endregion
 
 //#region constants
@@ -152,7 +153,8 @@ export class HelpersCore extends HelpersMessages {
    * @deprecated
    * get electron browser ipc renderer
    */
-  get ipcRenderer(): any { // typeof ipcRenderer
+  get ipcRenderer(): any {
+    // typeof ipcRenderer
     //#region @backend
     return;
     //#endregion
@@ -171,7 +173,8 @@ export class HelpersCore extends HelpersMessages {
   /**
    * get electron web frame
    */
-  get webFrame(): any { //  typeof webFrame
+  get webFrame(): any {
+    //  typeof webFrame
     //typeof webFrame
     //#region @backend
     return;
@@ -391,6 +394,113 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / remove file or folder
+
+  removeSymlinks(
+    dirPath: string | string[],
+    options?: {
+      dryRun?: boolean;
+    },
+  ): void {
+    //#region @backendFunc
+    if (_.isArray(dirPath)) {
+      dirPath = crossPlatformPath(dirPath);
+    }
+    options = options || {};
+    if (this.isUnexistedLink(dirPath)) {
+      if (options.dryRun) {
+        Helpers.log(
+          `[taon-core][remove symlinks] Dry run: unlink ${dirPath}`,
+        );
+      } else {
+        try {
+          fse.unlinkSync(dirPath);
+        } catch (error) {}
+      }
+    }
+
+    if (!fse.existsSync(dirPath)) {
+      console.warn(
+        `[taon-core][remove symlinks] Directory not found: ${dirPath}`,
+      );
+      return;
+    }
+
+    const entries = fse.readdirSync(dirPath);
+
+    for (const entry of entries) {
+      const fullPath = crossPlatformPath([dirPath, entry]);
+      let stats: Stats;
+
+      try {
+        stats = fse.lstatSync(fullPath);
+      } catch (err) {
+        console.error(
+          `[taon-core][remove symlinks] Error accessing ${fullPath}:`,
+          err,
+        );
+        continue;
+      }
+
+      if (stats.isSymbolicLink()) {
+        try {
+          if (options.dryRun) {
+            Helpers.log(
+              `[taon-core][remove symlinks] Dry run: unlink ${fullPath}`,
+            );
+          } else {
+            fse.unlinkSync(fullPath);
+          }
+        } catch (err) {
+          console.error(
+            `[taon-core][remove symlinks] Failed to remove symlink ${fullPath}:`,
+            err,
+          );
+        }
+      } else if (stats.isDirectory()) {
+        // Recursively process subdirectories
+        this.removeSymlinks(fullPath, options);
+      }
+      // Files that are not symlinks are left untouched
+    }
+    //#endregion
+  }
+
+  // /**
+  //  * TODO replacement for remove/rimraf.sync
+  //  * save remove file or folder
+  //  */
+  // safeRemove(
+  //   targetPath: string,
+  //   options?: {
+  //     // usePattern?: boolean;
+  //   },
+  // ): void {
+  //   targetPath = crossPlatformPath(targetPath);
+  //   try {
+  //     const stats = fse.lstatSync(targetPath);
+
+  //     if (stats.isSymbolicLink()) {
+  //       // Remove the symlink without following it
+  //       fse.unlinkSync(targetPath);
+  //     } else if (stats.isDirectory()) {
+  //       // Recursively remove directory contents
+  //       const entries = fse.readdirSync(targetPath);
+  //       for (const entry of entries) {
+  //         this.safeRemove(crossPlatformPath([targetPath, entry]), options);
+  //       }
+  //       fse.rmdirSync(targetPath);
+  //     } else {
+  //       // Remove file
+  //       fse.unlinkSync(targetPath);
+  //     }
+  //   } catch (err) {
+  //     console.error(`Error removing ${targetPath}:`, err);
+  //   }
+  // }
+
+  /**
+   * @deprecated use safeRemove
+   */
   remove(fileOrFolderPathOrPatter: string | string[], exactFolder = false) {
     //#region @backendFunc
     if (Array.isArray(fileOrFolderPathOrPatter)) {
@@ -443,11 +553,11 @@ export class HelpersCore extends HelpersMessages {
     return false;
     //#endregion
     //#region @backendFunc
-    if(process.platform === 'win32') {
-      if(UtilsOs.isRunningInWindowsCmd() ) {
+    if (process.platform === 'win32') {
+      if (UtilsOs.isRunningInWindowsCmd()) {
         return false;
       }
-      if(UtilsOs.isRunningInWindowsPowerShell()) {
+      if (UtilsOs.isRunningInWindowsPowerShell()) {
         return true;
       }
     }
