@@ -1942,7 +1942,43 @@ export namespace UtilsTerminal {
     //#region @backendFunc
     Helpers.msgCacheClear();
     console.clear();
+    //#endregion
+    // TODO @LAST
+    // let shouldClear = true;
+    //#region @backend
+    // const inspector = require('inspector');
+    // const isDebugging = process.execArgv.some(
+    //   arg => arg.startsWith('--inspect') || arg.startsWith('--debug'),
+    // );
+    // const isChromeConnected = inspector.url() !== undefined;
 
+    // if (
+    //   isDebugging ||
+    //   isChromeConnected ||
+    //   process.env.NO_CONSOLE_CLEAR === 'true'
+    // ) {
+    //   shouldClear = false;
+    // }
+
+    //#endregion
+
+    //#region @browser
+    // const isDevToolsOpen = (() => {
+    //   const threshold = 160; // devtools resizing causes this to be larger
+    //   return (
+    //     window.outerHeight - window.innerHeight > threshold ||
+    //     window.outerWidth - window.innerWidth > threshold
+    //   );
+    // })();
+
+    // if (isDevToolsOpen) {
+    //   shouldClear = false;
+    // }
+    //#endregion
+    // if (shouldClear) {
+    // Helpers.msgCacheClear?.();
+    // console.clear?.();
+    // }
     // console.log('\x1Bc');
     // process.stdout.write('\033c\033[3J');
     // try {
@@ -1950,7 +1986,6 @@ export namespace UtilsTerminal {
     // } catch (error) {
     //   console.log('clear console not succedd')
     // }
-    //#endregion
   };
   //#endregion
 
