@@ -402,6 +402,7 @@ export class HelpersCore extends HelpersMessages {
     },
   ): void {
     //#region @backendFunc
+    // Helpers.taskStarted(`Remove symlinks in directory ${path.basename(crossPlatformPath(dirPath))}`);
     if (_.isArray(dirPath)) {
       dirPath = crossPlatformPath(dirPath);
     }
@@ -460,6 +461,7 @@ export class HelpersCore extends HelpersMessages {
         // Recursively process subdirectories
         this.removeSymlinks(fullPath, options);
       }
+      // Helpers.taskDone(`Remove symlinks in directory ${path.basename(crossPlatformPath(dirPath))}`);
       // Files that are not symlinks are left untouched
     }
     //#endregion
@@ -508,7 +510,9 @@ export class HelpersCore extends HelpersMessages {
     }
     Helpers.log(`[taon-core][remove]: ${fileOrFolderPathOrPatter}`, 1);
     if (exactFolder) {
+      Helpers.taskStarted(`Removing folder ${path.basename(fileOrFolderPathOrPatter)}`);
       rimraf.sync(fileOrFolderPathOrPatter, { glob: false, disableGlob: true });
+      Helpers.taskDone(`Done removing folder ${path.basename(fileOrFolderPathOrPatter)}`);
       return;
     }
     rimraf.sync(fileOrFolderPathOrPatter);
