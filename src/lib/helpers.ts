@@ -15,7 +15,7 @@ import {
 } from './core-imports';
 import * as json5Write from 'json10-writer/src';
 import { Blob } from 'buffer';
-import { Stats } from 'fs-extra';
+import { Dirent, Stats } from 'fs-extra';
 // import { ipcMain, screen } from 'electron';
 //#endregion
 //#region @browser
@@ -409,9 +409,7 @@ export class HelpersCore extends HelpersMessages {
     options = options || {};
     if (this.isUnexistedLink(dirPath)) {
       if (options.dryRun) {
-        Helpers.log(
-          `[taon-core][remove symlinks] Dry run: unlink ${dirPath}`,
-        );
+        Helpers.log(`[taon-core][remove symlinks] Dry run: unlink ${dirPath}`);
       } else {
         try {
           fse.unlinkSync(dirPath);
@@ -510,9 +508,9 @@ export class HelpersCore extends HelpersMessages {
     }
     Helpers.log(`[taon-core][remove]: ${fileOrFolderPathOrPatter}`, 1);
     if (exactFolder) {
-      Helpers.taskStarted(`Removing folder ${path.basename(fileOrFolderPathOrPatter)}`);
+      Helpers.log(`Removing folder ${fileOrFolderPathOrPatter}`);
       rimraf.sync(fileOrFolderPathOrPatter, { glob: false, disableGlob: true });
-      Helpers.taskDone(`Done removing folder ${path.basename(fileOrFolderPathOrPatter)}`);
+      Helpers.log(`Done removing folder ${fileOrFolderPathOrPatter}`);
       return;
     }
     rimraf.sync(fileOrFolderPathOrPatter);
@@ -2689,9 +2687,71 @@ command: ${command}
   //#endregion
   //#endregion
 
+  getFilesFrom(
+    folderOrLinkToFolder: string | string[],
+    options: {
+      recursive?: boolean;
+      followSymlinks?: boolean;
+    } = {},
+  ): string[] {
+    //#region @backendFunc
+    folderOrLinkToFolder = crossPlatformPath(folderOrLinkToFolder) as string;
+    const { recursive = false, followSymlinks = true } = options;
+
+    const visited = new Set<string>();
+    const results: string[] = [];
+
+    const scan = (dir: string) => {
+      if (visited.has(dir)) return;
+      visited.add(dir);
+
+      let entries: Dirent[];
+
+      try {
+        entries = fse.readdirSync(dir, { withFileTypes: true });
+      } catch (e) {
+        return; // Skip folders we cannot access
+      }
+
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+
+        if (entry.isSymbolicLink()) {
+          let realPath: string;
+          try {
+            realPath = fse.realpathSync(fullPath);
+          } catch (e) {
+            continue; // Broken symlink – skip
+          }
+
+          const stats = fse.statSync(realPath);
+          if (stats.isDirectory()) {
+            if (followSymlinks && recursive) {
+              scan(realPath);
+            }
+          } else if (stats.isFile()) {
+            results.push(fullPath);
+          }
+        } else if (entry.isDirectory()) {
+          if (recursive) {
+            scan(fullPath);
+          }
+        } else if (entry.isFile()) {
+          results.push(fullPath);
+        }
+      }
+    };
+
+    scan(path.resolve(folderOrLinkToFolder));
+
+    return results.map(crossPlatformPath);
+    //#endregion
+  }
+
   //#region methods / files from
   //#region @backend
   /**
+   * @deprecated use getFilesFrom
    * return absolute paths for folders inside folders
    */
   public filesFrom(
