@@ -16,7 +16,6 @@ import {
 import * as json5Write from 'json10-writer/src';
 import { Blob } from 'buffer';
 import { Dirent, Stats } from 'fs-extra';
-// import { ipcMain, screen } from 'electron';
 //#endregion
 //#region @browser
 import { Subject, Subscription } from 'rxjs';
@@ -26,7 +25,7 @@ import { UtilsProcess, UtilsTerminal } from './utils';
 import { Helpers, Utils, UtilsOs } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
-// import { ipcRenderer, webFrame } from 'electron';
+
 import type { ChildProcess } from 'child_process';
 //#endregion
 
@@ -145,85 +144,6 @@ export class HelpersCore extends HelpersMessages {
    */
   clearConsole() {
     return UtilsTerminal.clearConsole();
-  }
-  //#endregion
-
-  //#region methods / electron ipc renderer
-  /**
-   * @deprecated
-   * get electron browser ipc renderer
-   */
-  get ipcRenderer(): any {
-    // typeof ipcRenderer
-    //#region @backend
-    return;
-    //#endregion
-    //#region @browser
-    if (!this.isElectron) {
-      return;
-    }
-    return void 0;
-    // return (window as any).require('electron')
-    //   .ipcRenderer as typeof ipcRenderer;
-    //#endregion
-  }
-  //#endregion
-
-  //#region methods / electron webframe
-  /**
-   * get electron web frame
-   */
-  get webFrame(): any {
-    //  typeof webFrame
-    //typeof webFrame
-    //#region @backend
-    return;
-    //#endregion
-    //#region @browser
-    if (!this.isElectron) {
-      return;
-    }
-    return void 0;
-    // return (window as any).require('electron').webFrame as typeof webFrame;
-    //#endregion
-  }
-  //#endregion
-
-  //#region methods / electron ipc renderer
-  /**
-   * @deprecated
-   * get electron backend ipc main proces
-   */
-  get ipcMain() {
-    //#region @backendFunc
-    if (!this.isElectron) {
-      return;
-    }
-    return void 0;
-    //#endregion
-  }
-  //#endregion
-
-  //#region methods / get electron window
-  getElectronWindow({
-    allowRunningInsecureContent = true,
-  }: { allowRunningInsecureContent?: boolean } = {}) {
-    //#region @backendFunc
-    // const size = screen.getPrimaryDisplay().workAreaSize;
-    // // Create the browser window.
-    // const win = new BrowserWindow({
-    //   x: 0,
-    //   y: 0,
-    //   width: size.width,
-    //   height: size.height,
-    //   webPreferences: {
-    //     nodeIntegration: true,
-    //     allowRunningInsecureContent,
-    //     contextIsolation: false,
-    //   },
-    // });
-    // return win
-    //#endregion
   }
   //#endregion
 
