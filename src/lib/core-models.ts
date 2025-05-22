@@ -38,6 +38,10 @@ export namespace CoreModels {
      * false by default
      */
     generateYarnOrPackageJsonLock?: boolean;
+    /**
+     * false by default
+     */
+    skipRemovingNodeModules?: boolean;
   };
   //#endregion
 
