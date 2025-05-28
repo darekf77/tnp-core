@@ -1,6 +1,6 @@
 {
   "name": "tnp-core",
-  "version": "19.0.33",
+  "version": "19.0.34",
   "scripts": {
     "mkdocs": "python3 -m mkdocs",
     "taon init": "taon init",
@@ -348,10 +348,5 @@
     "zone.js": "~0.13.0"
   },
   "main": "dist/app.electron.js",
-  "bin": {},
-  "exports": {
-    ".": {
-      "style": "./scss/index.scss"
-    }
-  }
+  "bin": {}
 }
