@@ -162,5 +162,8 @@
       ],
       "url": "./taon-config-standalone.schema.json"
     }
-  ]
+  ],
+  "files.watcherExclude": {
+    "local_release/**": true
+  }
 }
