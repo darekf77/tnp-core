@@ -1617,6 +1617,7 @@ export namespace UtilsOs {
     }
     // return !!process.env.VSCODE_PID || process.execPath.includes('Code');
     //#endregion
+    return false;
   };
   //#endregion
 
@@ -1837,6 +1838,12 @@ export namespace UtilsOs {
     //#endregion
   };
   //#endregion
+
+  export const isElectron = isRunningInElectron();
+  export const isBrowser = isRunningInBrowser();
+  export const isNode = isRunningInNode();
+  export const isWebSQL = isRunningInWebSQL();
+  export const isVscodeExtension = isRunningInVscodeExtension();
 }
 //#endregion
 
