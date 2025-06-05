@@ -158,7 +158,15 @@ export class HelpersCore extends HelpersMessages {
   //#region methods / sleep
   sleep(seconds = 1) {
     //#region @backendFunc
-    return Helpers.run(`sleep ${seconds}`).sync();
+    if (UtilsOs.isRunningInWindowsCmd()) {
+      Helpers.run(`timeout /t ${seconds} >nul`).sync();
+      return;
+    }
+    if (UtilsOs.isRunningInWindowsPowerShell()) {
+      Helpers.run(`Start-Sleep -Seconds ${seconds}`).sync();
+      return;
+    }
+    Helpers.run(`sleep ${seconds}`).sync();
     //#endregion
   }
   //#endregion
