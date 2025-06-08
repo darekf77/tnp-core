@@ -34,6 +34,8 @@
     "taon-core"
   ],
 
+  "appId": "com.domain.example.tnp-core",
+
   "autoReleaseConfigAllowedItems": [{
     "artifactName": "npm-lib-and-cli-tool"
   }],
@@ -51,6 +53,8 @@
 
     "scripts": {
       "mkdocs": "python3 -m mkdocs"
-    }
+    },
+
+    "description": "Description for tnp-core. Hello world!"
   }
 }

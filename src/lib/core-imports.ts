@@ -19,6 +19,7 @@ import * as netBase from 'net';
 import * as spawnBase from 'cross-spawn';
 import * as globBase from 'glob';
 import * as fgBase from 'fast-glob';
+// @ts-ignore
 import { minimatch as minimatchBase } from 'minimatch';
 import * as rimrafBase from 'rimraf';
 import * as chokidarBase from 'chokidar';
@@ -52,6 +53,7 @@ import type * as psListBaseType from 'ps-list';
 import type * as netBaseType from 'net';
 import type * as spawnBaseType from 'cross-spawn';
 import type * as fgBaseType from 'fast-glob';
+// @ts-ignore
 import type { minimatch as minimatchBaseType } from 'minimatch';
 import type * as rimrafBaseType from 'rimraf';
 import type * as chokidarBaseType from 'chokidar';
