@@ -48,13 +48,13 @@
 
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
+    "description": "Description for tnp-core. Hello world!",
     "license": "MIT",
+
     "private": false,
 
     "scripts": {
       "mkdocs": "python3 -m mkdocs"
-    },
-
-    "description": "Description for tnp-core. Hello world!"
+    }
   }
 }
