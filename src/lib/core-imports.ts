@@ -19,8 +19,6 @@ import * as netBase from 'net';
 import * as spawnBase from 'cross-spawn';
 import * as globBase from 'glob';
 import * as fgBase from 'fast-glob';
-// @ts-ignore
-import { minimatch as minimatchBase } from 'minimatch';
 import * as rimrafBase from 'rimraf';
 import * as chokidarBase from 'chokidar';
 import * as mkdirpBase from 'mkdirp';
@@ -53,8 +51,6 @@ import type * as psListBaseType from 'ps-list';
 import type * as netBaseType from 'net';
 import type * as spawnBaseType from 'cross-spawn';
 import type * as fgBaseType from 'fast-glob';
-// @ts-ignore
-import type { minimatch as minimatchBaseType } from 'minimatch';
 import type * as rimrafBaseType from 'rimraf';
 import type * as chokidarBaseType from 'chokidar';
 import type * as mkdirpBaseType from 'mkdirp';
@@ -208,13 +204,6 @@ net = netBase;
 let spawn = void 0 as typeof spawnBaseType;
 //#region @backend
 spawn = spawnBase;
-//#endregion
-//#endregion
-
-//#region set up browser mocks / mock minimatch
-let minimatch = void 0 as typeof minimatchBaseType;
-//#region @backend
-minimatch = minimatchBase;
 //#endregion
 //#endregion
 
@@ -377,7 +366,6 @@ export {
   fkill,
   psList,
   spawn,
-  minimatch,
   fg,
   chokidar,
   mkdirp,
