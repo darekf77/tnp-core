@@ -1562,41 +1562,52 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  export const isRunningInSSRMode = (): boolean => {
+    return typeof globalThis.window === 'undefined';
+  };
+
   //#region utils os / is running in electron
   /**
    * check whether the current process is running inside
    * Electron backend or browser.
    */
   export const isRunningInElectron = (): boolean => {
-    // Renderer process
-    // @ts-ignore
-    if (
-      typeof window !== 'undefined' &&
-      typeof window.process === 'object' &&
+    try {
+      let win: any;
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        win = window;
+      }
+      // Renderer process
+
+      if (
+        typeof win !== 'undefined' &&
+        typeof win?.process === 'object' &&
+        // @ts-ignoreFF
+        win?.process?.type === 'renderer'
+      ) {
+        return true;
+      }
+
+      // Main process
       // @ts-ignore
-      window.process.type === 'renderer'
-    ) {
-      return true;
-    }
+      if (
+        typeof globalThis !== 'undefined' &&
+        typeof globalThis?.process === 'object' &&
+        globalThis.process?.versions?.electron
+      ) {
+        return true;
+      }
 
-    // Main process
-    // @ts-ignore
-    if (
-      typeof process !== 'undefined' &&
-      typeof process.versions === 'object' &&
-      !!process.versions.electron
-    ) {
-      return true;
-    }
-
-    // Detect the user agent when the `nodeIntegration` option is set to false
-    if (
-      typeof navigator === 'object' &&
-      typeof navigator.userAgent === 'string' &&
-      navigator.userAgent.indexOf('Electron') >= 0
-    ) {
-      return true;
-    }
+      // Detect the user agent when the `nodeIntegration` option is set to false
+      if (
+        typeof navigator === 'object' &&
+        typeof navigator.userAgent === 'string' &&
+        navigator?.userAgent?.indexOf('Electron') >= 0
+      ) {
+        return true;
+      }
+    } catch (error) {}
 
     return false;
   };
@@ -1844,6 +1855,7 @@ export namespace UtilsOs {
   export const isNode = isRunningInNode();
   export const isWebSQL = isRunningInWebSQL();
   export const isVscodeExtension = isRunningInVscodeExtension();
+  export const isSSRMode = isRunningInSSRMode();
 }
 //#endregion
 
@@ -1893,6 +1905,7 @@ export namespace UtilsMigrations {
 
   export const formatTimestamp = (timestamp: number): string => {
     const dateFromTimestamp: Date = new Date(timestamp);
+    // @ts-ignore
     return `${dateformat(dateFromTimestamp, 'dd-mm-yyyy HH:MM:ss')}`;
   };
 
