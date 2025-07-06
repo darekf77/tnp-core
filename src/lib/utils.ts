@@ -1562,12 +1562,19 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  export const isRunningInSSRMode = (): boolean => {
+    return typeof globalThis.window === 'undefined';
+  };
+
   //#region utils os / is running in electron
   /**
    * check whether the current process is running inside
    * Electron backend or browser.
    */
   export const isRunningInElectron = (): boolean => {
+    if (UtilsOs.isRunningInSSRMode()) {
+      return false; // no ssr for electron
+    }
     // Renderer process
     // @ts-ignore
     if (
@@ -1844,6 +1851,7 @@ export namespace UtilsOs {
   export const isNode = isRunningInNode();
   export const isWebSQL = isRunningInWebSQL();
   export const isVscodeExtension = isRunningInVscodeExtension();
+  export const isSSRMode = isRunningInSSRMode();
 }
 //#endregion
 
@@ -1893,6 +1901,7 @@ export namespace UtilsMigrations {
 
   export const formatTimestamp = (timestamp: number): string => {
     const dateFromTimestamp: Date = new Date(timestamp);
+    // @ts-ignore
     return `${dateformat(dateFromTimestamp, 'dd-mm-yyyy HH:MM:ss')}`;
   };
 
