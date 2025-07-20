@@ -6,7 +6,14 @@ import { promisify } from 'util';
 
 import axios, { AxiosResponse } from 'axios';
 
-import { path, _, crossPlatformPath, os, chalk } from './core-imports';
+import {
+  path,
+  _,
+  crossPlatformPath,
+  os,
+  chalk,
+  win32Path,
+} from './core-imports';
 import { dateformat } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { fse } from './core-imports';
@@ -1845,6 +1852,62 @@ export namespace UtilsOs {
     //#endregion
   };
   //#endregion
+
+  export const openFolderInVSCode = (folderPath: string): void => {
+    //#region @backendFunc
+    Helpers.taskStarted(`Opening folder in VSCode: "${folderPath}"`);
+    try {
+      Helpers.run(`code .`, {
+        cwd: folderPath,
+        silence: true,
+        output: false,
+      }).sync();
+      Helpers.taskDone(`Done opening folder in VSCode: "${folderPath}"`);
+    } catch (error) {
+      Helpers.warn(`Not able to open in VSCode: "${folderPath}"`, false);
+    }
+
+    //#endregion
+  }
+
+  export const openFolderInFileExplorer = (folderPath: string): void => {
+    //#region @backendFunc
+    if (process.platform === 'win32') {
+      folderPath = win32Path(folderPath);
+    }
+    try {
+      Helpers.info(`Opening path.. "${folderPath}"`);
+      if (process.platform === 'win32') {
+        Helpers.run(`explorer .`, {
+          cwd: folderPath,
+          silence: true,
+          output: false,
+        }).sync();
+        return;
+      }
+      if (process.platform === 'darwin') {
+        Helpers.run(`open .`, {
+          cwd: folderPath,
+          silence: true,
+          output: false,
+        }).sync();
+        return;
+      }
+      Helpers.run(`xdg-open .`, {
+        cwd: folderPath,
+        silence: true,
+        output: false,
+      }).sync();
+    } catch (error) {
+      Helpers.warn(`Not able to open in file explorer: "${folderPath}"`, false);
+    }
+    //#endregion
+    //#region @browser
+    console.warn(
+      `UtilsOs.openFolderInFileExplorer is not supported in browser mode`,
+    );
+    //#endregion
+  };
 
   export const isElectron = isRunningInElectron();
   export const isBrowser = isRunningInBrowser();

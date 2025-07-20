@@ -2372,7 +2372,9 @@ command: ${command}
       fse.lstatSync(absoluteFilePath).isDirectory()
     ) {
       Helpers.warn(
-        `[taon-core] Trying to write file content into directory: ${absoluteFilePath}`,
+        `[taon-core] Trying to write file content into directory:
+        ${absoluteFilePath}
+        `,
       );
       return false;
     }
@@ -2732,24 +2734,12 @@ command: ${command}
 
   //#region methods / open folder in file explorer
   //#region @backend
-  public openFolderInFileExploer(folderPath: string): void {
-    if (process.platform === 'win32') {
-      folderPath = win32Path(folderPath);
-    }
-    try {
-      Helpers.info(`Opening path.. "${folderPath}"`);
-      if (process.platform === 'win32') {
-        Helpers.run(`explorer .`, { cwd: folderPath }).sync();
-        return;
-      }
-      if (process.platform === 'darwin') {
-        Helpers.run(`open .`, { cwd: folderPath }).sync();
-        return;
-      }
-      Helpers.run(`xdg-open .`, { cwd: folderPath }).sync();
-    } catch (error) {
-      Helpers.warn(`Not able to open in file explorer: "${folderPath}"`, false);
-    }
+  /**
+   * @deprecated use UtilsOs.openFolderInFileExplorer
+   * @param folderPath
+   */
+  public openFolderInFileExplorer(folderPath: string): void {
+    UtilsOs.openFolderInFileExplorer(folderPath);
   }
   //#endregion
   //#endregion
