@@ -1868,7 +1868,7 @@ export namespace UtilsOs {
     }
 
     //#endregion
-  }
+  };
 
   export const openFolderInFileExplorer = (folderPath: string): void => {
     //#region @backendFunc
@@ -2643,3 +2643,120 @@ export namespace UtilsTerminal {
   //#endregion
 }
 //#endregion
+
+//#region utils json
+export namespace UtilsJson {
+  //#region read json
+  /**
+   * read json from absolute path
+   * @returns json object
+   */
+  export const readJson = (
+    absoluteFilePath: string | string[],
+    defaultValue = {},
+    useJson5 = false, // TODO @LAST change api to simple options
+  ): any => {
+    //#region @backendFunc
+    absoluteFilePath = crossPlatformPath(absoluteFilePath);
+    absoluteFilePath = absoluteFilePath as string;
+
+    if (!fse.existsSync(absoluteFilePath)) {
+      return {};
+    }
+    try {
+      const fileContent = Helpers.readFile(absoluteFilePath);
+      let json;
+      // @ts-ignore
+      json = Helpers.parse(
+        fileContent,
+        useJson5 || absoluteFilePath.endsWith('.json5'),
+      );
+      return json;
+    } catch (error) {
+      return defaultValue;
+    }
+    //#endregion
+  };
+  //#endregion
+
+  //#region read json with comments
+  export const readJsonWithComments = (
+    absoluteFilePath: string | string[],
+    defaultValue: any = {},
+  ): any => {
+    //#region @backendFunc
+    return Helpers.readJson(absoluteFilePath, defaultValue, true);
+    //#endregion
+  };
+  //#endregion
+}
+//#endregion
+
+export namespace UtilsYaml {
+  export const yamlToJson = <FORMAT = any>(yamlString: string): any => {
+    //#region @backendFunc
+    const yaml = require('js-yaml');
+    try {
+      const jsonFromYaml = yaml.load(yamlString);
+      return jsonFromYaml as FORMAT;
+    } catch (error) {
+      console.warn(`[UtilsYaml] Error reading YAML`, yamlString);
+      return void 0;
+    }
+    //#endregion
+  };
+
+  export const jsonToYaml = (json: any): string => {
+    //#region @backendFunc
+    const yaml = require('js-yaml');
+    try {
+      const yamlString = yaml.dump(json, {
+        quotingType: '"', // enforce double quotes
+        forceQuotes: true
+      });
+      return yamlString;
+    } catch (error) {
+      console.warn(`[UtilsYaml] Error converting JSON to YAML`, json);
+      return '';
+    }
+    //#endregion
+  };
+
+  //#region read yaml as json
+  export const readYamlAsJson = <FORMAT = any>(
+    absFilePathToYamlOrYmlFile: string,
+    options?: {
+      defaultValue?: FORMAT;
+    },
+  ): FORMAT => {
+    //#region @backendFunc
+    options = options || {};
+    if (
+      !Helpers.exists(absFilePathToYamlOrYmlFile) &&
+      !_.isUndefined(options.defaultValue)
+    ) {
+      return options.defaultValue as FORMAT;
+    }
+    return UtilsYaml.yamlToJson<FORMAT>(
+      Helpers.readFile(absFilePathToYamlOrYmlFile),
+    );
+    //#endregion
+  };
+  //#endregion
+
+  //#region write json to yaml
+  export const writeJsonToYaml = (
+    destinationYamlfileAbsPath: string,
+    json: any,
+    // options: {},
+  ): void => {
+    //#region @backendFunc
+    if (!_.isObject(json)) {
+      json = {};
+    }
+    const yamlString = jsonToYaml(json);
+    Helpers.writeFile(destinationYamlfileAbsPath, yamlString);
+    //#endregion
+  };
+  //#endregion
+}

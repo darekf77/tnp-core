@@ -28,6 +28,7 @@
     "dateformat",
     "cheerio",
     "fast-glob",
+    "js-yaml",
   ],
 
   "additionalNpmNames": [

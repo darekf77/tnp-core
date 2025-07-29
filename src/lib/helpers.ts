@@ -21,7 +21,7 @@ import { Dirent, Stats } from 'fs-extra';
 import { Subject, Subscription } from 'rxjs';
 //#endregion
 import { _, path, crossPlatformPath } from './core-imports';
-import { UtilsProcess, UtilsTerminal } from './utils';
+import { UtilsJson, UtilsProcess, UtilsTerminal } from './utils';
 import { Helpers, Utils, UtilsOs } from './index';
 import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
@@ -2209,53 +2209,34 @@ command: ${command}
 
   //#region methods / read json
   /**
-   * read json from absolute path
-   * @returns json object
+   * @deprecated use UtilsJson.readJson or UtilsJson.readJson5
    */
   public readJson(
     absoluteFilePath: string | string[],
     defaultValue = {},
     useJson5 = false,
   ): any {
-    //#region @backendFunc
-    if (_.isArray(absoluteFilePath)) {
-      absoluteFilePath = path.join.apply(this, absoluteFilePath);
-    }
-    absoluteFilePath = absoluteFilePath as string;
-
-    if (!fse.existsSync(absoluteFilePath)) {
-      return {};
-    }
-    try {
-      const fileContent = Helpers.readFile(absoluteFilePath);
-      let json;
-      // @ts-ignore
-      json = Helpers.parse(
-        fileContent,
-        useJson5 || absoluteFilePath.endsWith('.json5'),
-      );
-      return json;
-    } catch (error) {
-      return defaultValue;
-    }
-    //#endregion
+    return UtilsJson.readJson(absoluteFilePath, defaultValue, useJson5);
   }
+
+  /**
+   * @deprecated use UtilsJson.readJsonWithComments
+   */
   public readJson5(
     absoluteFilePath: string | string[],
     defaultValue: any = {},
   ): any {
-    //#region @backendFunc
-    return Helpers.readJson(absoluteFilePath, defaultValue, true);
-    //#endregion
+    return UtilsJson.readJsonWithComments(absoluteFilePath, defaultValue);
   }
 
+  /**
+   * @deprecated use UtilsJson.readJsonWithComments
+   */
   public readJsonC(
     absoluteFilePath: string | string[],
     defaultValue: any = {},
   ): any {
-    //#region @backendFunc
-    return this.readJson5(absoluteFilePath, defaultValue);
-    //#endregion
+    return UtilsJson.readJsonWithComments(absoluteFilePath, defaultValue);
   }
 
   //#endregion
