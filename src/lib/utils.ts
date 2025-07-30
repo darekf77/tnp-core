@@ -1741,10 +1741,48 @@ export namespace UtilsOs {
     //#endregion
     //#region @backendFunc
     try {
-      const cgroup = fse.readFileSync('/proc/1/cgroup', 'utf8');
-      return /docker|kubepods|containerd/.test(cgroup);
-    } catch (e) {
-      return false; // If the file does not exist or cannot be read, assume not running in Docker
+      // 1. Explicit env vars set by Docker or Kubernetes
+      if (
+        process.env.DOCKER_CONTAINER ||
+        process.env.CONTAINER ||
+        process.env.KUBERNETES_SERVICE_HOST
+      ) {
+        return true;
+      }
+
+      // 2. Check for /.dockerenv file
+      if (fse.existsSync("/.dockerenv")) {
+        return true;
+      }
+
+      // 3. Check /proc/1/cgroup for docker / container hints
+      if (fse.existsSync("/proc/1/cgroup")) {
+        const cgroup = fse.readFileSync("/proc/1/cgroup", "utf8");
+        if (/docker|kubepods|containerd|podman/i.test(cgroup)) {
+          return true;
+        }
+      }
+
+      // 4. For cgroup v2, check /proc/self/mountinfo
+      if (fse.existsSync("/proc/self/mountinfo")) {
+        const mountInfo = fse.readFileSync("/proc/self/mountinfo", "utf8");
+        if (/docker|kubepods|containerd|podman/i.test(mountInfo)) {
+          return true;
+        }
+      }
+
+      // 5. Alpine-specific: check /proc/self/cgroup
+      if (fse.existsSync("/proc/self/cgroup")) {
+        const selfCgroup = fse.readFileSync("/proc/self/cgroup", "utf8");
+        if (/docker|kubepods|containerd|podman/i.test(selfCgroup)) {
+          return true;
+        }
+      }
+
+      // Default: assume not running in Docker
+      return false;
+    } catch (err) {
+      return false;
     }
     //#endregion
   };
