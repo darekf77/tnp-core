@@ -306,7 +306,8 @@ const crossPlatformPath = (
   if (hasNonAscii) {
     const allNonAscii = pathStringOrPathParts.match(/[^\u0000-\u0080]+/g) || '';
     Helpers.logWarn(
-      `[taon-core][crossPlatformPath]: Path contains non-ascii characters: ${allNonAscii}`,
+      `[taon-core][crossPlatformPath]: path below contains non-ascii characters (${allNonAscii}):
+"${pathStringOrPathParts}"`,
     );
     Helpers.logWarn(pathStringOrPathParts);
   }
