@@ -2480,6 +2480,8 @@ command: ${command}
     pathToFolder: string | string[],
     options?: {
       recursive?: boolean;
+      omitRootFolders?: string[];
+      omitRootFoldersThatStartWith?: string[];
     },
   ): string[] {
     if (_.isArray(pathToFolder)) {
@@ -2489,6 +2491,9 @@ command: ${command}
       return [];
     }
     const { recursive } = options || {};
+    const omitRootFolders = options?.omitRootFolders || [];
+    const omitRootFoldersThatStartWith =
+      options?.omitRootFoldersThatStartWith || [];
     let directories: string[] = [];
 
     // Helper function to read a directory
@@ -2496,6 +2501,20 @@ command: ${command}
       try {
         const files = fse.readdirSync(folderPath, { withFileTypes: true });
         for (const file of files) {
+          if (omitRootFolders) {
+            if (omitRootFolders.includes(file.name)) {
+              continue;
+            }
+          }
+          if (omitRootFoldersThatStartWith) {
+            if (
+              omitRootFoldersThatStartWith.some(prefix =>
+                file.name.startsWith(prefix),
+              )
+            ) {
+              continue;
+            }
+          }
           if (
             file.isDirectory() &&
             !Helpers.isSymlinkFileExitedOrUnexisted([folderPath, file.name])
