@@ -1891,6 +1891,28 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  //#region utils os / is docker available
+  export const isDockerAvailable = async (): Promise<boolean> => {
+    if (UtilsOs.isBrowser) {
+      return false;
+    }
+    //#region @backendFunc
+    const execAsync = promisify(child_process.exec);
+    try {
+      // 1. Check if `docker` command exists
+      await execAsync('command -v docker');
+
+      // 2. Check if Docker daemon is running by calling `docker info`
+      await execAsync('docker info');
+
+      return true;
+    } catch (error) {
+      return false;
+    }
+    //#endregion
+  };
+  //#endregion
+
   export const openFolderInVSCode = (folderPath: string): void => {
     //#region @backendFunc
     Helpers.taskStarted(`Opening folder in VSCode: "${folderPath}"`);
