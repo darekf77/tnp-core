@@ -1,6 +1,6 @@
 {
   "name": "tnp-core",
-  "version": "19.0.49",
+  "version": "19.0.50",
   "scripts": {
     "mkdocs": "python3 -m mkdocs",
     "taon init": "taon init",
@@ -260,6 +260,7 @@
     "ngx-progressbar": "~14.0.0",
     "ngx-scrollbar": "~18.0.0",
     "ngx-scrolltop": "~19.0.2",
+    "ngx-spinner ": "~19.0.0",
     "ngx-store": "3.1.1",
     "ngx-typed-js": "2.1.1",
     "node-7z": "~3.0.0",
