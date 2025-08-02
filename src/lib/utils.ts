@@ -1392,6 +1392,7 @@ in location: ${cwd}
   };
   //#endregion
 
+  //#region utils process / get current process and child processes usage
   /**
    * Get CPU and memory usage for a single PID.
    */
@@ -1421,7 +1422,9 @@ in location: ${cwd}
 
     //#endregion
   };
+  //#endregion
 
+  //#region utils process / get child PIDs
   /**
    * Return a list of direct child PIDs for the given PID on a Unix-like system.
    * Uses `ps -o pid= --ppid <pid>` to find child processes.
@@ -1444,7 +1447,9 @@ in location: ${cwd}
     }
     //#endregion
   }
+  //#endregion
 
+  //#region utils process / get child PIDs on Windows
   /**
    * Return a list of direct child PIDs for the given PID on Windows.
    * Uses `wmic process where (ParentProcessId=<pid>) get ProcessId` to find child processes.
@@ -1468,7 +1473,9 @@ in location: ${cwd}
     }
     //#endregion
   }
+  //#endregion
 
+  //#region utils process / get child PIDs once
   /**
    * Cross-platform function to list *direct* child PIDs of a given PID.
    * Uses the appropriate command depending on `process.platform`.
@@ -1482,7 +1489,9 @@ in location: ${cwd}
     }
     //#endregion
   }
+  //#endregion
 
+  //#region utils process / get current process and child usage
   /**
    * Get CPU and memory usage for the current process (the Node.js process itself),
    * plus any child processes spawned by it.
@@ -1518,6 +1527,74 @@ in location: ${cwd}
     };
     //#endregion
   };
+  //#endregion
+
+  //#region kill process on port
+  export const killProcessOnPort = async (port: number): Promise<boolean> => {
+    if (!port || isNaN(port) || UtilsOs.isBrowser) {
+      Helpers.warn(`[UtilsProcess.killProcessOnPort]: Invalid port number: ${port}`);
+      return false;
+    }
+
+    //#region @backendFunc
+    Helpers.taskStarted(`Killing process on port ${port}...`);
+    return new Promise(resolve => {
+      const platform = process.platform;
+
+      // Cross-platform commands for listing process IDs by port
+      const findCommand =
+        platform === 'win32'
+          ? `netstat -ano | findstr :${port}`
+          : `lsof -i :${port} -sTCP:LISTEN -t || netstat -nlp 2>/dev/null | grep :${port}`;
+
+      child_process.exec(findCommand, (err, stdout) => {
+        if (err || !stdout) {
+          return resolve(false); // nothing listening
+        }
+
+        const pids: string[] = [];
+        const lines = stdout.split('\n').filter(Boolean);
+
+        if (platform === 'win32') {
+          // Windows output format -> extract PID (last column)
+          for (const line of lines) {
+            const parts = line.trim().split(/\s+/);
+            const pid = parts[parts.length - 1];
+            if (pid && /^\d+$/.test(pid)) {
+              pids.push(pid);
+            }
+          }
+        } else {
+          // macOS / Linux: either `lsof` or `netstat`
+          for (const line of lines) {
+            const pidMatch = line.match(/\b\d+\b/);
+            if (pidMatch) {
+              pids.push(pidMatch[0]);
+            }
+          }
+        }
+
+        if (pids.length === 0) {
+          return resolve(false);
+        }
+
+        // Build kill command
+        const killCommand =
+          platform === 'win32'
+            ? `taskkill /PID ${pids.join(' /PID ')} /F`
+            : `kill -9 ${pids.join(' ')}`;
+
+        child_process.exec(killCommand, killErr => {
+          if (killErr) {
+            return resolve(false);
+          }
+          resolve(true);
+        });
+      });
+    });
+    //#endregion
+  };
+  //#endregion
 }
 
 //#endregion
@@ -1751,29 +1828,29 @@ export namespace UtilsOs {
       }
 
       // 2. Check for /.dockerenv file
-      if (fse.existsSync("/.dockerenv")) {
+      if (fse.existsSync('/.dockerenv')) {
         return true;
       }
 
       // 3. Check /proc/1/cgroup for docker / container hints
-      if (fse.existsSync("/proc/1/cgroup")) {
-        const cgroup = fse.readFileSync("/proc/1/cgroup", "utf8");
+      if (fse.existsSync('/proc/1/cgroup')) {
+        const cgroup = fse.readFileSync('/proc/1/cgroup', 'utf8');
         if (/docker|kubepods|containerd|podman/i.test(cgroup)) {
           return true;
         }
       }
 
       // 4. For cgroup v2, check /proc/self/mountinfo
-      if (fse.existsSync("/proc/self/mountinfo")) {
-        const mountInfo = fse.readFileSync("/proc/self/mountinfo", "utf8");
+      if (fse.existsSync('/proc/self/mountinfo')) {
+        const mountInfo = fse.readFileSync('/proc/self/mountinfo', 'utf8');
         if (/docker|kubepods|containerd|podman/i.test(mountInfo)) {
           return true;
         }
       }
 
       // 5. Alpine-specific: check /proc/self/cgroup
-      if (fse.existsSync("/proc/self/cgroup")) {
-        const selfCgroup = fse.readFileSync("/proc/self/cgroup", "utf8");
+      if (fse.existsSync('/proc/self/cgroup')) {
+        const selfCgroup = fse.readFileSync('/proc/self/cgroup', 'utf8');
         if (/docker|kubepods|containerd|podman/i.test(selfCgroup)) {
           return true;
         }
@@ -2784,7 +2861,7 @@ export namespace UtilsYaml {
     try {
       const yamlString = yaml.dump(json, {
         quotingType: '"', // enforce double quotes
-        forceQuotes: true
+        forceQuotes: true,
       });
       return yamlString;
     } catch (error) {

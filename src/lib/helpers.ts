@@ -1267,6 +1267,9 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / kill process by port
+  /**
+   * @deprecated use UtilsProcess.killProcessOnPort
+   */
   async killProcessByPort(
     portOrPortsToKill: number | number[],
     options?: {
