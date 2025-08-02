@@ -1532,7 +1532,9 @@ in location: ${cwd}
   //#region kill process on port
   export const killProcessOnPort = async (port: number): Promise<boolean> => {
     if (!port || isNaN(port) || UtilsOs.isBrowser) {
-      Helpers.warn(`[UtilsProcess.killProcessOnPort]: Invalid port number: ${port}`);
+      Helpers.warn(
+        `[UtilsProcess.killProcessOnPort]: Invalid port number: ${port}`,
+      );
       return false;
     }
 
@@ -1976,12 +1978,18 @@ export namespace UtilsOs {
     //#region @backendFunc
     const execAsync = promisify(child_process.exec);
     try {
-      // 1. Check if `docker` command exists
-      await execAsync('command -v docker');
-
-      // 2. Check if Docker daemon is running by calling `docker info`
-      await execAsync('docker info');
-
+      // 1. Detect docker binary (different command depending on shell/OS)
+      if (process.platform === 'win32') {
+        try {
+          // PowerShell supports `Get-Command`
+          await execAsync('pwsh -Command "Get-Command docker"');
+        } catch {
+          // fallback for CMD
+          await execAsync('where docker');
+        }
+      } else {
+        await execAsync('command -v docker');
+      }
       return true;
     } catch (error) {
       return false;
@@ -2841,6 +2849,7 @@ export namespace UtilsJson {
 }
 //#endregion
 
+//#region utils yaml
 export namespace UtilsYaml {
   export const yamlToJson = <FORMAT = any>(yamlString: string): any => {
     //#region @backendFunc
@@ -2909,3 +2918,4 @@ export namespace UtilsYaml {
   };
   //#endregion
 }
+//#endregion
