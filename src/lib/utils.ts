@@ -2076,6 +2076,18 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
+  //#region wait
+  export const waitMiliseconds = (miliseconds: number): Promise<void> => {
+    // Helpers.taskStarted(`Waiting ${miliseconds} miliseconds...`);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Helpers.taskDone(`Done waiting ${miliseconds} miliseconds`);
+        resolve(void 0);
+      }, miliseconds);
+    });
+  };
+  //#endregion
+
   //#region clear
   export const clearConsole = (): void => {
     //#region @backendFunc
