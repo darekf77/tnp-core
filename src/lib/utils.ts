@@ -1658,35 +1658,24 @@ export namespace UtilsOs {
    * Electron backend or browser.
    */
   export const isRunningInElectron = (): boolean => {
-    if (UtilsOs.isRunningInSSRMode()) {
-      return false; // no ssr for electron
+    // Electron main or renderer (most reliable)
+    if (typeof process !== 'undefined' && process?.versions?.electron) {
+      return true;
     }
-    // Renderer process
-    // @ts-ignore
+
+    // Renderer with nodeIntegration
     if (
-      typeof window !== 'undefined' &&
-      typeof window.process === 'object' &&
-      // @ts-ignore
-      window.process.type === 'renderer'
+      typeof globalThis !== 'undefined' &&
+      (globalThis as any)?.process?.type === 'renderer'
     ) {
       return true;
     }
 
-    // Main process
-    // @ts-ignore
-    if (
-      typeof process !== 'undefined' &&
-      typeof process.versions === 'object' &&
-      !!process.versions.electron
-    ) {
-      return true;
-    }
-
-    // Detect the user agent when the `nodeIntegration` option is set to false
+    // Renderer with nodeIntegration disabled
     if (
       typeof navigator === 'object' &&
       typeof navigator.userAgent === 'string' &&
-      navigator.userAgent.indexOf('Electron') >= 0
+      /Electron/i.test(navigator.userAgent)
     ) {
       return true;
     }
