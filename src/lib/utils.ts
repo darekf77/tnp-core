@@ -1068,7 +1068,10 @@ export namespace UtilsProcess {
 
     while (true) {
       const maxBuffer = options?.biggerBuffer ? Helpers.bigMaxBuffer : void 0;
-      const env = { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'development' };
+      let env = { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'development' };
+      if(options.env) {
+        env = { ...env, ...options.env };
+      }
       childProcess = child_process.exec(command, { cwd, env, maxBuffer });
       onChildProcessChange && onChildProcessChange(childProcess);
       try {

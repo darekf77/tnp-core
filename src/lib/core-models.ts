@@ -356,6 +356,7 @@ export namespace CoreModels {
      * Use big buffer for big webpack logs
      */
     biggerBuffer?: boolean;
+    env?: any;
     askToTryAgainOnError?: boolean;
     onChildProcessChange?: (childProcess: ChildProcess) => void;
     exitOnErrorCallback?: (code: number) => void;
