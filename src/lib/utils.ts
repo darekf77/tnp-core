@@ -1069,7 +1069,7 @@ export namespace UtilsProcess {
     while (true) {
       const maxBuffer = options?.biggerBuffer ? Helpers.bigMaxBuffer : void 0;
       let env = { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'development' };
-      if(options.env) {
+      if (options.env) {
         env = { ...env, ...options.env };
       }
       childProcess = child_process.exec(command, { cwd, env, maxBuffer });
@@ -1531,6 +1531,41 @@ in location: ${cwd}
     //#endregion
   };
   //#endregion
+
+  /**
+   * Kills all running Java processes cross‑platform.
+   * @returns Promise<boolean> true if processes were killed, false if none found
+   */
+  export const killAllJava = async (): Promise<boolean> => {
+    //#region @backendFunc
+    return new Promise((resolve, reject) => {
+      const platform = os.platform();
+
+      // Build command depending on platform
+      let cmd: string;
+      if (platform === 'win32') {
+        // Windows: use taskkill to kill all java.exe processes
+        cmd = `taskkill /F /IM java.exe /T`;
+      } else {
+        // Linux / macOS: use pkill to kill all java processes
+        cmd = `pkill -f java`;
+      }
+
+      child_process.exec(cmd, (error, stdout, stderr) => {
+        if (error) {
+          if (
+            stderr.includes('no process found') ||
+            stderr.includes('not found')
+          ) {
+            return resolve(false); // nothing to kill
+          }
+          return reject(error);
+        }
+        resolve(true);
+      });
+    });
+    //#endregion
+  };
 
   //#region kill process on port
   export const killProcessOnPort = async (port: number): Promise<boolean> => {
