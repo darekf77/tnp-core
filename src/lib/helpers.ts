@@ -1831,11 +1831,15 @@ export class HelpersCore extends HelpersMessages {
   //#region @backend
   public runSyncIn(command: string, options?: CoreModels.RunOptions) {
     // @ts-ignore
-    const { cwd, biggerBuffer } = options;
+    const { cwd, biggerBuffer, env } = options;
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
     let stdio = Helpers.getStdio(options);
     Helpers.checkProcess(cwd, command);
-    return child_process.execSync(command, { stdio, cwd, maxBuffer } as any);
+    const optionsDest = { stdio, cwd, maxBuffer } as any;
+    if (_.isObject(env)) {
+      optionsDest.env = { ...process.env, ...(env || {}) };
+    }
+    return child_process.execSync(command, optionsDest);
   }
   //#endregion
   //#endregion
