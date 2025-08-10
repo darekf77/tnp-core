@@ -1907,6 +1907,20 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  export const isRunningInOsWithGraphicsCapableEnvironment = (): boolean => {
+    //#region @backendFunc
+    if(process.platform === 'win32') {
+      return true; // Windows is always graphics capable
+    }
+    if(process.platform === 'darwin') {
+      return true; // macOS is always graphics capable
+    }
+    return (
+      UtilsOs.isRunningInLinuxGraphicsCapableEnvironment()
+    );
+    //#endregion
+  }
+
   //#region utils os / is running in cli mode
   /**
    * Check whether the current process is running in CLI mode.
