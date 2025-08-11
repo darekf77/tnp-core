@@ -2095,6 +2095,64 @@ export namespace UtilsOs {
     //#endregion
   };
 
+  //#region utils os / get real home directory
+  export const getRealHomeDir = (): string => {
+    //#region @backendFunc
+    // 1. If SUDO_USER is set (macOS/Linux sudo)
+    if (process.env.SUDO_USER) {
+      const sudoUser = process.env.SUDO_USER;
+
+      // Try to get from /etc/passwd if it exists (more reliable than guessing)
+      if (process.platform !== 'win32' && fse.existsSync('/etc/passwd')) {
+        const passwdLine = fse
+          .readFileSync('/etc/passwd', 'utf8')
+          .split('\n')
+          .find(line => line.startsWith(sudoUser + ':'));
+        if (passwdLine) {
+          const homeDir = passwdLine.split(':')[5];
+          if (homeDir) {
+            return crossPlatformPath(homeDir);
+          }
+        }
+      }
+
+      // Fallback guess for macOS
+      if (process.platform === 'darwin') {
+        return crossPlatformPath(path.join('/Users', sudoUser));
+      }
+      // Fallback guess for Linux
+      if (process.platform === 'linux') {
+        return crossPlatformPath(path.join('/home', sudoUser));
+      }
+    }
+
+    // 2. Windows elevated mode
+    if (process.platform === 'win32') {
+      // When run as Administrator, os.homedir() returns the admin's profile dir.
+      // To get the *real* logged-in user, try USERNAME from env
+      const realUser =
+        process.env.USERNAME ||
+        process.env.LOGNAME ||
+        process.env.USER ||
+        process.env.LNAME;
+
+      if (realUser) {
+        const userProfileBase = process.env.SystemDrive
+          ? path.join(process.env.SystemDrive, 'Users')
+          : 'C:\\Users';
+        const guessedHome = path.join(userProfileBase, realUser);
+        if (fse.existsSync(guessedHome)) {
+          return crossPlatformPath(guessedHome);
+        }
+      }
+    }
+
+    // 3. Default to current user's home
+    return crossPlatformPath(os.homedir());
+    //#endregion
+  };
+  //#endregion
+
   export const isElectron = isRunningInElectron();
   export const isBrowser = isRunningInBrowser();
   export const isNode = isRunningInNode();
