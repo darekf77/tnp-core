@@ -3122,7 +3122,7 @@ export namespace UtilsNetwork {
         ? 'C:/Windows/System32/drivers/etc/hosts'
         : '/etc/hosts';
     //#endregion
-    return HOST_FILE_PATH;
+    return crossPlatformPath(HOST_FILE_PATH);
   };
   //#endregion
 
@@ -3198,39 +3198,47 @@ export namespace UtilsNetwork {
       );
     }
 
-    const url = new URL(
-      domain.startsWith('http') ? domain : `http://${domain}`,
-    );
-    domain = url.hostname;
+    return await new Promise(resolve => {
+      const url = new URL(
+        domain.startsWith('http') ? domain : `http://${domain}`,
+      );
+      domain = url.hostname;
 
-    UtilsNetwork.setEtcHost(domain);
-    Helpers.info(`
+      UtilsNetwork.setEtcHost(domain);
+      Helpers.info(`
+  
+        You can access the domain at:
+  
+        ${chalk.underline(`http://${domain}`)}
+        ${chalk.underline(`https://${domain}`)}
+  
+        (domain is now pointing to ${chalk.bold('localhost')}):
 
-      You can access the domain at:
+        your etc host path:
+        ${chalk.underline(UtilsNetwork.getEtcHostsPath())}
+  
+        PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
+        AND STOP SIMULATION
+        
+        `);
 
-      ${chalk.underline(`http://${domain}`)}
-      ${chalk.underline(`https://${domain}`)}
+      let closing = false;
+      const currentRawMode = process.stdin.isRaw;
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+      process.stdin.on('data', () => {
+        if (closing) {
+          return;
+        }
 
-      (domain is now pointing to ${chalk.bold('localhost')}):
-
-      PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
-      AND STOP SIMULATION
-      
-      `);
-
-    let closing = false;
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    process.stdin.on('data', () => {
-      if (closing) {
-        return;
-      }
-
-      closing = true;
-      console.log('Removing domain from /etc/hosts');
-      UtilsNetwork.removeEtcHost(domain);
-      process.exit(0);
+        closing = true;
+        console.log('Removing domain from /etc/hosts');
+        UtilsNetwork.removeEtcHost(domain);
+        process.stdin.setRawMode(currentRawMode);
+        resolve(void 0);
+      });
     });
+
     //#endregion
   };
   //#endregion
