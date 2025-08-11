@@ -14,6 +14,7 @@ import {
   os,
   chalk,
   win32Path,
+  isElevated,
 } from './core-imports';
 import { dateformat } from './core-imports';
 import { spawn, child_process } from './core-imports';
@@ -3182,5 +3183,56 @@ export namespace UtilsNetwork {
   // Utility to escape domain for RegExp
   const escapeRegExp = (s: string): string =>
     s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  //#region utils network / simulate domain in etc hosts
+  export const simulateDomain = async (domain: string) => {
+    //#region @backendFunc
+    if (!UtilsNetwork.isValidDomain(domain)) {
+      Helpers.error(`Invalid domain: "${domain}"`, false, true);
+    }
+    if (!(await isElevated())) {
+      Helpers.error(
+        `You must run this command with elevated privileges (sudo or as administrator)`,
+        false,
+        true,
+      );
+    }
+
+    const url = new URL(
+      domain.startsWith('http') ? domain : `http://${domain}`,
+    );
+    domain = url.hostname;
+
+    UtilsNetwork.setEtcHost(domain);
+    Helpers.info(`
+
+      You can access the domain at:
+
+      ${chalk.underline(`http://${domain}`)}
+      ${chalk.underline(`https://${domain}`)}
+
+      (domain is now pointing to ${chalk.bold('localhost')}):
+
+      PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
+      AND STOP SIMULATION
+      
+      `);
+
+    let closing = false;
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.on('data', () => {
+      if (closing) {
+        return;
+      }
+
+      closing = true;
+      console.log('Removing domain from /etc/hosts');
+      UtilsNetwork.removeEtcHost(domain);
+      process.exit(0);
+    });
+    //#endregion
+  };
+  //#endregion
 }
 //#endregion
