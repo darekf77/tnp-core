@@ -2,6 +2,7 @@
 import { Blob } from 'buffer';
 import { ChildProcess } from 'child_process';
 import * as net from 'net';
+import { URL } from 'url'; // @backend
 import { promisify } from 'util';
 
 import axios, { AxiosResponse } from 'axios';
@@ -1909,17 +1910,15 @@ export namespace UtilsOs {
 
   export const isRunningInOsWithGraphicsCapableEnvironment = (): boolean => {
     //#region @backendFunc
-    if(process.platform === 'win32') {
+    if (process.platform === 'win32') {
       return true; // Windows is always graphics capable
     }
-    if(process.platform === 'darwin') {
+    if (process.platform === 'darwin') {
       return true; // macOS is always graphics capable
     }
-    return (
-      UtilsOs.isRunningInLinuxGraphicsCapableEnvironment()
-    );
+    return UtilsOs.isRunningInLinuxGraphicsCapableEnvironment();
     //#endregion
-  }
+  };
 
   //#region utils os / is running in cli mode
   /**
@@ -3016,5 +3015,172 @@ export namespace UtilsYaml {
     //#endregion
   };
   //#endregion
+}
+//#endregion
+
+//#region utils network
+export namespace UtilsNetwork {
+  //#region utils network / isValidIp
+  export const isValidIp = (ip: string): boolean => {
+    if (!_.isString(ip)) {
+      return false;
+    }
+    ip = ip.trim();
+    if (ip === 'localhost') {
+      return true;
+    }
+    return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+      ip,
+    );
+  };
+  //#endregion
+
+  //#region utils network / isValidDomain
+  export const isValidDomain = (
+    url: string,
+    options?: {
+      /**
+       * if yes - domain should start with http:// or https://
+       */
+      shouldIncludeProtocol?: boolean | 'http' | 'https';
+    },
+  ): boolean => {
+    if (!url || typeof url !== 'string') return false;
+
+    const shouldIncludeProtocol = !!options?.shouldIncludeProtocol;
+
+    // Build regex depending on protocol requirement
+    const domainRegex = shouldIncludeProtocol
+      ? /^(https?:\/\/)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/ // with protocol
+      : /^([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,}$/; // without protocol
+
+    if (
+      typeof options?.shouldIncludeProtocol === 'string' &&
+      options?.shouldIncludeProtocol === 'http' &&
+      !url.startsWith('http://')
+    ) {
+      return false; // if http is required, but url does not start with http://
+    }
+    if (
+      typeof options?.shouldIncludeProtocol === 'string' &&
+      options?.shouldIncludeProtocol === 'https' &&
+      !url.startsWith('https://')
+    ) {
+      return false; // if https is required, but url does not start with https://
+    }
+
+    return domainRegex.test(url.trim());
+  };
+  //#endregion
+
+  //#region utils network / urlParse
+  export const urlParse = (
+    portOrHost: number | string | URL,
+    options?: {
+      forceDomain?: boolean;
+      httpsIfNotProvided?: boolean;
+    },
+  ): URL => {
+    options = options || {};
+    let url: URL;
+    const defaultProtocol = options.httpsIfNotProvided ? 'https:' : 'http:';
+    if (portOrHost instanceof URL) {
+      url = portOrHost;
+    } else if (_.isNumber(portOrHost)) {
+      url = new URL(`${defaultProtocol}//localhost:${portOrHost}`);
+    } else if (!_.isNaN(Number(portOrHost))) {
+      url = new URL(`${defaultProtocol}//localhost:${Number(portOrHost)}`);
+    } else if (_.isString(portOrHost)) {
+      try {
+        url = new URL(portOrHost);
+      } catch (error) {}
+      if (isValidIp(portOrHost)) {
+        try {
+          url = new URL(`${defaultProtocol}//${portOrHost}`);
+        } catch (error) {
+          Helpers.warn(`Not able to get port from ${portOrHost}`);
+        }
+      }
+      if (options.forceDomain) {
+        const domain = portOrHost as string;
+        url = new URL(
+          domain.startsWith('http') ? domain : `http://${portOrHost}`,
+        );
+      }
+    }
+    return url;
+  };
+  //#endregion
+
+  //#region utils network / getPortFromUrl
+  export const getEtcHostsPath = (): string => {
+    let HOST_FILE_PATH = '';
+    //#region @backend
+    HOST_FILE_PATH =
+      process.platform === 'win32'
+        ? 'C:/Windows/System32/drivers/etc/hosts'
+        : '/etc/hosts';
+    //#endregion
+    return HOST_FILE_PATH;
+  };
+  //#endregion
+
+  //#region utils network / setEtcHost
+  /**
+   * Add or update a hosts entry
+   */
+  export const setEtcHost = (
+    domain: string,
+    ip: string = '127.0.0.1',
+    comment: string = '',
+  ): void => {
+    //#region @backendFunc
+    const hostsPath = getEtcHostsPath();
+
+    if (!domain || /\s/.test(domain)) {
+      throw new Error('Invalid domain');
+    }
+
+    let content = fse.readFileSync(hostsPath, 'utf8').split(/\r?\n/);
+
+    // Remove any existing lines with this domain
+    content = content.filter(
+      line => !new RegExp(`\\b${escapeRegExp(domain)}\\b`).test(line),
+    );
+
+    // Add new entry
+    const entry = `${ip} ${domain}${comment ? ` # ${comment}` : ''}`;
+    content.push(entry);
+
+    fse.writeFileSync(hostsPath, content.join(os.EOL), 'utf8');
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils network / removeEtcHost
+  /**
+   * Remove all lines containing the given domain
+   */
+  export const removeEtcHost = (domain: string): void => {
+    //#region @backendFunc
+    const hostsPath = getEtcHostsPath();
+
+    if (!domain || /\s/.test(domain)) {
+      throw new Error('Invalid domain');
+    }
+
+    let content = fse.readFileSync(hostsPath, 'utf8').split(/\r?\n/);
+    content = content.filter(
+      line => !new RegExp(`\\b${escapeRegExp(domain)}\\b`).test(line),
+    );
+
+    fse.writeFileSync(hostsPath, content.join(os.EOL), 'utf8');
+    //#endregion
+  };
+  //#endregion
+
+  // Utility to escape domain for RegExp
+  const escapeRegExp = (s: string): string =>
+    s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 //#endregion
