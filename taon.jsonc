@@ -29,6 +29,7 @@
     "cheerio",
     "fast-glob",
     "js-yaml",
+    "cfonts",
   ],
 
   "additionalNpmNames": [

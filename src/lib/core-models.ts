@@ -633,4 +633,20 @@ export namespace CoreModels {
     debug?: boolean;
   }
   //#endregion
+
+  export type CfontStyle =
+    | 'block'
+    | 'slick'
+    | 'tiny'
+    | 'grid'
+    | 'pallet'
+    | 'shade'
+    | 'chrome'
+    | 'simple'
+    | 'simpleBlock'
+    | '3d'
+    | 'simple3d'
+    | 'huge';
+
+  export type CfontAlign = 'left' | 'center' | 'right' | 'block';
 }

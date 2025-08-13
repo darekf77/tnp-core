@@ -2897,6 +2897,38 @@ export namespace UtilsTerminal {
     //#endregion
   };
   //#endregion
+
+  //#region draw big text
+  export const drawBigText = async (
+    text: string,
+    options?: {
+      skipDrawing?: boolean;
+      align?: CoreModels.CfontAlign;
+      style?: CoreModels.CfontStyle;
+    },
+  ): Promise<string> => {
+    //#region @backendFunc
+    options = options || {};
+    const cfonts = require('cfonts');
+    const output = cfonts.render(text, {
+      font: options.style || 'block',
+      align: options.align || 'left',
+      colors: ['system'],
+      background: 'transparent',
+      letterSpacing: 1,
+      lineHeight: 1,
+      space: true,
+      maxLength: '0',
+      gradient: false,
+      independentGradient: false,
+      transitionGradient: false,
+      env: 'node',
+    });
+    console.log(output.string);
+    return output.string;
+    //#endregion
+  };
+  //#endregion
 }
 //#endregion
 
@@ -3206,20 +3238,20 @@ export namespace UtilsNetwork {
 
       UtilsNetwork.setEtcHost(domain);
       Helpers.info(`
-  
+
         You can access the domain at:
-  
+
         ${chalk.underline(`http://${domain}`)}
         ${chalk.underline(`https://${domain}`)}
-  
+
         (domain is now pointing to ${chalk.bold('localhost')}):
 
         your etc host path:
         ${chalk.underline(UtilsNetwork.getEtcHostsPath())}
-  
+
         PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
         AND STOP SIMULATION
-        
+
         `);
 
       let closing = false;
