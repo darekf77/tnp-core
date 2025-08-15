@@ -163,7 +163,7 @@ export class HelpersCore extends HelpersMessages {
       return;
     }
     if (UtilsOs.isRunningInWindowsPowerShell()) {
-      Helpers.run(`Start-Sleep -Seconds ${seconds}`).sync();
+      Helpers.run(`powershell -Command "Start-Sleep -Seconds ${seconds}"`).sync();
       return;
     }
     Helpers.run(`sleep ${seconds}`).sync();
