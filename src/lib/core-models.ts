@@ -650,5 +650,5 @@ export namespace CoreModels {
 
   export type CfontAlign = 'left' | 'center' | 'right' | 'block';
 
-  export const tagForTaskName = '@taskName';
+  export const tagForTaskName = '@updateValueWithPortNumForTaskName';
 }
