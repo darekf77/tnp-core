@@ -649,4 +649,6 @@ export namespace CoreModels {
     | 'huge';
 
   export type CfontAlign = 'left' | 'center' | 'right' | 'block';
+
+  export const tagForTaskName = '@taskName';
 }
