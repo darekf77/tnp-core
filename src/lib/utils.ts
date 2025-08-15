@@ -6,6 +6,7 @@ import { URL } from 'url'; // @backend
 import { promisify } from 'util';
 
 import axios, { AxiosResponse } from 'axios';
+import { Subject } from 'rxjs';
 
 import {
   path,
@@ -3217,11 +3218,23 @@ export namespace UtilsNetwork {
     s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   //#region utils network / simulate domain in etc hosts
-  export const simulateDomain = async (domain: string) => {
+  export const simulateDomain = async (
+    domainOrDomains: string | string[],
+    options?: {
+      triggerRevertChangesToEtcHosts?: Subject<void>;
+    },
+  ): Promise<void> => {
     //#region @backendFunc
+options = options || {};
+    domainOrDomains = _.isArray(domainOrDomains)
+      ? domainOrDomains
+      : [domainOrDomains];
+    for (const domain of domainOrDomains) {
     if (!UtilsNetwork.isValidDomain(domain)) {
       Helpers.error(`Invalid domain: "${domain}"`, false, true);
     }
+}
+
     if (!(await isElevated())) {
       Helpers.error(
         `You must run this command with elevated privileges (sudo or as administrator)`,
@@ -3231,29 +3244,64 @@ export namespace UtilsNetwork {
     }
 
     return await new Promise(resolve => {
+for (const domain of domainOrDomains) {
       const url = new URL(
         domain.startsWith('http') ? domain : `http://${domain}`,
       );
-      domain = url.hostname;
+            UtilsNetwork.setEtcHost(
+          url.hostname,
+          '127.0.0.1',
+          '@simulatedDomainByTaon',
+        );
+      }
 
-      UtilsNetwork.setEtcHost(domain);
       Helpers.info(`
 
-        You can access the domain at:
+        You can access the simulated domain(s) at:
 
-        ${chalk.underline(`https://${domain}`)}
+        ${domainOrDomains
+  .map(domain => {
+    const url = new URL(
+      domain.startsWith('http') ? domain : `http://${domain}`,
+    );
+    return chalk.underline(`\thttps://${url.hostname}`);
+  })
+  .join('\n')}
 
-        (domain is now pointing to ${chalk.bold('localhost')}):
+        (${domainOrDomains.length <= 1 ? 'Domain is' : 'Domains are'} now pointing to ${chalk.bold('localhost')}):
 
         your etc host path:
         ${chalk.underline(UtilsNetwork.getEtcHostsPath())}
 
-        PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
-        AND STOP SIMULATION
+${
+         !options.triggerRevertChangesToEtcHosts
+           ? `        PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
+        AND STOP SIMULATION`
+           : ''
+       }
 
         `);
-
       let closing = false;
+const revertChanges = () => {
+        console.log('Removing domain(s) from /etc/hosts');
+        for (const domain of domainOrDomains) {
+          const url = new URL(
+            domain.startsWith('http') ? domain : `http://${domain}`,
+          );
+          UtilsNetwork.removeEtcHost(url.hostname);
+        }
+      };
+
+      if (options.triggerRevertChangesToEtcHosts) {
+        const sub = options.triggerRevertChangesToEtcHosts.subscribe(() => {
+          if (closing) {
+            return;
+          }
+          revertChanges();
+          sub.unsubscribe();
+          resolve(void 0);
+        });
+      } else {
       const currentRawMode = process.stdin.isRaw;
       process.stdin.setRawMode(true);
       process.stdin.resume();
@@ -3263,11 +3311,11 @@ export namespace UtilsNetwork {
         }
 
         closing = true;
-        console.log('Removing domain from /etc/hosts');
-        UtilsNetwork.removeEtcHost(domain);
+        revertChanges();
         process.stdin.setRawMode(currentRawMode);
         resolve(void 0);
       });
+}
     });
 
     //#endregion
