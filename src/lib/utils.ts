@@ -215,126 +215,6 @@ export namespace Utils {
   };
   //#endregion
 
-  //#region json
-  interface AttrJsoncProp {
-    name: string;
-    value?: any;
-  }
-  export namespace json {
-    export const getAtrributies = (
-      jsonDeepPath: string, // lodash path to property in json ex. deep.path.to.prop
-      fileContent: string, // jsonc or json5 - json with comments
-    ): AttrJsoncProp[] => {
-      const lines = fileContent.split('\n');
-      // split path to parts but keep part if is for example 'sql.js
-      const pathParts = jsonDeepPath.split('.').reduce((a, b) => {
-        if (a.length === 0) {
-          return [b];
-        }
-        const last: string = a[a.length - 1];
-        if (
-          (last.startsWith(`['`) && b.endsWith(`']`)) ||
-          (last.startsWith(`["`) && b.endsWith(`"]`))
-        ) {
-          a[a.length - 1] = [last, b].join('.');
-        } else {
-          a.push(b);
-        }
-        return a;
-      }, []);
-      // console.log({ pathParts });
-      // const pathParts = jsonDeepPath.split('.');
-      const keyName = pathParts.pop()!.replace(/^\["(.+)"\]$/, '$1');
-      let currentPath = '';
-      let attributes: AttrJsoncProp[] = [];
-      let collectedComments: string[] = [];
-
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-
-        if (trimmedLine.startsWith('//')) {
-          // Collect comments
-          collectedComments.push(trimmedLine);
-          // trimmedLine.startsWith('//pizda') &&
-          //   console.log('pushlin line', { trimmedLine });
-        } else if (trimmedLine.startsWith('"') || trimmedLine.startsWith("'")) {
-          // Extract the key from the line
-          const match = trimmedLine.match(/["']([^"']+)["']\s*:/);
-          // console.log({ match0: match && match[0], match1: match && match[1] });
-          if (match) {
-            const key = match[1];
-            currentPath = currentPath
-              ? `${currentPath}.${key.includes('.') ? `['${key}']` : key}`
-              : key;
-            // console.log({ key });
-            // Check if the current path matches the jsonDeepPath
-            if (
-              (currentPath.endsWith(keyName) &&
-                !currentPath.endsWith('/' + keyName)) ||
-              currentPath.endsWith(`['${keyName}']`)
-            ) {
-              // console.log('extract attributes', {
-              //   keyName,
-              //   collectedCommentsLength: collectedComments.length,
-              // });
-              // Process the collected comments to extract attributes
-              attributes = extractAttributesFromComments(collectedComments);
-              break;
-            }
-
-            // Reset collected comments as they only relate to the next key
-            collectedComments = [];
-          }
-        }
-      }
-
-      return attributes;
-    };
-
-    const extractAttributesFromComments = (
-      comments: string[],
-    ): AttrJsoncProp[] => {
-      const attributes: AttrJsoncProp[] = [];
-      const attrRegex = /@(\w+)(?:\s*=\s*([^\s@]+))?/g;
-      // console.log({ comments });
-      for (const comment of comments) {
-        let match;
-        while ((match = attrRegex.exec(comment)) !== null) {
-          const [, name, value] = match;
-
-          const existingAttribute = attributes.find(
-            attr => attr.name === `@${name}`,
-          );
-
-          if (existingAttribute) {
-            if (value) {
-              if (Array.isArray(existingAttribute.value)) {
-                existingAttribute.value.push(value);
-              } else {
-                existingAttribute.value = [existingAttribute.value, value];
-              }
-            }
-          } else {
-            attributes.push({
-              name: `@${name}`,
-              value: value ? value : true,
-            });
-          }
-        }
-      }
-
-      // Normalize single values not to be arrays
-      attributes.forEach(attr => {
-        if (Array.isArray(attr.value) && attr.value.length === 1) {
-          attr.value = attr.value[0];
-        }
-      });
-
-      return attributes;
-    };
-  }
-  //#endregion
-
   //#region binary
 
   //#region db binary format type
@@ -2935,6 +2815,148 @@ export namespace UtilsTerminal {
 
 //#region utils json
 export namespace UtilsJson {
+  export interface AttrJsoncProp {
+    name: string;
+    value?: any;
+  }
+
+  //#region get attributes from jsonc or json5 file
+  /**
+   * Get attributes from jsonc or json5 file
+   * @param jsonDeepPath lodash path to property in json ex. deep.path.to.prop
+   * @param fileContent jsonc or json5 - json with comments
+   * @returns array of attributes
+   */
+  export const getAtrributiesFromJsonWithComments = (
+    jsonDeepPath: string, // lodash path to property in json ex. deep.path.to.prop
+    fileContent: string, // jsonc or json5 - json with comments
+  ): AttrJsoncProp[] => {
+    const lines = fileContent.split('\n');
+    // split path to parts but keep part if is for example 'sql.js
+    const pathParts = jsonDeepPath.split('.').reduce((a, b) => {
+      if (a.length === 0) {
+        return [b];
+      }
+      const last: string = a[a.length - 1];
+      if (
+        (last.startsWith(`['`) && b.endsWith(`']`)) ||
+        (last.startsWith(`["`) && b.endsWith(`"]`))
+      ) {
+        a[a.length - 1] = [last, b].join('.');
+      } else {
+        a.push(b);
+      }
+      return a;
+    }, []);
+    // console.log({ pathParts });
+    // const pathParts = jsonDeepPath.split('.');
+    const keyName = pathParts.pop()!.replace(/^\["(.+)"\]$/, '$1');
+    let currentPath = '';
+    let attributes: AttrJsoncProp[] = [];
+    let collectedComments: string[] = [];
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      if (trimmedLine.startsWith('//')) {
+        // Collect comments
+        collectedComments.push(trimmedLine);
+        // trimmedLine.startsWith('//pizda') &&
+        //   console.log('pushlin line', { trimmedLine });
+      } else if (trimmedLine.startsWith('"') || trimmedLine.startsWith("'")) {
+        // Extract the key from the line
+        const match = trimmedLine.match(/["']([^"']+)["']\s*:/);
+        // console.log({ match0: match && match[0], match1: match && match[1] });
+        if (match) {
+          const key = match[1];
+          currentPath = currentPath
+            ? `${currentPath}.${key.includes('.') ? `['${key}']` : key}`
+            : key;
+          // console.log({ key });
+          // Check if the current path matches the jsonDeepPath
+          if (
+            (currentPath.endsWith(keyName) &&
+              !currentPath.endsWith('/' + keyName)) ||
+            currentPath.endsWith(`['${keyName}']`)
+          ) {
+            // console.log('extract attributes', {
+            //   keyName,
+            //   collectedCommentsLength: collectedComments.length,
+            // });
+            // Process the collected comments to extract attributes
+            attributes = extractAttributesFromComments(collectedComments);
+            break;
+          }
+
+          // Reset collected comments as they only relate to the next key
+          collectedComments = [];
+        }
+      }
+    }
+
+    return attributes;
+  };
+  //#endregion
+
+  //#region get attributes from comment
+  export const getAttributiesFromComment = (
+    comment: string,
+    attributes: AttrJsoncProp[] = [],
+  ): AttrJsoncProp[] => {
+    // Match @name=value OR @name
+    // Values can be "..." or '...' or unquoted token without @
+    const attrRegex = /@(\w+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s@]+)))?/g;
+    let match;
+    while ((match = attrRegex.exec(comment)) !== null) {
+      const [, name, doubleQuoted, singleQuoted, unquoted] = match;
+      const value = doubleQuoted ?? singleQuoted ?? unquoted;
+
+      const existingAttribute = attributes.find(
+        attr => attr.name === `@${name}`,
+      );
+
+      if (existingAttribute) {
+        if (value !== undefined) {
+          if (Array.isArray(existingAttribute.value)) {
+            existingAttribute.value.push(value);
+          } else {
+            existingAttribute.value = [existingAttribute.value, value];
+          }
+        }
+      } else {
+        attributes.push({
+          name: `@${name}`,
+          value: value !== undefined ? value : true,
+        });
+      }
+    }
+
+    // Normalize single values not to be arrays
+    attributes.forEach(attr => {
+      if (Array.isArray(attr.value) && attr.value.length === 1) {
+        attr.value = attr.value[0];
+      }
+    });
+
+    return attributes;
+  };
+  //#endregion
+
+  //#region extract attributes from comments
+  const extractAttributesFromComments = (
+    comments: string[],
+  ): AttrJsoncProp[] => {
+    const attributes: AttrJsoncProp[] = [];
+
+    // console.log({ comments });
+    for (const comment of comments) {
+      getAttributiesFromComment(comment, attributes);
+    }
+
+    return attributes;
+  };
+  //#endregion
+
   //#region read json
   /**
    * read json from absolute path
@@ -3225,15 +3247,15 @@ export namespace UtilsNetwork {
     },
   ): Promise<void> => {
     //#region @backendFunc
-options = options || {};
+    options = options || {};
     domainOrDomains = _.isArray(domainOrDomains)
       ? domainOrDomains
       : [domainOrDomains];
     for (const domain of domainOrDomains) {
-    if (!UtilsNetwork.isValidDomain(domain)) {
-      Helpers.error(`Invalid domain: "${domain}"`, false, true);
+      if (!UtilsNetwork.isValidDomain(domain)) {
+        Helpers.error(`Invalid domain: "${domain}"`, false, true);
+      }
     }
-}
 
     if (!(await isElevated())) {
       Helpers.error(
@@ -3244,11 +3266,11 @@ options = options || {};
     }
 
     return await new Promise(resolve => {
-for (const domain of domainOrDomains) {
-      const url = new URL(
-        domain.startsWith('http') ? domain : `http://${domain}`,
-      );
-            UtilsNetwork.setEtcHost(
+      for (const domain of domainOrDomains) {
+        const url = new URL(
+          domain.startsWith('http') ? domain : `http://${domain}`,
+        );
+        UtilsNetwork.setEtcHost(
           url.hostname,
           '127.0.0.1',
           '@simulatedDomainByTaon',
@@ -3259,7 +3281,7 @@ for (const domain of domainOrDomains) {
 
         You can access the simulated domain(s) at:
 
-        ${domainOrDomains
+${domainOrDomains
   .map(domain => {
     const url = new URL(
       domain.startsWith('http') ? domain : `http://${domain}`,
@@ -3273,16 +3295,16 @@ for (const domain of domainOrDomains) {
         your etc host path:
         ${chalk.underline(UtilsNetwork.getEtcHostsPath())}
 
-${
+       ${
          !options.triggerRevertChangesToEtcHosts
-           ? `        PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
+           ? `PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
         AND STOP SIMULATION`
            : ''
        }
 
         `);
       let closing = false;
-const revertChanges = () => {
+      const revertChanges = () => {
         console.log('Removing domain(s) from /etc/hosts');
         for (const domain of domainOrDomains) {
           const url = new URL(
@@ -3302,20 +3324,20 @@ const revertChanges = () => {
           resolve(void 0);
         });
       } else {
-      const currentRawMode = process.stdin.isRaw;
-      process.stdin.setRawMode(true);
-      process.stdin.resume();
-      process.stdin.on('data', () => {
-        if (closing) {
-          return;
-        }
+        const currentRawMode = process.stdin.isRaw;
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
+        process.stdin.on('data', () => {
+          if (closing) {
+            return;
+          }
 
-        closing = true;
-        revertChanges();
-        process.stdin.setRawMode(currentRawMode);
-        resolve(void 0);
-      });
-}
+          closing = true;
+          revertChanges();
+          process.stdin.setRawMode(currentRawMode);
+          resolve(void 0);
+        });
+      }
     });
 
     //#endregion
