@@ -3321,8 +3321,8 @@ ${domainOrDomains
           }
           revertChanges();
           sub.unsubscribe();
-          resolve(void 0);
         });
+        resolve(void 0);
       } else {
         const currentRawMode = process.stdin.isRaw;
         process.stdin.setRawMode(true);
