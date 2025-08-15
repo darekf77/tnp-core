@@ -3241,7 +3241,6 @@ export namespace UtilsNetwork {
 
         You can access the domain at:
 
-        ${chalk.underline(`http://${domain}`)}
         ${chalk.underline(`https://${domain}`)}
 
         (domain is now pointing to ${chalk.bold('localhost')}):
