@@ -14,7 +14,7 @@ import {
   fkill,
 } from './core-imports';
 import * as json5Write from 'json10-writer/src';
-import { Blob } from 'buffer';
+import { Blob } from 'buffer'; // @backend
 import { Dirent, Stats } from 'fs-extra';
 //#endregion
 //#region @browser
