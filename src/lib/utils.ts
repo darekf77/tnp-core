@@ -3168,7 +3168,7 @@ export namespace UtilsNetwork {
   };
   //#endregion
 
-  //#region utils network / getPortFromUrl
+  //#region utils network / get etc hosts path
   export const getEtcHostsPath = (): string => {
     let HOST_FILE_PATH = '';
     //#region @backend
