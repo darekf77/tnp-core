@@ -266,6 +266,7 @@ const win32Path = (p: string): string => {
   if (/^\/[a-z]\//.test(p)) {
     p = p.replace(/^\/[a-z]\//, `${p.charAt(1).toUpperCase()}:/`);
   }
+  // return _.upperFirst(path.win32.normalize(p)); // TODO maybe not needed
   return path.win32.normalize(p);
 };
 //#endregion

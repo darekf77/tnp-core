@@ -651,4 +651,9 @@ export namespace CoreModels {
   export type CfontAlign = 'left' | 'center' | 'right' | 'block';
 
   export const tagForTaskName = '@updateValueWithPortNumForTaskName';
+
+  /**
+   * @deprecated TODO I should remove it from here and from taon-typeorm somehow
+   */
+  export const OrignalClassKey = '$$originalClass$$';
 }
