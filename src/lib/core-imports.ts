@@ -33,7 +33,6 @@ import { path as pathMock } from './node-path-mock';
 //#endregion
 import * as _ from 'lodash';
 import * as q from 'q';
-import * as moment from 'moment';
 import * as dateformat from 'dateformat';
 import { Chalk } from 'chalk';
 import * as json5 from 'json5';
@@ -350,7 +349,6 @@ const crossPlatformPath = (
 export {
   _,
   q,
-  moment,
   dateformat,
   crossPlatformPath,
   win32Path,

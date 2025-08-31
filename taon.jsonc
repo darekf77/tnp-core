@@ -5,7 +5,6 @@
   "dependenciesNamesForNpmLib": [
     "axios",
     "glob",
-    "moment",
     "fkill",
     "copy-paste",
     "chokidar",
