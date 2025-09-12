@@ -2528,7 +2528,8 @@ export namespace UtilsTerminal {
   export const input = async ({
     defaultValue,
     question,
-    required, // TODO something is werid with required
+    required,
+    validate,
   }: {
     defaultValue?: string;
     question: string;
@@ -2540,17 +2541,25 @@ export namespace UtilsTerminal {
 
     const inquirer = await import('inquirer');
 
-    // Create an input prompt
-    const response = await inquirer.prompt({
-      type: 'input',
-      name: 'name',
-      message: question,
-      required,
-      default: initial,
-      // required: _.isNil(required) ? true : required,
-    });
-    const anwser = response.name;
-    return anwser;
+    while (true) {
+      // Create an input prompt
+      const response = await inquirer.prompt({
+        type: 'input',
+        name: 'name',
+        message: question,
+        required,
+        default: initial,
+        // required: _.isNil(required) ? true : required,
+      });
+      const anwser = response.name;
+      if (required && !anwser) {
+        continue;
+      }
+      if(_.isFunction(validate) && !validate(anwser)) {
+        continue;
+      }
+      return anwser;
+    }
     //#endregion
   };
   //#endregion
