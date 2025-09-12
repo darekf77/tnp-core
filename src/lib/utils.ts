@@ -2153,6 +2153,16 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
+  /**
+   * Check if cli is running in verbose mode
+   * @returns true if cli is running with arugment -verbose
+   */
+  export const isVerboseModeTaon = (): boolean => {
+    //#region @backendFunc
+    return !global.hideLog
+    //#endregion
+  }
+
   //#region clear
   export const clearConsole = (): void => {
     //#region @backendFunc
