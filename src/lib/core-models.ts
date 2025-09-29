@@ -656,4 +656,6 @@ export namespace CoreModels {
    * @deprecated TODO I should remove it from here and from taon-typeorm somehow
    */
   export const OrignalClassKey = '$$originalClass$$';
+
+  export const localhostIp127 = '127.0.0.1';
 }
