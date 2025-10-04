@@ -1893,6 +1893,10 @@ export namespace UtilsOs {
   //#endregion
 
   //#region utils os / is docker available
+  /**
+   * Check if docker is available on this system
+   * and it is running (daemon active)
+   */
   export const isDockerAvailable = async (): Promise<boolean> => {
     if (UtilsOs.isBrowser) {
       return false;
@@ -1912,6 +1916,15 @@ export namespace UtilsOs {
       } else {
         await execAsync('command -v docker');
       }
+
+      // 2. Check if docker daemon is running (try a lightweight command)
+      try {
+        await execAsync('docker info');
+        // or: await execAsync("docker ps --format '{{.ID}}' --no-trunc");
+      } catch (daemonError) {
+        return false; // docker installed but not running
+      }
+
       return true;
     } catch (error) {
       return false;
@@ -2159,9 +2172,9 @@ export namespace UtilsTerminal {
    */
   export const isVerboseModeTaon = (): boolean => {
     //#region @backendFunc
-    return !global.hideLog
+    return !global.hideLog;
     //#endregion
-  }
+  };
 
   //#region clear
   export const clearConsole = (): void => {
@@ -2565,7 +2578,7 @@ export namespace UtilsTerminal {
       if (required && !anwser) {
         continue;
       }
-      if(_.isFunction(validate) && !validate(anwser)) {
+      if (_.isFunction(validate) && !validate(anwser)) {
         continue;
       }
       return anwser;
