@@ -39,6 +39,7 @@ if (messageWasShown) {
 const PROJECT_NPM_NAME = require('./dist/lib/build-info._auto-generated_.js').PROJECT_NPM_NAME;
 console.log({PROJECT_NPM_NAME});
 const core = require('tnp-core/lib');
+const taon = require('taon/lib');
 
 var app = require('./dist/app').default;
 app({
@@ -46,8 +47,8 @@ app({
    onlyMigrationRevertToTimestamp: argsMinimist.onlyMigrationRevertToTimestamp,
    args: [process.argv.slice(2).map(c => `"${c}"`).join(',')]
 }).then(async () => {
-  const endpoints = core.CoreModels.ContextsEndpointStorage.Instance.arr || [];
-  await Promise.all(endpoints.map(c => c.initControllersHook(core.CoreModels.ContextsEndpointStorage.Instance)));
+  const endpoints = taon.ContextsEndpointStorage.Instance.arr || [];
+  await Promise.all(endpoints.map(c => c.initControllersHook(taon.ContextsEndpointStorage.Instance)));
   console.log(core.CoreModels.SPECIAL_APP_READY_MESSAGE);
 }).catch(err => {
   console.error(err);
