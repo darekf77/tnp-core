@@ -22,7 +22,7 @@ import { spawn, child_process } from './core-imports';
 import { fse } from './core-imports';
 import { CoreModels } from './core-models';
 
-import { Helpers } from './index';
+import { frameworkName, Helpers } from './index';
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
@@ -132,7 +132,7 @@ export namespace Utils {
       startFrom += 1;
       if (i++ === max) {
         Helpers.error(
-          `[taon-helpers]] failed to assign free port after ${max} trys...`,
+          `[taon-core]] failed to assign free port after ${max} trys...`,
         );
       }
     }
@@ -3568,6 +3568,25 @@ export namespace UtilsNetwork {
     fse.writeFileSync(hostsPath, content.join(os.EOL), 'utf8');
     //#endregion
   };
+  //#endregion
+
+  //#region utils network / etc host without localhost
+  export const etcHostHasProperLocalhostIp4Entry = (): boolean => {
+    //#region @backendFunc
+    const hostsPath = getEtcHostsPath();
+    let localhost = UtilsDotFile.getValueFromDotFile(hostsPath, '127.0.0.1');
+    return localhost === 'localhost';
+    //#endregion
+  };
+
+  export const etcHostHasProperLocalhostIp6Entry = (): boolean => {
+    //#region @backendFunc
+    const hostsPath = getEtcHostsPath();
+    let localhost = UtilsDotFile.getValueFromDotFile(hostsPath, '::1');
+    return localhost === 'localhost';
+    //#endregion
+  };
+
   //#endregion
 
   // Utility to escape domain for RegExp
