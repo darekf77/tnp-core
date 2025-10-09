@@ -1,6 +1,8 @@
 //#region imports
 import { Blob } from 'buffer'; // @backend
 import { ChildProcess } from 'child_process';
+import * as crypto from 'crypto'; // @backend
+import type { WriteStream } from 'fs';
 import * as net from 'net';
 import { URL } from 'url'; // @backend
 import { promisify } from 'util';
@@ -1415,6 +1417,7 @@ in location: ${cwd}
   };
   //#endregion
 
+  //#region utils process / kill all java processes
   /**
    * Kills all running Java processes cross‑platform.
    * @returns Promise<boolean> true if processes were killed, false if none found
@@ -1449,6 +1452,7 @@ in location: ${cwd}
     });
     //#endregion
   };
+  //#endregion
 
   //#region kill process on port
   export const killProcessOnPort = async (port: number): Promise<boolean> => {
@@ -1518,8 +1522,189 @@ in location: ${cwd}
     //#endregion
   };
   //#endregion
-}
 
+  //#region utils process / process file logger
+  export interface ProcessFileLoggerOptions {
+    name: string;
+    pid?: number;
+    ppid?: number;
+    hash?: string;
+    utime?: string;
+  }
+
+  const dummyFilename = 'file.log';
+
+  export const baseDirTaonProcessLogs = crossPlatformPath([
+    UtilsOs.getRealHomeDir(),
+    '.taon',
+    'log-files-for',
+  ]);
+
+  /**
+   * Logs the stdout and stderr of a ChildProcess to a file.
+   */
+  export class ProcessFileLogger<
+    T extends ProcessFileLoggerOptions = ProcessFileLoggerOptions,
+  > {
+    private logFilePath: string | null = null;
+    private writeStream: WriteStream | null = null;
+    private _processLogFilename: string | null = null;
+    public get processLogFilename(): string | null {
+      return this._processLogFilename;
+    }
+
+    constructor(
+      /**
+       * Options used to generate the log file name.
+       */
+      private dataForFilename: T,
+      private options?: {
+        baseDir?: string;
+        specialEvent?: {
+          stdout?: {
+            stringInStream: string;
+            callback: (data: string) => void;
+          };
+          stderr?: {
+            stringInStream: string;
+            callback: (data: string) => void;
+          };
+        };
+      },
+    ) {
+      //#region @backend
+      this.options = options || {};
+      this.options.baseDir = this.options.baseDir || baseDirTaonProcessLogs;
+
+      try {
+        fse.mkdirSync(this.options.baseDir, { recursive: true });
+      } catch (error) {
+        Helpers.warn(
+          `[ProcessFileLogger]: Could not create log directory: ${this.options.baseDir}`,
+        );
+      }
+      //#endregion
+    }
+
+    startLogging(proc: ChildProcess): void {
+      //#region @backendFunc
+      const options = _.cloneDeep(this.dataForFilename);
+      const utime = options.utime
+        ? options.utime
+        : new Date().toISOString().replace(/[:.]/g, '-');
+
+      const hash = options.hash
+        ? options.hash
+        : crypto.randomBytes(4).toString('hex');
+
+      options.utime = utime;
+      options.hash = hash;
+
+      const filenameWithMetadata = FilePathMetaData.embedData(
+        options,
+        dummyFilename,
+        {
+          skipAddingBasenameAtEnd: true,
+        },
+      );
+
+      this._processLogFilename = `${filenameWithMetadata}.log`;
+      this.logFilePath = crossPlatformPath([
+        this.options.baseDir,
+        this._processLogFilename,
+      ]);
+
+      this.writeStream = fse.createWriteStream(this.logFilePath, {
+        flags: 'a',
+      });
+
+      const specialEventStdoutCallback =
+        this.options?.specialEvent?.stderr?.callback;
+      const specialEventStderrCallback =
+        this.options?.specialEvent?.stderr?.callback;
+      const specialEventStdoutString =
+        this.options?.specialEvent?.stdout?.stringInStream;
+      const specialEventStderrString =
+        this.options?.specialEvent?.stderr?.stringInStream;
+
+      const update = (data: Buffer | string, type: 'stdout' | 'stderr') => {
+        if (!this.writeStream) return;
+
+        if (data?.toString().includes(specialEventStdoutString || '')) {
+          specialEventStdoutCallback &&
+            specialEventStdoutCallback(data.toString());
+        }
+
+        if (data?.toString().includes(specialEventStderrString || '')) {
+          specialEventStderrCallback &&
+            specialEventStderrCallback(data.toString());
+        }
+
+        this.writeStream.write(
+          `[${new Date().toISOString()}] [${type}] ${data.toString()}`,
+        );
+      };
+
+      proc.stdout?.on('data', d => update(d, 'stdout'));
+      proc.stderr?.on('data', d => update(d, 'stderr'));
+
+      // prevent leaks
+      proc.on('close', () => this.stopLogging());
+      proc.on('exit', () => this.stopLogging());
+      proc.on('error', () => this.stopLogging());
+      //#endregion
+    }
+
+    stopLogging(): void {
+      //#region @backendFunc
+      if (this.writeStream) {
+        this.writeStream.end();
+        this.writeStream = null;
+      }
+      //#endregion
+    }
+
+    /**
+     * Externally update the log file with additional stdout/stderr data.
+     */
+    update(stdout: string, stderr?: string): void {
+      //#region @backendFunc
+      if (!this.writeStream) return;
+      if (stdout)
+        this.writeStream.write(
+          `[${new Date().toISOString()}] [stdout] ${stdout}\n`,
+        );
+      if (stderr)
+        this.writeStream.write(
+          `[${new Date().toISOString()}] [stderr] ${stderr}\n`,
+        );
+      //#endregion
+    }
+
+    static getLogsFiles<
+      T extends ProcessFileLoggerOptions = ProcessFileLoggerOptions,
+    >(options: T, baseDir: string): string[] {
+      //#region @backendFunc
+      if (!fse.existsSync(baseDir)) return [];
+      const files = fse.readdirSync(baseDir);
+      return files
+        .filter(f => {
+          const processName = FilePathMetaData.embedData(
+            options,
+            dummyFilename,
+            {
+              skipAddingBasenameAtEnd: true,
+            },
+          );
+
+          return f.startsWith(processName + '_') && f.endsWith('.log');
+        })
+        .map(f => crossPlatformPath([baseDir, f]));
+      //#endregion
+    }
+  }
+  //#endregion
+}
 //#endregion
 
 //#region utils os
@@ -3101,6 +3286,131 @@ export namespace UtilsYaml {
     const yamlString = jsonToYaml(json);
     Helpers.writeFile(destinationYamlfileAbsPath, yamlString);
     //#endregion
+  };
+  //#endregion
+}
+//#endregion
+
+//#region utils filepath metadata
+export namespace FilePathMetaData {
+  const TERMINATOR = 'xxxxx'; // terminates metadata block
+  const KV_SEPARATOR = '...'; // key/value separator
+  const PAIR_SEPARATOR = 'IxIxI'; // between pairs
+
+  //#region embed data into filename
+  /**
+   * Embed metadata into filename while preserving the extension.
+   *
+   * Example:
+   * embedData({ version: "1.2.3", envName: "__" }, "project.zip")
+   * -> "version|-|1.2.3||--||envName|-|__|||project.zip"
+   *
+   * keysMap = {
+   *  projectName: "pn",
+   *  envName: "en",
+   *  version: "v"
+   * }
+   */
+  export const embedData = <T extends Record<string, any>>(
+    data: T,
+    orgFilename: string,
+    options?: {
+      skipAddingBasenameAtEnd?: boolean; // default false
+      keysMap?: Record<keyof T, string>; // optional mapping of keys
+    },
+  ): string => {
+    options = options || {};
+    const ext = path.extname(orgFilename);
+    const base = path.basename(orgFilename, ext);
+
+    const meta = Object.entries(data)
+      .map(([key, value]) => {
+        if (options.keysMap && options.keysMap[key as keyof T]) {
+          key = options.keysMap[key as keyof T];
+        }
+        return `${key}${KV_SEPARATOR}${value ?? ''}`;
+      })
+      .join(PAIR_SEPARATOR);
+
+    return `${meta}${TERMINATOR}${
+      options.skipAddingBasenameAtEnd ? '' : base
+    }${ext}`;
+  };
+  //#endregion
+
+  //#region extract data from filename
+  /**
+   * Extract metadata from filename (reverse of embedData).
+   *
+   * Example:
+   * extractData<{ version: string; env: string }>("myfile__version-1.2.3__env-prod.zip")
+   * -> { version: "1.2.3", env: "prod" }
+   *
+   * keysMap = {
+   *  projectName: "pn",
+   *  envName: "en",
+   *  version: "v"
+   * }
+   */
+  export const extractData = <T extends Record<string, any>>(
+    filename: string,
+    options?: {
+      keysMap?: Record<keyof T, string>; // optional mapping of keys
+    },
+  ): T => {
+    options = options || {};
+    const ext = path.extname(filename);
+    const thereIsNoExt = ext.includes('|') || ext.includes('-');
+    const base = thereIsNoExt ? filename : path.basename(filename, ext);
+
+    // Everything BEFORE the FIRST TERMINATOR
+    const idx = base.lastIndexOf(TERMINATOR);
+    const metaPart = idx >= 0 ? base.substring(0, idx) : base;
+
+    const data: Record<string, string> = {};
+
+    let cursor = 0;
+    while (cursor <= metaPart.length) {
+      const sepIdx = metaPart.indexOf(PAIR_SEPARATOR, cursor);
+      const segment =
+        sepIdx === -1
+          ? metaPart.substring(cursor)
+          : metaPart.substring(cursor, sepIdx);
+
+      if (segment) {
+        const kvIdx = segment.indexOf(KV_SEPARATOR);
+        if (kvIdx > -1) {
+          const key = segment.substring(0, kvIdx);
+          const value = segment.substring(kvIdx + KV_SEPARATOR.length);
+          let finalKey = options.keysMap
+            ? (Object.keys(options.keysMap || {}).find(
+                k => options.keysMap[k as keyof T] === key,
+              ) as keyof T)
+            : key;
+          data[finalKey as string] = value;
+        }
+      }
+
+      if (sepIdx === -1) break;
+      cursor = sepIdx + PAIR_SEPARATOR.length;
+    }
+
+    return data as T;
+  };
+  //#endregion
+
+  //#region get only metadata string
+  export const getOnlyMetadataString = (filename: string): string => {
+    const ext = path.extname(filename);
+    const base = path.basename(filename, ext);
+
+    const idx = base.lastIndexOf(TERMINATOR);
+    if (idx === -1) return ''; // no terminator
+
+    const metaPart = base.substring(0, idx);
+    if (!metaPart.trim()) return ''; // empty metadata
+
+    return metaPart;
   };
   //#endregion
 }
