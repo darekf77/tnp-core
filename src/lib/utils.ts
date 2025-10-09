@@ -3138,9 +3138,7 @@ export namespace UtilsDotFile {
       // Create file if it doesn't exist
       Helpers.writeFile(dotFileAbsPath, '');
       Helpers.logInfo(
-        `[${frameworkName}-core] Created ${path.basename(
-          dotFileAbsPath,
-        )}`,
+        `[${frameworkName}-core] Created ${path.basename(dotFileAbsPath)}`,
       );
       envContent = '';
     }
@@ -3183,9 +3181,7 @@ export namespace UtilsDotFile {
     } else {
       Helpers.writeFile(dotFileAbsPath, '');
       Helpers.logInfo(
-        `[${frameworkName}-core] Created ${path.basename(
-          dotFileAbsPath,
-        )}`,
+        `[${frameworkName}-core] Created ${path.basename(dotFileAbsPath)}`,
       );
       envContent = '';
     }
@@ -3206,9 +3202,7 @@ export namespace UtilsDotFile {
 
     Helpers.writeFile(dotFileAbsPath, envContent);
     Helpers.info(
-      `[${
-        frameworkName
-      }-core] Updated comment for ${key} in ${path.basename(
+      `[${frameworkName}-core] Updated comment for ${key} in ${path.basename(
         dotFileAbsPath,
       )}`,
     );
@@ -3548,6 +3542,95 @@ export namespace UtilsNetwork {
   };
   //#endregion
 
+  //#region utils network / get Etc Host Entry By Domain
+  export const getEtcHostEntryByDomain = (
+    domain: string,
+  ): { ip: string | null; comment: string | null } => {
+    //#region @backendFunc
+    const hostsPath = getEtcHostsPath();
+
+    if (!domain || /\s/.test(domain)) {
+      throw new Error('Invalid domain');
+    }
+
+    const lines = fse.readFileSync(hostsPath, 'utf8').split(/\r?\n/);
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Skip comments or empty lines
+      if (!trimmed || trimmed.startsWith('#')) continue;
+
+      // Extract comment (if any)
+      const [entryPart, ...commentParts] = trimmed.split('#');
+      const comment = commentParts.length
+        ? commentParts.join('#').trim()
+        : null;
+
+      // Split IP + domains by whitespace
+      const tokens = entryPart.trim().split(/\s+/);
+      console.log({ tokens });
+      if (tokens.length < 2) continue;
+
+      const [ip, ...domains] = tokens;
+      if (domains.includes(domain)) {
+        return { ip, comment };
+      }
+    }
+
+    return { ip: null, comment: null };
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils network /  get etc host entries by ip
+  /**
+   * Returns all host entries for a given IP address.
+   *
+   * Example output:
+   *   getEtcHostEntryByIp("127.0.0.1")
+   *   => [
+   *        { domains: ["localhost"], comment: null },
+   *        { domains: ["myapp.local", "dev.local"], comment: "local testing" }
+   *      ]
+   */
+  export const getEtcHostEntryByIp = (
+    ip: string,
+  ): { domains: string[]; comment: string | null }[] => {
+    //#region @backendFunc
+    const hostsPath = getEtcHostsPath();
+
+    if (!ip || /\s/.test(ip)) {
+      throw new Error('Invalid IP address');
+    }
+
+    const lines = fse.readFileSync(hostsPath, 'utf8').split(/\r?\n/);
+    const results: { domains: string[]; comment: string | null }[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+
+      // Split off inline comment
+      const [entryPart, ...commentParts] = trimmed.split('#');
+      const comment = commentParts.length
+        ? commentParts.join('#').trim()
+        : null;
+
+      const tokens = entryPart.trim().split(/\s+/);
+      if (tokens.length < 2) continue;
+
+      const [lineIp, ...domains] = tokens;
+      if (lineIp === ip && domains.length > 0) {
+        results.push({ domains, comment });
+      }
+    }
+
+    return results;
+    //#endregion
+  };
+  //#endregion
+
   //#region utils network / removeEtcHost
   /**
    * Remove all lines containing the given domain
@@ -3573,17 +3656,15 @@ export namespace UtilsNetwork {
   //#region utils network / etc host without localhost
   export const etcHostHasProperLocalhostIp4Entry = (): boolean => {
     //#region @backendFunc
-    const hostsPath = getEtcHostsPath();
-    let localhost = UtilsDotFile.getValueFromDotFile(hostsPath, '127.0.0.1');
-    return localhost === 'localhost';
+    let localhost = getEtcHostEntryByIp('127.0.0.1');
+    return localhost.some(entry => entry.domains.includes('localhost'));
     //#endregion
   };
 
   export const etcHostHasProperLocalhostIp6Entry = (): boolean => {
     //#region @backendFunc
-    const hostsPath = getEtcHostsPath();
-    let localhost = UtilsDotFile.getValueFromDotFile(hostsPath, '::1');
-    return localhost === 'localhost';
+    let localhost = getEtcHostEntryByIp('::1');
+    return localhost.some(entry => entry.domains.includes('localhost'));
     //#endregion
   };
 
