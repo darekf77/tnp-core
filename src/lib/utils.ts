@@ -1522,188 +1522,6 @@ in location: ${cwd}
     //#endregion
   };
   //#endregion
-
-  //#region utils process / process file logger
-  export interface ProcessFileLoggerOptions {
-    name: string;
-    pid?: number;
-    ppid?: number;
-    hash?: string;
-    utime?: string;
-  }
-
-  const dummyFilename = 'file.log';
-
-  export const baseDirTaonProcessLogs = crossPlatformPath([
-    UtilsOs.getRealHomeDir(),
-    '.taon',
-    'log-files-for',
-  ]);
-
-  /**
-   * Logs the stdout and stderr of a ChildProcess to a file.
-   */
-  export class ProcessFileLogger<
-    T extends ProcessFileLoggerOptions = ProcessFileLoggerOptions,
-  > {
-    private logFilePath: string | null = null;
-    private writeStream: WriteStream | null = null;
-    private _processLogFilename: string | null = null;
-    public get processLogFilename(): string | null {
-      return this._processLogFilename;
-    }
-
-    constructor(
-      /**
-       * Options used to generate the log file name.
-       */
-      private dataForFilename: T,
-      private options?: {
-        baseDir?: string;
-        specialEvent?: {
-          stdout?: {
-            stringInStream: string;
-            callback: (data: string) => void;
-          };
-          stderr?: {
-            stringInStream: string;
-            callback: (data: string) => void;
-          };
-        };
-      },
-    ) {
-      //#region @backend
-      this.options = options || {};
-      this.options.baseDir = this.options.baseDir || baseDirTaonProcessLogs;
-
-      try {
-        fse.mkdirSync(this.options.baseDir, { recursive: true });
-      } catch (error) {
-        Helpers.warn(
-          `[ProcessFileLogger]: Could not create log directory: ${this.options.baseDir}`,
-        );
-      }
-      //#endregion
-    }
-
-    startLogging(proc: ChildProcess): void {
-      //#region @backendFunc
-      const options = _.cloneDeep(this.dataForFilename);
-      const utime = options.utime
-        ? options.utime
-        : new Date().toISOString().replace(/[:.]/g, '-');
-
-      const hash = options.hash
-        ? options.hash
-        : crypto.randomBytes(4).toString('hex');
-
-      options.utime = utime;
-      options.hash = hash;
-
-      const filenameWithMetadata = FilePathMetaData.embedData(
-        options,
-        dummyFilename,
-        {
-          skipAddingBasenameAtEnd: true,
-        },
-      );
-
-      this._processLogFilename = `${filenameWithMetadata}.log`;
-      this.logFilePath = crossPlatformPath([
-        this.options.baseDir,
-        this._processLogFilename,
-      ]);
-
-      this.writeStream = fse.createWriteStream(this.logFilePath, {
-        flags: 'a',
-      });
-
-      const specialEventStdoutCallback =
-        this.options?.specialEvent?.stderr?.callback;
-      const specialEventStderrCallback =
-        this.options?.specialEvent?.stderr?.callback;
-      const specialEventStdoutString =
-        this.options?.specialEvent?.stdout?.stringInStream;
-      const specialEventStderrString =
-        this.options?.specialEvent?.stderr?.stringInStream;
-
-      const update = (data: Buffer | string, type: 'stdout' | 'stderr') => {
-        if (!this.writeStream) return;
-
-        if (data?.toString().includes(specialEventStdoutString || '')) {
-          specialEventStdoutCallback &&
-            specialEventStdoutCallback(data.toString());
-        }
-
-        if (data?.toString().includes(specialEventStderrString || '')) {
-          specialEventStderrCallback &&
-            specialEventStderrCallback(data.toString());
-        }
-
-        this.writeStream.write(
-          `[${new Date().toISOString()}] [${type}] ${data.toString()}`,
-        );
-      };
-
-      proc.stdout?.on('data', d => update(d, 'stdout'));
-      proc.stderr?.on('data', d => update(d, 'stderr'));
-
-      // prevent leaks
-      proc.on('close', () => this.stopLogging());
-      proc.on('exit', () => this.stopLogging());
-      proc.on('error', () => this.stopLogging());
-      //#endregion
-    }
-
-    stopLogging(): void {
-      //#region @backendFunc
-      if (this.writeStream) {
-        this.writeStream.end();
-        this.writeStream = null;
-      }
-      //#endregion
-    }
-
-    /**
-     * Externally update the log file with additional stdout/stderr data.
-     */
-    update(stdout: string, stderr?: string): void {
-      //#region @backendFunc
-      if (!this.writeStream) return;
-      if (stdout)
-        this.writeStream.write(
-          `[${new Date().toISOString()}] [stdout] ${stdout}\n`,
-        );
-      if (stderr)
-        this.writeStream.write(
-          `[${new Date().toISOString()}] [stderr] ${stderr}\n`,
-        );
-      //#endregion
-    }
-
-    static getLogsFiles<
-      T extends ProcessFileLoggerOptions = ProcessFileLoggerOptions,
-    >(options: T, baseDir: string): string[] {
-      //#region @backendFunc
-      if (!fse.existsSync(baseDir)) return [];
-      const files = fse.readdirSync(baseDir);
-      return files
-        .filter(f => {
-          const processName = FilePathMetaData.embedData(
-            options,
-            dummyFilename,
-            {
-              skipAddingBasenameAtEnd: true,
-            },
-          );
-
-          return f.startsWith(processName + '_') && f.endsWith('.log');
-        })
-        .map(f => crossPlatformPath([baseDir, f]));
-      //#endregion
-    }
-  }
-  //#endregion
 }
 //#endregion
 
@@ -4087,6 +3905,209 @@ ${domainOrDomains
 
     //#endregion
   };
+  //#endregion
+}
+//#endregion
+
+//#region utils process logger
+export namespace UtilsProcessLogger {
+  //#region utils process / process file logger options
+  export interface ProcessFileLoggerOptions {
+    name: string;
+    id?: string | number;
+    pid?: number;
+    ppid?: number;
+    hash?: string;
+    utime?: string;
+  }
+  //#endregion
+
+  //#region utils process / special event in process logger
+  export interface SpecialEventInProcessLogger {
+    stdout?: {
+      stringInStream: string;
+      callback: (data: string) => void;
+    }[];
+    stderr?: {
+      stringInStream: string;
+      callback: (data: string) => void;
+    }[];
+  }
+  //#endregion
+
+  //#region utils process / constants
+  const dummyFilename = 'file.log';
+
+  export const baseDirTaonProcessLogs = crossPlatformPath([
+    UtilsOs.getRealHomeDir(),
+    '.taon',
+    'log-files-for',
+  ]);
+  //#endregion
+
+  //#region utils process / get log files
+  export const getLogsFiles = <
+    T extends ProcessFileLoggerOptions = ProcessFileLoggerOptions,
+  >(
+    options: T,
+    baseDir: string,
+  ): string[] => {
+    //#region @backendFunc
+    if (!fse.existsSync(baseDir)) return [];
+    const files = fse.readdirSync(baseDir);
+    return files
+      .filter(f => {
+        const processName = FilePathMetaData.embedData(options, dummyFilename, {
+          skipAddingBasenameAtEnd: true,
+        });
+
+        return f.startsWith(processName + '_') && f.endsWith('.log');
+      })
+      .map(f => crossPlatformPath([baseDir, f]));
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils process / process file logger class
+  /**
+   * Logs the stdout and stderr of a ChildProcess to a file.
+   */
+  export class ProcessFileLogger<
+    T extends ProcessFileLoggerOptions = ProcessFileLoggerOptions,
+  > {
+    //#region fields & getters
+    private logFilePath: string | null = null;
+    private writeStream: WriteStream | null = null;
+    private _processLogFilename: string | null = null;
+    public get processLogFilename(): string | null {
+      return this._processLogFilename;
+    }
+    //#endregion
+
+    //#region constructor
+    constructor(
+      /**
+       * Options used to generate the log file name.
+       */
+      private dataForFilename: T,
+      private options?: {
+        baseDir?: string;
+        specialEvent?: SpecialEventInProcessLogger;
+      },
+    ) {
+      //#region @backend
+      this.options = options || {};
+      this.options.baseDir = this.options.baseDir || baseDirTaonProcessLogs;
+
+      try {
+        fse.mkdirSync(this.options.baseDir, { recursive: true });
+      } catch (error) {
+        Helpers.warn(
+          `[ProcessFileLogger]: Could not create log directory: ${this.options.baseDir}`,
+        );
+      }
+      //#endregion
+    }
+    //#endregion
+
+    //#region start logging
+    startLogging(proc: ChildProcess): void {
+      //#region @backendFunc
+      const options = _.cloneDeep(this.dataForFilename);
+      const utime = options.utime
+        ? options.utime
+        : new Date().toISOString().replace(/[:.]/g, '-');
+
+      const hash = options.hash
+        ? options.hash
+        : crypto.randomBytes(4).toString('hex');
+
+      options.utime = utime;
+      options.hash = hash;
+
+      const filenameWithMetadata = FilePathMetaData.embedData(
+        options,
+        dummyFilename,
+        {
+          skipAddingBasenameAtEnd: true,
+        },
+      );
+
+      this._processLogFilename = `${filenameWithMetadata}.log`;
+      this.logFilePath = crossPlatformPath([
+        this.options.baseDir,
+        this._processLogFilename,
+      ]);
+
+      this.writeStream = fse.createWriteStream(this.logFilePath, {
+        flags: 'a',
+      });
+
+      const update = (data: Buffer | string, type: 'stdout' | 'stderr') => {
+        if (!this.writeStream) return;
+
+        if (type === 'stdout') {
+          for (const c of this.options.specialEvent?.stdout || []) {
+            if (data?.toString().includes(c.stringInStream || '')) {
+              c.callback && c.callback(data.toString());
+            }
+          }
+        }
+
+        if (type === 'stderr') {
+          for (const c of this.options.specialEvent?.stderr || []) {
+            if (data?.toString().includes(c.stringInStream || '')) {
+              c.callback && c.callback(data.toString());
+            }
+          }
+        }
+
+        this.writeStream.write(
+          `[${new Date().toISOString()}] [${type}] ${data.toString()}`,
+        );
+      };
+
+      proc.stdout?.on('data', d => update(d, 'stdout'));
+      proc.stderr?.on('data', d => update(d, 'stderr'));
+
+      // prevent leaks
+      proc.on('close', () => this.stopLogging());
+      proc.on('exit', () => this.stopLogging());
+      proc.on('error', () => this.stopLogging());
+      //#endregion
+    }
+    //#endregion
+
+    //#region stop logging
+    stopLogging(): void {
+      //#region @backendFunc
+      if (this.writeStream) {
+        this.writeStream.end();
+        this.writeStream = null;
+      }
+      //#endregion
+    }
+    //#endregion
+
+    //#region external update
+    /**
+     * Externally update the log file with additional stdout/stderr data.
+     */
+    update(stdout: string, stderr?: string): void {
+      //#region @backendFunc
+      if (!this.writeStream) return;
+      if (stdout)
+        this.writeStream.write(
+          `[${new Date().toISOString()}] [stdout] ${stdout}\n`,
+        );
+      if (stderr)
+        this.writeStream.write(
+          `[${new Date().toISOString()}] [stderr] ${stderr}\n`,
+        );
+      //#endregion
+    }
+    //#endregion
+  }
   //#endregion
 }
 //#endregion
