@@ -2158,13 +2158,13 @@ export namespace UtilsTerminal {
   //#endregion
 
   //#region wait
-  export const waitMiliseconds = (miliseconds: number): Promise<void> => {
-    // Helpers.taskStarted(`Waiting ${miliseconds} miliseconds...`);
+  export const waitMilliseconds = (milliseconds: number): Promise<void> => {
+    // Helpers.taskStarted(`Waiting ${milliseconds} milliseconds...`);
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        // Helpers.taskDone(`Done waiting ${miliseconds} miliseconds`);
+        // Helpers.taskDone(`Done waiting ${milliseconds} milliseconds`);
         resolve(void 0);
-      }, miliseconds);
+      }, milliseconds);
     });
   };
   //#endregion
