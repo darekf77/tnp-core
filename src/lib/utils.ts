@@ -1454,7 +1454,7 @@ in location: ${cwd}
   };
   //#endregion
 
-  //#region kill process on port
+  //#region utils process / kill process on port
   export const killProcessOnPort = async (port: number): Promise<boolean> => {
     if (!port || isNaN(port) || UtilsOs.isBrowser) {
       Helpers.warn(
@@ -1522,6 +1522,44 @@ in location: ${cwd}
     //#endregion
   };
   //#endregion
+
+  export const isNodeVersionOk = (options?: {
+    required?: string;
+    log?: boolean;
+    throwErrorIfNotOk?: boolean;
+  }): boolean => {
+    if (!globalThis || !globalThis.process || !globalThis.process.version) {
+      return false;
+    }
+    options = options || ({} as any);
+    options.required = options.required || '18.0.0';
+    const current = globalThis.process.version.replace(/^v/, '');
+    const [curMajor, curMinor, curPatch] = current.split('.').map(Number);
+    const [reqMajor, reqMinor, reqPatch] = options.required
+      .replace(/^v/, '')
+      .split('.')
+      .map(Number);
+
+    const ok =
+      curMajor > reqMajor ||
+      (curMajor === reqMajor && curMinor > reqMinor) ||
+      (curMajor === reqMajor && curMinor === reqMinor && curPatch >= reqPatch);
+
+    if (options?.log) {
+      console.log(
+        ok
+          ? `✅ Node.js version OK (required ≥ ${options.required}, current ${current})`
+          : `❌ Node.js version too low (required ≥ ${options.required}, current ${current})`,
+      );
+    }
+    if (options?.throwErrorIfNotOk && !ok) {
+      throw new Error(
+        `Node.js version too low (required ≥ ${options.required}, current ${current})`,
+      );
+    }
+
+    return ok;
+  };
 }
 //#endregion
 
@@ -2049,6 +2087,8 @@ export namespace UtilsOs {
     //#endregion
   };
   //#endregion
+
+  export const isNodeVersionOk = UtilsProcess.isNodeVersionOk;
 
   export const isElectron = isRunningInElectron();
   export const isBrowser = isRunningInBrowser();
