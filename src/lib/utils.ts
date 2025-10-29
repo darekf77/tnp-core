@@ -4226,3 +4226,106 @@ export namespace UtilsProcessLogger {
   //#endregion
 }
 //#endregion
+
+//#region utils cli
+/**
+ * Easy way to connect CLI commands to cli class methods.
+ *
+ * Example:
+ * in clic class
+ *
+ * $FirstCli {
+ *   static [UtilsCliClassMethod.staticClassNameProperty] = '$FirstCli';
+ *
+ *   @UtilsCliClassMethod.decoratorMethod('doSomething')
+ *   doSomething() {
+ *     console.log('doing something');
+ *   }
+ * }
+ *
+ * UtilsCliClassMethod.getFrom($FirstCli.prototype.doSomething) // "firstcli:dosomething"
+ *
+ */
+export namespace UtilsCliClassMethod {
+  const CLI_METHOD_KEY = Symbol('cliMethod');
+  const unknowClass = 'unknownclass';
+
+  // does not work
+  // export const decoratorClass = (className: string) => {
+  //   return function (target: Function) {
+  //     // console.log(target);
+  //     // console.log('Decorating class with CLI name:', className);
+  //     // debugger;
+  //     // const classFn = (target?.constructor || {}) as Function;
+  //     target[CoreModels.ClassNameStaticProperty] = className;
+  //     return target;
+  //   };
+  // };
+
+  export const staticClassNameProperty = CoreModels.ClassNameStaticProperty;
+
+  export const decoratorMethod = (methodName: string): MethodDecorator => {
+    return (target, propertyKey, descriptor) => {
+      //#region @backendFunc
+      // If name not given, fallback to property key
+      const classFnConstructor = (target?.constructor || {}) as Function;
+      const className =
+        target[CoreModels.ClassNameStaticProperty] ||
+        classFnConstructor[CoreModels.ClassNameStaticProperty] ||
+        unknowClass;
+
+      if (!className || className === unknowClass) {
+        debugger;
+      }
+      Reflect.defineMetadata(
+        CLI_METHOD_KEY,
+        `${_.camelCase(className).toLowerCase()}` +
+          `:${_.camelCase(
+            (methodName as string) ?? (propertyKey as string),
+          ).toLowerCase()}`,
+        descriptor.value!,
+      );
+      //#endregion
+    };
+  };
+
+  export const getFrom = <ARGS_TO_PARSE = any>(
+    ClassPrototypeMethodFnHere: Function,
+    options?: {
+      globalMethod?: boolean;
+      argsToParse?: ARGS_TO_PARSE;
+    },
+  ): string => {
+    //#region @backendFunc
+    options = options || {};
+    const fullCliMethodName = Reflect.getMetadata(
+      CLI_METHOD_KEY,
+      ClassPrototypeMethodFnHere,
+    ) as string;
+    if (!fullCliMethodName) {
+      console.log('prototype: ', ClassPrototypeMethodFnHere);
+      throw new Error(
+        `No CLI method metadata found. Did you forget to add @UtilsCliClassMethod.decoratorMethod('methodName')?`,
+      );
+    }
+
+    const argsToParse = options.argsToParse
+      ? Object.keys(options.argsToParse)
+          .map(c => `--${c}=${options.argsToParse}`)
+          .join(' ')
+      : '';
+
+    if (options.globalMethod) {
+      return fullCliMethodName.split(':')[1] + ` ${argsToParse}`;
+    }
+    if (fullCliMethodName.startsWith(`${unknowClass}:`)) {
+      debugger;
+      throw new Error(
+        `Cannot get CLI method for unknown class. Did you forget to add @CLASS.NAME('ClassName') to the class?`,
+      );
+    }
+    return fullCliMethodName + ` ${argsToParse}`;
+    //#endregion
+  };
+}
+//#endregion
