@@ -1454,7 +1454,23 @@ in location: ${cwd}
   };
   //#endregion
 
-  //#region kill process on port
+  //#region utils process / kill process by pid or child process
+  export const killProcess = async (
+    pidOrProcess: number | ChildProcess,
+  ): Promise<void> => {
+    //#region @backendFunc
+    const pid =
+      typeof pidOrProcess === 'number' ? pidOrProcess : pidOrProcess.pid;
+    if (process.platform === 'win32') {
+      spawn('taskkill', ['/pid', String(pid), '/T', '/F']);
+    } else {
+      process.kill(-pid);
+    }
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils process / kill process on port
   export const killProcessOnPort = async (port: number): Promise<boolean> => {
     if (!port || isNaN(port) || UtilsOs.isBrowser) {
       Helpers.warn(
