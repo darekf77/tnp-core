@@ -4083,12 +4083,12 @@ export namespace UtilsProcessLogger {
     if (!fse.existsSync(baseDir)) return [];
     const files = fse.readdirSync(baseDir);
     return files
-      .filter(f => {
+      .filter(filesBasename => {
         const processName = FilePathMetaData.embedData(options, dummyFilename, {
           skipAddingBasenameAtEnd: true,
         });
 
-        return f.startsWith(processName + '_') && f.endsWith('.log');
+        return filesBasename.startsWith(processName) && filesBasename.endsWith('.log');
       })
       .map(f => crossPlatformPath([baseDir, f]));
     //#endregion
@@ -4106,6 +4106,9 @@ export namespace UtilsProcessLogger {
     private logFilePath: string | null = null;
     private writeStream: WriteStream | null = null;
     private _processLogFilename: string | null = null;
+    private lastNLinesFromStderr: string[] = [];
+    private lastNLinesFromStdout: string[] = [];
+    private lastNLinesFromOfOutput: string[] = [];
     public get processLogFilename(): string | null {
       return this._processLogFilename;
     }
@@ -4138,7 +4141,20 @@ export namespace UtilsProcessLogger {
     //#endregion
 
     //#region start logging
-    startLogging(proc: ChildProcess): void {
+    startLogging(proc: ChildProcess, cacheCallback?:{
+      /**
+       * @default 40
+       */
+      cacheLinesMax?:number,
+      /**
+       * Throttle in ms for callback update()
+       */
+      throttleMs?:number,
+      /**
+       * Special callback function for saving stuff in db/memory or elsewhere
+       */
+      update:(opt:{outputLines:string, stderrLines:string, stdoutLines:string})=>void
+    }): void {
       //#region @backendFunc
       const options = _.cloneDeep(this.dataForFilename);
       const utime = options.utime
@@ -4170,10 +4186,38 @@ export namespace UtilsProcessLogger {
         flags: 'a',
       });
 
+      if(cacheCallback) {
+        cacheCallback.cacheLinesMax = cacheCallback.cacheLinesMax || 40;
+        cacheCallback.throttleMs = cacheCallback.throttleMs || 1000;
+        this.lastNLinesFromOfOutput = [];
+        this.lastNLinesFromStderr = [];
+        this.lastNLinesFromStdout = [];
+      }
+
+      const throttledUpdate = cacheCallback ? _.throttle(() => {
+        cacheCallback.update({
+          outputLines: this.lastNLinesFromOfOutput.join('\n'),
+          stderrLines: this.lastNLinesFromStderr.join('\n'),
+          stdoutLines: this.lastNLinesFromStdout.join('\n'),
+        });
+      }, cacheCallback.throttleMs) : null;
+
       const update = (data: Buffer | string, type: 'stdout' | 'stderr') => {
+        if(cacheCallback) {
+          this.lastNLinesFromOfOutput.push(data.toString())
+          if(type === 'stdout') {
+            this.lastNLinesFromStdout.push(data.toString());
+          }
+          if(type === 'stderr') {
+            this.lastNLinesFromStderr.push(data.toString());
+          }
+          throttledUpdate();
+        }
+
         if (!this.writeStream) return;
 
         if (type === 'stdout') {
+          // ! TODO @LAST add throttled for this
           for (const c of this.options.specialEvent?.stdout || []) {
             if (data?.toString().includes(c.stringInStream || '')) {
               c.callback && c.callback(data.toString());
@@ -4182,6 +4226,7 @@ export namespace UtilsProcessLogger {
         }
 
         if (type === 'stderr') {
+          // ! TODO @LAST add throttled for this
           for (const c of this.options.specialEvent?.stderr || []) {
             if (data?.toString().includes(c.stringInStream || '')) {
               c.callback && c.callback(data.toString());
