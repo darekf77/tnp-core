@@ -1460,8 +1460,17 @@ in location: ${cwd}
     pidOrProcess: number | ChildProcess,
   ): Promise<void> => {
     //#region @backendFunc
-    const pid =
-      typeof pidOrProcess === 'number' ? pidOrProcess : pidOrProcess.pid;
+    const pid = Number(
+      typeof pidOrProcess === 'object' ? pidOrProcess.pid: pidOrProcess
+    );
+
+    if(isNaN(pid)){
+      Helpers.warn(
+        `[UtilsProcess.killProcess]: Invalid PID: ${pid}`,
+      );
+      return;
+    }
+
     if (process.platform === 'win32') {
       spawn('taskkill', ['/pid', String(pid), '/T', '/F']);
     } else {
