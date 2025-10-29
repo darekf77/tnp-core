@@ -1029,13 +1029,13 @@ in location: ${cwd}
       const stdoutConditions = Array.isArray(stdout)
         ? stdout
         : stdout
-          ? [stdout]
-          : [];
+        ? [stdout]
+        : [];
       const stderrConditions = Array.isArray(stderr)
         ? stderr
         : stderr
-          ? [stderr]
-          : [];
+        ? [stderr]
+        : [];
 
       const checkConditions = (output: string, conditions: string[]) => {
         const conditionReady = conditions.some(condition =>
@@ -2225,7 +2225,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-//#region is verbose mode
+  //#region is verbose mode
   /**
    * Check if cli is running in verbose mode
    * @returns true if cli is running with arugment -verbose
@@ -2235,7 +2235,7 @@ export namespace UtilsTerminal {
     return !global.hideLog;
     //#endregion
   };
-//#endregion
+  //#endregion
 
   export const waitForUserAnyKey = async (
     callback: () => void | Promise<void>,
@@ -3968,7 +3968,9 @@ ${domainOrDomains
   })
   .join('\n')}
 
-        (${domainOrDomains.length <= 1 ? 'Domain is' : 'Domains are'} now pointing to ${chalk.bold('localhost')}):
+        (${
+          domainOrDomains.length <= 1 ? 'Domain is' : 'Domains are'
+        } now pointing to ${chalk.bold('localhost')}):
 
         your etc host path:
         ${chalk.underline(UtilsNetwork.getEtcHostsPath())}

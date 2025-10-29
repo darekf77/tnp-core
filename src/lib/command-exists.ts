@@ -1,24 +1,18 @@
-const exec = require('child_process').exec;
-const execSync = require('child_process').execSync;
-import { Helpers } from "./index";
-import { fse } from "./core-imports";
-const access = fse.access;
-const accessSync = fse.accessSync;
-const constants = fse.constants;
+import { fse, child_process } from './core-imports';
 
+import { Helpers } from './index';
 
-const isUsingWindows = process.platform == 'win32'
+const isUsingWindows = process.platform == 'win32';
 
 const fileNotExists = function (commandName, callback) {
-  access(commandName, constants.F_OK,
-    function (err) {
-      callback(!err);
-    });
+  fse.access(commandName, fse.constants.F_OK, function (err) {
+    callback(!err);
+  });
 };
 
 const fileNotExistsSync = function (commandName) {
   try {
-    accessSync(commandName, constants.F_OK);
+    fse.accessSync(commandName, fse.constants.F_OK);
     return false;
   } catch (e) {
     return true;
@@ -26,56 +20,65 @@ const fileNotExistsSync = function (commandName) {
 };
 
 const localExecutable = function (commandName, callback) {
-  access(commandName, constants.F_OK | constants.X_OK,
+  fse.access(
+    commandName,
+    fse.constants.F_OK | fse.constants.X_OK,
     function (err) {
       callback(null, !err);
-    });
+    },
+  );
 };
 
 const localExecutableSync = function (commandName) {
   try {
-    accessSync(commandName, constants.F_OK | constants.X_OK);
+    fse.accessSync(commandName, fse.constants.F_OK | fse.constants.X_OK);
     return true;
   } catch (e) {
     return false;
   }
-}
+};
 
 const commandExistsUnix = function (commandName, callback) {
-
   fileNotExists(commandName, function (isFile) {
-
     if (!isFile) {
-      var child = exec('command -v ' + commandName +
-        ' 2>/dev/null' +
-        ' && { echo >&1 \'' + commandName + ' found\'; exit 0; }',
+      var child = child_process.exec(
+        'command -v ' +
+          commandName +
+          ' 2>/dev/null' +
+          " && { echo >&1 '" +
+          commandName +
+          " found'; exit 0; }",
         function (error, stdout, stderr) {
           callback(null, !!stdout);
-        });
+        },
+      );
       return;
     }
 
     localExecutable(commandName, callback);
   });
-
-}
+};
 
 const commandExistsWindows = function (commandName, callback) {
-  Helpers.commnadOutputAsStringAsync('where ' + commandName,)
+  Helpers.commnadOutputAsStringAsync('where ' + commandName)
     .then(() => {
       callback(null, false);
     })
     .catch(() => {
       callback(null, true);
     });
-}
+};
 
 const commandExistsUnixSync = function (commandName) {
   if (fileNotExistsSync(commandName)) {
     try {
-      var stdout = execSync('command -v ' + commandName +
-        ' 2>/dev/null' +
-        ' && { echo >&1 \'' + commandName + ' found\'; exit 0; }'
+      var stdout = child_process.execSync(
+        'command -v ' +
+          commandName +
+          ' 2>/dev/null' +
+          " && { echo >&1 '" +
+          commandName +
+          " found'; exit 0; }",
       );
       return !!stdout;
     } catch (error) {
@@ -84,8 +87,7 @@ const commandExistsUnixSync = function (commandName) {
   }
 
   return localExecutableSync(commandName);
-
-}
+};
 
 const commandExistsWindowsSync = function (commandName) {
   try {
@@ -94,9 +96,12 @@ const commandExistsWindowsSync = function (commandName) {
   } catch (error) {
     return false;
   }
-}
+};
 
-export function checkSyncIfCommandExistsAsync(commandName, callback): Promise<boolean> {
+export function checkSyncIfCommandExistsAsync(
+  commandName,
+  callback,
+): Promise<boolean> {
   if (!callback && typeof Promise !== 'undefined') {
     return new Promise(function (resolve, reject) {
       checkSyncIfCommandExistsAsync(commandName, function (error, output) {
@@ -113,9 +118,9 @@ export function checkSyncIfCommandExistsAsync(commandName, callback): Promise<bo
   } else {
     commandExistsUnix(commandName, callback);
   }
-};
+}
 
-export const checkSyncIfCommandExists = (commandName: string) => {
+export const commandExistsSync = (commandName: string) => {
   if (isUsingWindows) {
     return commandExistsWindowsSync(commandName);
   } else {
