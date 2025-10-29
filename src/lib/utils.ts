@@ -2225,6 +2225,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
+//#region is verbose mode
   /**
    * Check if cli is running in verbose mode
    * @returns true if cli is running with arugment -verbose
@@ -2232,6 +2233,64 @@ export namespace UtilsTerminal {
   export const isVerboseModeTaon = (): boolean => {
     //#region @backendFunc
     return !global.hideLog;
+    //#endregion
+  };
+//#endregion
+
+  export const waitForUserAnyKey = async (
+    callback: () => void | Promise<void>,
+    options?: {
+      /**
+       * by default, the action is only triggered once when a key is pressed.
+       * if this option is set, the action will be triggered on every key press.
+       * (Promise will not be resolved until process is killed)
+       */
+      triggerActionEveryKeypress?: boolean;
+    },
+  ): Promise<void> => {
+    //#region @backendFunc
+    return new Promise<void>(resolve => {
+      options = options || {};
+      const stdin = process.stdin;
+
+      const wasRaw = (stdin as any).isRaw; // remember if it was already raw
+      if (!options?.triggerActionEveryKeypress) {
+        stdin.setRawMode?.(true);
+        stdin.resume();
+      }
+      let stoping = false;
+
+      const onKeyPress = async () => {
+        if (!options?.triggerActionEveryKeypress) {
+          if (stoping) {
+            return;
+          }
+          stoping = true;
+        }
+        // restore previous raw mode state
+        if (!options?.triggerActionEveryKeypress) {
+          if (wasRaw) {
+            stdin.setRawMode?.(true);
+          } else {
+            stdin.setRawMode?.(false);
+          }
+
+          stdin.pause();
+        }
+
+        if (callback) await callback();
+
+        if (!options?.triggerActionEveryKeypress) {
+          resolve();
+        }
+      };
+
+      if (options?.triggerActionEveryKeypress) {
+        stdin.on('data', onKeyPress);
+      } else {
+        stdin.once('data', onKeyPress);
+      }
+    });
     //#endregion
   };
 
