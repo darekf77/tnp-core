@@ -163,7 +163,9 @@ export class HelpersCore extends HelpersMessages {
       return;
     }
     if (UtilsOs.isRunningInWindowsPowerShell()) {
-      Helpers.run(`powershell -Command "Start-Sleep -Seconds ${seconds}"`).sync();
+      Helpers.run(
+        `powershell -Command "Start-Sleep -Seconds ${seconds}"`,
+      ).sync();
       return;
     }
     Helpers.run(`sleep ${seconds}`).sync();
@@ -1181,12 +1183,13 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / command output as string async
-  //#region @backend
-  async commnadOutputAsStringAsync(
+
+  async commandOutputAsStringAsync(
     command: string,
     cwd = crossPlatformPath(process.cwd()),
     options?: CommandOutputOptions,
   ): Promise<string> {
+    //#region @backendFunc
     command = Helpers._fixCommand(command);
     const opt = (options || {}) as typeof options;
     let output = '';
@@ -1215,17 +1218,18 @@ export class HelpersCore extends HelpersMessages {
       }
     }
     return output;
+    //#endregion
   }
-  //#endregion
   //#endregion
 
   //#region methods / command output as string
-  //#region @backend
-  commnadOutputAsString(
+
+  commandOutputAsString(
     command: string,
     cwd = crossPlatformPath(process.cwd()),
     options?: CommandOutputOptions,
   ): string {
+    //#region @backendFunc
     command = Helpers._fixCommand(command);
     const opt = (options || {}) as typeof options;
     let output = '';
@@ -1262,8 +1266,9 @@ export class HelpersCore extends HelpersMessages {
       }
     }
     return output;
+    // #endregion
   }
-  //#endregion
+
   //#endregion
 
   //#region methods / kill process by port

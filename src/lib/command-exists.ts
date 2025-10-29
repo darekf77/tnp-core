@@ -60,7 +60,7 @@ const commandExistsUnix = function (commandName, callback) {
 };
 
 const commandExistsWindows = function (commandName, callback) {
-  Helpers.commnadOutputAsStringAsync('where ' + commandName)
+  Helpers.commandOutputAsStringAsync('where ' + commandName)
     .then(() => {
       callback(null, false);
     })
@@ -91,7 +91,7 @@ const commandExistsUnixSync = function (commandName) {
 
 const commandExistsWindowsSync = function (commandName) {
   try {
-    var stdout = Helpers.commnadOutputAsString(`where ${commandName}`);
+    var stdout = Helpers.commandOutputAsString(`where ${commandName}`);
     return !!stdout;
   } catch (error) {
     return false;
