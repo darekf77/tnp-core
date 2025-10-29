@@ -661,4 +661,6 @@ export namespace CoreModels {
 
   export const SPECIAL_WORKER_READY_MESSAGE = '$$$ WORKER_READY $$$';
   export const SPECIAL_APP_READY_MESSAGE = '$$$ APP_READY $$$';
+
+  export const ClassNameStaticProperty = '$$className$$';
 }
