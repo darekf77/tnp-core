@@ -25,6 +25,7 @@ import { fse } from './core-imports';
 import { CoreModels } from './core-models';
 
 import { frameworkName, Helpers } from './index';
+
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
@@ -4291,10 +4292,15 @@ export namespace UtilsCliClassMethod {
     };
   };
 
-  export const getFrom = <ARGS_TO_PARSE = any>(
+  export const getFrom = <ARGS_TO_PARSE extends object = any>(
     ClassPrototypeMethodFnHere: Function,
     options?: {
       globalMethod?: boolean;
+      /**
+       * arguments to parse into CLI format
+       * Example: { projectName: "myproj", envName: "prod" } => "--projectName=myproj --envName=prod"
+       * TODO @LAST add support for DEEP args parsing with lodash-walk-object
+       */
       argsToParse?: ARGS_TO_PARSE;
     },
   ): string => {
@@ -4311,9 +4317,19 @@ export namespace UtilsCliClassMethod {
       );
     }
 
+    // TODO move load walk to tnp-core
+    // import { walk } from 'lodash-walk-object';
+
+    // TODO @LAST move stuff
+    // walk.Object(options.argsToParse || {}, (key, value) => {
+    //   if (value === undefined || value === null) {
+    //     delete options.argsToParse[key];
+    //   }
+    // });
+
     const argsToParse = options.argsToParse
       ? Object.keys(options.argsToParse)
-          .map(c => `--${c}=${options.argsToParse}`)
+          .map(key => `--${key}=${options.argsToParse}`)
           .join(' ')
       : '';
 
