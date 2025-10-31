@@ -156,6 +156,11 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / sleep
+  /**
+   * @deprecated use async Utils.wait
+   *
+   * Helpers.sleep(2)  => await Utils.wait(2)
+   */
   sleep(seconds = 1) {
     //#region @backendFunc
     if (UtilsOs.isRunningInWindowsCmd()) {

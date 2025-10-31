@@ -32,6 +32,28 @@ const BLOB_SUPPORTED_IN_SQLJS = false;
 
 //#region utils
 export namespace Utils {
+  //#region wait
+  export const wait = (second: number): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(void 0);
+      }, second * 1000);
+    });
+  };
+  //#endregion
+
+  //#region wait miliseconds
+  export const waitMilliseconds = (milliseconds: number): Promise<void> => {
+    // Helpers.taskStarted(`Waiting ${milliseconds} milliseconds...`);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Helpers.taskDone(`Done waiting ${milliseconds} milliseconds`);
+        resolve(void 0);
+      }, milliseconds);
+    });
+  };
+  //#endregion
+
   //#region utils / uniq array
   export const uniqArray = <T = any>(
     array: any[],
@@ -1461,13 +1483,11 @@ in location: ${cwd}
   ): Promise<void> => {
     //#region @backendFunc
     const pid = Number(
-      typeof pidOrProcess === 'object' ? pidOrProcess.pid: pidOrProcess
+      typeof pidOrProcess === 'object' ? pidOrProcess.pid : pidOrProcess,
     );
 
-    if(isNaN(pid)){
-      Helpers.warn(
-        `[UtilsProcess.killProcess]: Invalid PID: ${pid}`,
-      );
+    if (isNaN(pid)) {
+      Helpers.warn(`[UtilsProcess.killProcess]: Invalid PID: ${pid}`);
       return;
     }
 
@@ -2214,25 +2234,11 @@ export namespace UtilsTerminal {
   //#endregion
 
   //#region wait
-  export const wait = (second: number): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(void 0);
-      }, second * 1000);
-    });
-  };
+  export const wait = Utils.wait;
   //#endregion
 
-  //#region wait
-  export const waitMilliseconds = (milliseconds: number): Promise<void> => {
-    // Helpers.taskStarted(`Waiting ${milliseconds} milliseconds...`);
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Helpers.taskDone(`Done waiting ${milliseconds} milliseconds`);
-        resolve(void 0);
-      }, milliseconds);
-    });
-  };
+  //#region wait milliseconds
+  export const waitMilliseconds = Utils.waitMilliseconds;
   //#endregion
 
   //#region is verbose mode
