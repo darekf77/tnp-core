@@ -4121,7 +4121,7 @@ export namespace UtilsProcessLogger {
     T extends ProcessFileLoggerOptions = ProcessFileLoggerOptions,
   > {
     //#region fields & getters
-    private logFilePath: string | null = null;
+    private _logFilePath: string | null = null;
     private writeStream: WriteStream | null = null;
     private _processLogFilename: string | null = null;
     private lastNLinesFromStderr: string[] = [];
@@ -4129,6 +4129,10 @@ export namespace UtilsProcessLogger {
     private lastNLinesFromOfOutput: string[] = [];
     public get processLogFilename(): string | null {
       return this._processLogFilename;
+    }
+
+    public get processLogAbsFilePath(): string | null {
+      return this._logFilePath;
     }
     //#endregion
 
@@ -4202,12 +4206,12 @@ export namespace UtilsProcessLogger {
       );
 
       this._processLogFilename = `${filenameWithMetadata}.log`;
-      this.logFilePath = crossPlatformPath([
+      this._logFilePath = crossPlatformPath([
         this.options.baseDir,
         this._processLogFilename,
       ]);
 
-      this.writeStream = fse.createWriteStream(this.logFilePath, {
+      this.writeStream = fse.createWriteStream(this._logFilePath, {
         flags: 'a',
       });
 
