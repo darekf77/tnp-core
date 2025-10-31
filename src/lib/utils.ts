@@ -4350,7 +4350,7 @@ export namespace UtilsCliClassMethod {
         unknowClass;
 
       if (!className || className === unknowClass) {
-        debugger;
+        // debugger;
       }
       Reflect.defineMetadata(
         CLI_METHOD_KEY,
