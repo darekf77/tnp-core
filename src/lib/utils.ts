@@ -1052,13 +1052,13 @@ in location: ${cwd}
       const stdoutConditions = Array.isArray(stdout)
         ? stdout
         : stdout
-        ? [stdout]
-        : [];
+          ? [stdout]
+          : [];
       const stderrConditions = Array.isArray(stderr)
         ? stderr
         : stderr
-        ? [stderr]
-        : [];
+          ? [stderr]
+          : [];
 
       const checkConditions = (output: string, conditions: string[]) => {
         const conditionReady = conditions.some(condition =>
@@ -4094,7 +4094,10 @@ export namespace UtilsProcessLogger {
           skipAddingBasenameAtEnd: true,
         });
 
-        return filesBasename.startsWith(processName) && filesBasename.endsWith('.log');
+        return (
+          filesBasename.startsWith(processName) &&
+          filesBasename.endsWith('.log')
+        );
       })
       .map(f => crossPlatformPath([baseDir, f]));
     //#endregion
@@ -4147,20 +4150,27 @@ export namespace UtilsProcessLogger {
     //#endregion
 
     //#region start logging
-    startLogging(proc: ChildProcess, cacheCallback?:{
-      /**
-       * @default 40
-       */
-      cacheLinesMax?:number,
-      /**
-       * Throttle in ms for callback update()
-       */
-      throttleMs?:number,
-      /**
-       * Special callback function for saving stuff in db/memory or elsewhere
-       */
-      update:(opt:{outputLines:string, stderrLines:string, stdoutLines:string})=>void
-    }): void {
+    startLogging(
+      proc: ChildProcess,
+      cacheCallback?: {
+        /**
+         * @default 40
+         */
+        cacheLinesMax?: number;
+        /**
+         * Throttle in ms for callback update()
+         */
+        throttleMs?: number;
+        /**
+         * Special callback function for saving stuff in db/memory or elsewhere
+         */
+        update: (opt: {
+          outputLines: string;
+          stderrLines: string;
+          stdoutLines: string;
+        }) => void;
+      },
+    ): void {
       //#region @backendFunc
       const options = _.cloneDeep(this.dataForFilename);
       const utime = options.utime
@@ -4192,7 +4202,7 @@ export namespace UtilsProcessLogger {
         flags: 'a',
       });
 
-      if(cacheCallback) {
+      if (cacheCallback) {
         cacheCallback.cacheLinesMax = cacheCallback.cacheLinesMax || 40;
         cacheCallback.throttleMs = cacheCallback.throttleMs || 1000;
         this.lastNLinesFromOfOutput = [];
@@ -4200,21 +4210,23 @@ export namespace UtilsProcessLogger {
         this.lastNLinesFromStdout = [];
       }
 
-      const throttledUpdate = cacheCallback ? _.throttle(() => {
-        cacheCallback.update({
-          outputLines: this.lastNLinesFromOfOutput.join('\n'),
-          stderrLines: this.lastNLinesFromStderr.join('\n'),
-          stdoutLines: this.lastNLinesFromStdout.join('\n'),
-        });
-      }, cacheCallback.throttleMs) : null;
+      const throttledUpdate = cacheCallback
+        ? _.throttle(() => {
+            cacheCallback.update({
+              outputLines: this.lastNLinesFromOfOutput.join('\n'),
+              stderrLines: this.lastNLinesFromStderr.join('\n'),
+              stdoutLines: this.lastNLinesFromStdout.join('\n'),
+            });
+          }, cacheCallback.throttleMs)
+        : null;
 
       const update = (data: Buffer | string, type: 'stdout' | 'stderr') => {
-        if(cacheCallback) {
-          this.lastNLinesFromOfOutput.push(data.toString())
-          if(type === 'stdout') {
+        if (cacheCallback) {
+          this.lastNLinesFromOfOutput.push(data.toString());
+          if (type === 'stdout') {
             this.lastNLinesFromStdout.push(data.toString());
           }
-          if(type === 'stderr') {
+          if (type === 'stderr') {
             this.lastNLinesFromStderr.push(data.toString());
           }
           throttledUpdate();
@@ -4398,9 +4410,8 @@ export namespace UtilsCliClassMethod {
     }
     if (
       !options.globalMethod &&
-fullCliMethodName.startsWith(`${unknowClass}:`)
-) {
-      debugger;
+      fullCliMethodName.startsWith(`${unknowClass}:`)
+    ) {
       throw new Error(
         `Cannot get CLI method for unknown class. Did you forget to add @CLASS.NAME('ClassName') to the class?`,
       );
