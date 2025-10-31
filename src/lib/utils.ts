@@ -1483,7 +1483,9 @@ in location: ${cwd}
   ): Promise<void> => {
     //#region @backendFunc
     const pid =
-    typeof pidOrProcess === 'object' ? Number(pidOrProcess.pid) : Number(pidOrProcess);
+      typeof pidOrProcess === 'object'
+        ? Number(pidOrProcess.pid)
+        : Number(pidOrProcess);
 
     if (!pid || isNaN(pid)) {
       console.warn(`[killProcess] Invalid PID: ${pid}`);
@@ -2931,8 +2933,11 @@ export namespace UtilsTerminal {
       list = list.join('\n');
     }
     return new Promise((resolve, reject) => {
-      const less = spawn('less', [], {
+      const pager = os.platform() === 'win32' ? 'more' : 'less';
+
+      const less = spawn(pager, [], {
         stdio: ['pipe', process.stdout, process.stderr],
+        shell: true,
       });
 
       less.stdin.write(list); // Write the list content to the less process
@@ -2942,7 +2947,7 @@ export namespace UtilsTerminal {
         if (code === 0) {
           resolve(void 0);
         } else {
-          reject(new Error(`less process exited with code ${code}`));
+          reject(new Error(`"${pager}" process exited with code ${code}`));
         }
       });
 
