@@ -1482,19 +1482,28 @@ in location: ${cwd}
     pidOrProcess: number | ChildProcess,
   ): Promise<void> => {
     //#region @backendFunc
-    const pid = Number(
-      typeof pidOrProcess === 'object' ? pidOrProcess.pid : pidOrProcess,
-    );
+    const pid =
+    typeof pidOrProcess === 'object' ? Number(pidOrProcess.pid) : Number(pidOrProcess);
 
-    if (isNaN(pid)) {
-      Helpers.warn(`[UtilsProcess.killProcess]: Invalid PID: ${pid}`);
+    if (!pid || isNaN(pid)) {
+      console.warn(`[killProcess] Invalid PID: ${pid}`);
       return;
     }
 
     if (process.platform === 'win32') {
       spawn('taskkill', ['/pid', String(pid), '/T', '/F']);
     } else {
-      process.kill(-pid);
+      // If you spawned the process with detached: true, kill group:
+      try {
+        process.kill(-pid, 'SIGTERM');
+      } catch (err: any) {
+        if (err.code === 'ESRCH') {
+          // Try normal PID if group doesn't exist
+          process.kill(pid, 'SIGTERM');
+        } else {
+          throw err;
+        }
+      }
     }
     //#endregion
   };
