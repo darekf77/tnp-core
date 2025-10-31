@@ -4242,6 +4242,17 @@ export namespace UtilsProcessLogger {
           if (type === 'stderr') {
             this.lastNLinesFromStderr.push(data.toString());
           }
+
+          // trim stuff
+          this.lastNLinesFromOfOutput = this.lastNLinesFromOfOutput.slice(
+            -cacheCallback.cacheLinesMax,
+          );
+          this.lastNLinesFromStdout = this.lastNLinesFromStdout.slice(
+            -cacheCallback.cacheLinesMax,
+          );
+          this.lastNLinesFromStderr = this.lastNLinesFromStderr.slice(
+            -cacheCallback.cacheLinesMax,
+          );
           throttledUpdate();
         }
 
