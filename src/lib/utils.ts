@@ -4390,7 +4390,10 @@ export namespace UtilsCliClassMethod {
     if (options.globalMethod) {
       return fullCliMethodName.split(':')[1] + ` ${argsToParse}`;
     }
-    if (fullCliMethodName.startsWith(`${unknowClass}:`)) {
+    if (
+      !options.globalMethod &&
+fullCliMethodName.startsWith(`${unknowClass}:`)
+) {
       debugger;
       throw new Error(
         `Cannot get CLI method for unknown class. Did you forget to add @CLASS.NAME('ClassName') to the class?`,
