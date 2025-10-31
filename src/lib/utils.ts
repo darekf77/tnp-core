@@ -2934,17 +2934,21 @@ export namespace UtilsTerminal {
       list = list.join('\n');
     }
     await  new Promise((resolve, reject) => {
-      const pager = os.platform() === 'win32' ? 'more' : 'less';
+      const isWindows = os.platform() === 'win32';
+      const pager = isWindows ? 'more' : 'less';
 
-      const less = spawn(pager, [], {
-        stdio: ['pipe', process.stdout, process.stderr],
+      const tmpFilePath = crossPlatformPath([
+        UtilsOs.getRealHomeDir() , '.taon/temp-file-preview',`taon-preview-${Date.now()}.txt`
+      ]);
+      Helpers.writeFile(tmpFilePath, list);
+
+      const less = spawn(pager, [isWindows ? win32Path(tmpFilePath): tmpFilePath ], {
+        stdio: 'inherit',
         shell: true,
       });
 
-      less.stdin.write(list); // Write the list content to the less process
-      less.stdin.end(); // Signal that writing is complete
-
-      less.on('close', code => {
+      less.on('exit', code => {
+        Helpers.removeFileIfExists(tmpFilePath);
         if (code === 0) {
           resolve(void 0);
         } else {
@@ -2953,6 +2957,7 @@ export namespace UtilsTerminal {
       });
 
       less.on('error', err => {
+        Helpers.removeFileIfExists(tmpFilePath);
         reject(err);
       });
     });
