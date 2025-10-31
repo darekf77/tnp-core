@@ -2925,14 +2925,15 @@ export namespace UtilsTerminal {
    * @param {string} list - The long string content to display.
    * @returns {Promise<void>} A Promise that resolves when the pager exits.
    */
-  export const previewLongListGitLogLike = (
+  export const previewLongListGitLogLike = async (
     list: string | string[],
   ): Promise<void> => {
     //#region @backendFunc
+    UtilsTerminal.clearConsole();
     if (Array.isArray(list)) {
       list = list.join('\n');
     }
-    return new Promise((resolve, reject) => {
+    await  new Promise((resolve, reject) => {
       const pager = os.platform() === 'win32' ? 'more' : 'less';
 
       const less = spawn(pager, [], {
@@ -2954,6 +2955,9 @@ export namespace UtilsTerminal {
       less.on('error', err => {
         reject(err);
       });
+    });
+    await UtilsTerminal.pressAnyKeyToContinueAsync({
+      message: 'Done previewing. Press any key to go back...',
     });
     //#endregion
   };
