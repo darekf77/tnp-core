@@ -663,4 +663,6 @@ export namespace CoreModels {
   export const SPECIAL_APP_READY_MESSAGE = '$$$ APP_READY $$$';
 
   export const ClassNameStaticProperty = '$$className$$';
+
+  export const TaonHttpErrorCustomProp = '$$taonError$$';
 }
