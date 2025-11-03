@@ -116,6 +116,7 @@ export class HelpersMessages extends HelpersIsomorphic {
 
   /**
    * throw error
+   * @deprecated use normal throw
    */
   throw(details: string) {
     throw new Error(details);
