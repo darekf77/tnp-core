@@ -2637,33 +2637,41 @@ export namespace UtilsTerminal {
     let prompt;
     // console.log({ choicesBefore: choices });
 
-    if (options.autocomplete) {
-      const { AutoComplete } = require('enquirer');
-      prompt = new AutoComplete({
-        name: 'value',
-        message: options.question,
-        limit: 10,
-        multiple: false,
-        initial: preselectedIndex,
-        choices,
-        hint: options.hint,
-        footer() {
-          return chalk.green('(Scroll up and down to reveal more choices)');
-        },
-      });
-      const res = await prompt.run();
-      // console.log({choices})
-      // console.log(`Selected!!!: "${res}" `);
-      return res;
-    } else {
-      const { Select } = require('enquirer');
-      prompt = new Select({
-        // name: 'value',
-        message: options.question,
-        choices,
-      });
-      const res = await prompt.run();
-      return choices.find(c => c.name === res)?.value as any;
+    while(true) {
+      try {
+        if (options.autocomplete) {
+          const { AutoComplete } = require('enquirer');
+          prompt = new AutoComplete({
+            name: 'value',
+            message: options.question,
+            limit: 10,
+            multiple: false,
+            initial: preselectedIndex,
+            choices,
+            hint: options.hint,
+            footer() {
+              return chalk.green('(Scroll up and down to reveal more choices)');
+            },
+          });
+          const res = await prompt.run();
+          // console.log({choices})
+          // console.log(`Selected!!!: "${res}" `);
+          return res;
+        } else {
+          const { Select } = require('enquirer');
+          prompt = new Select({
+            // name: 'value',
+            message: options.question,
+            choices,
+          });
+          const res = await prompt.run();
+          return choices.find(c => c.name === res)?.value as any;
+        }
+      } catch (error) {
+        await UtilsTerminal.pressAnyKeyToContinueAsync({
+          message: `Error during selection: ${error}. Press any key to retry...`,
+        });
+      }
     }
 
     //#region does not work
