@@ -2637,7 +2637,7 @@ export namespace UtilsTerminal {
     let prompt;
     // console.log({ choicesBefore: choices });
 
-    while(true) {
+    while (true) {
       try {
         if (options.autocomplete) {
           const { AutoComplete } = require('enquirer');
@@ -2941,19 +2941,25 @@ export namespace UtilsTerminal {
     if (Array.isArray(list)) {
       list = list.join('\n');
     }
-    await  new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const isWindows = os.platform() === 'win32';
       const pager = isWindows ? 'more' : 'less';
 
       const tmpFilePath = crossPlatformPath([
-        UtilsOs.getRealHomeDir() , '.taon/temp-file-preview',`taon-preview-${Date.now()}.txt`
+        UtilsOs.getRealHomeDir(),
+        '.taon/temp-file-preview',
+        `taon-preview-${Date.now()}.txt`,
       ]);
       Helpers.writeFile(tmpFilePath, list);
 
-      const less = spawn(pager, [isWindows ? win32Path(tmpFilePath): tmpFilePath ], {
-        stdio: 'inherit',
-        shell: true,
-      });
+      const less = spawn(
+        pager,
+        [isWindows ? win32Path(tmpFilePath) : tmpFilePath],
+        {
+          stdio: 'inherit',
+          shell: true,
+        },
+      );
 
       less.on('exit', code => {
         Helpers.removeFileIfExists(tmpFilePath);
@@ -3291,12 +3297,14 @@ export namespace FilePathMetaData {
    *  version: "v"
    * }
    */
-  export const embedData = <T extends Record<string, any>>(
+  export const embedData = <
+    T extends Record<string, string | number | boolean | undefined>,
+  >(
     data: T,
     orgFilename: string,
     options?: {
       skipAddingBasenameAtEnd?: boolean; // default false
-      keysMap?: Record<keyof T, string>; // optional mapping of keys
+      keysMap?: Record<keyof T, string | number | boolean | undefined>; // optional mapping of keys
     },
   ): string => {
     options = options || {};
@@ -3306,7 +3314,7 @@ export namespace FilePathMetaData {
     const meta = Object.entries(data)
       .map(([key, value]) => {
         if (options.keysMap && options.keysMap[key as keyof T]) {
-          key = options.keysMap[key as keyof T];
+          key = options.keysMap[key as keyof T] as string;
         }
         return `${key}${KV_SEPARATOR}${value ?? ''}`;
       })
@@ -3332,10 +3340,12 @@ export namespace FilePathMetaData {
    *  version: "v"
    * }
    */
-  export const extractData = <T extends Record<string, any>>(
+  export const extractData = <
+    T extends Record<string, string | number | boolean | undefined>,
+  >(
     filename: string,
     options?: {
-      keysMap?: Record<keyof T, string>; // optional mapping of keys
+      keysMap?: Record<keyof T, string | number | boolean | undefined>; // optional mapping of keys
     },
   ): T => {
     options = options || {};
@@ -4076,7 +4086,8 @@ ${domainOrDomains
 //#region utils process logger
 export namespace UtilsProcessLogger {
   //#region utils process / process file logger options
-  export interface ProcessFileLoggerOptions {
+  export interface ProcessFileLoggerOptions
+    extends Record<string, string | number | boolean | undefined> {
     name: string;
     id?: string | number;
     pid?: number;
