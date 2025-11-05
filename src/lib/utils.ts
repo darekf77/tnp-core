@@ -4259,9 +4259,9 @@ export namespace UtilsProcessLogger {
       const throttledUpdate = cacheCallback
         ? _.throttle(() => {
             cacheCallback.update({
-              outputLines: this.lastNLinesFromOfOutput.join('\n'),
-              stderrLines: this.lastNLinesFromStderr.join('\n'),
-              stdoutLines: this.lastNLinesFromStdout.join('\n'),
+              outputLines: this.lastNLinesFromOfOutput.join(''),
+              stderrLines: this.lastNLinesFromStderr.join(''),
+              stdoutLines: this.lastNLinesFromStdout.join(''),
             });
           }, cacheCallback.throttleMs)
         : null;
