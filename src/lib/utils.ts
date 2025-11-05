@@ -2994,16 +2994,16 @@ export namespace UtilsTerminal {
         '.taon/temp-file-preview',
         `taon-preview-${Date.now()}.txt`,
       ]);
+      const pagerArgs = isWindows
+        ? [win32Path(tmpFilePath)]
+        : ['-R', '-f', tmpFilePath];
+
       Helpers.writeFile(tmpFilePath, list);
 
-      const less = spawn(
-        pager,
-        [isWindows ? win32Path(tmpFilePath) : tmpFilePath],
-        {
-          stdio: 'inherit',
-          shell: true,
-        },
-      );
+      const less = spawn(pager, pagerArgs, {
+        stdio: 'inherit',
+        shell: true,
+      });
 
       less.on('exit', code => {
         Helpers.removeFileIfExists(tmpFilePath);
