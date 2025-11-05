@@ -2321,6 +2321,34 @@ export namespace UtilsTerminal {
     //#endregion
   };
 
+  //#region get terminal height
+  export const getTerminalHeight = (): number => {
+    //#region @backendFunc
+    if (process.stdout.rows && process.stdout.rows > 10) {
+      return process.stdout.rows;
+    }
+
+    // fallback 1: environment variable (works in most shells)
+    if (process.env.LINES) {
+      const lines = parseInt(process.env.LINES, 10);
+      if (!isNaN(lines) && lines > 10) return lines;
+    }
+
+    // fallback 2: use `tput` (works in macOS/Linux, even VSCode)
+    try {
+      const result = child_process.spawnSync('tput', ['lines'], {
+        encoding: 'utf-8',
+      });
+      const lines = parseInt(result.stdout.trim(), 10);
+      if (!isNaN(lines) && lines > 10) return lines;
+    } catch {}
+
+    // fallback default
+    return 24;
+    //#endregion
+  };
+  //#endregion
+
   //#region clear
   export const clearConsole = (): void => {
     //#region @backendFunc
@@ -4084,6 +4112,13 @@ ${domainOrDomains
 //#endregion
 
 //#region utils process logger
+/**
+ * Utils for logging ChildProcess output to files.
+ * - logging stdout and stderr to files
+ * - real-time monitoring of output
+ * - special event callbacks on specific output strings
+ * - caching last N lines of output for quick access
+ */
 export namespace UtilsProcessLogger {
   //#region utils process / process file logger options
   export interface ProcessFileLoggerOptions
@@ -4355,6 +4390,83 @@ export namespace UtilsProcessLogger {
     }
     //#endregion
   }
+  //#endregion
+
+  //#region utils process / create sticky top box
+  /**
+   * Perfect for real-time logs with a sticky top box message.
+   *
+   * Example:
+   * const stickyBox = UtilsProcessLogger.createStickyTopBox('My Sticky Message');
+   * stickyBox.draw('Initial log content...');
+   *
+   * // Later updates
+   * stickyBox.append('More log content...');
+   * stickyBox.append('Even more log content...');
+   *
+   * // To clear the sticky box and logs
+   * stickyBox.clear();
+   */
+  export const createStickyTopBox = (message: string) => {
+    //#region @backendFunc
+    const readline = require('readline');
+    const boxLines = buildBox(message);
+    let logBuffer: string[] = [];
+    let terminalHeight = UtilsTerminal.getTerminalHeight();
+
+    // auto update height when user resizes terminal
+    process.stdout.on('resize', () => {
+      terminalHeight = UtilsTerminal.getTerminalHeight();
+      render();
+    });
+
+    function draw(content: string): void {
+      logBuffer = content.split(/\r?\n/);
+      render();
+    }
+
+    function append(content: string): void {
+      logBuffer = content.split(/\r?\n/);
+      render();
+    }
+
+    function render(): void {
+      const boxHeight = boxLines.length + 2; // +2 for blank spacing
+      const availableHeight = Math.max(0, terminalHeight - boxHeight);
+
+      // keep only last N lines to fit screen
+      const visibleLogs = logBuffer.slice(-availableHeight);
+
+      readline.cursorTo(process.stdout, 0, 0);
+      readline.clearScreenDown(process.stdout);
+
+      process.stdout.write(boxLines.join('\n') + '\n\n');
+      process.stdout.write(visibleLogs.join('\n') + '\n');
+    }
+
+    function clear(): void {
+      readline.cursorTo(process.stdout, 0, 0);
+      readline.clearScreenDown(process.stdout);
+    }
+
+    return { draw, append, clear };
+    //#endregion
+  };
+
+  const buildBox = (message: string): string[] => {
+    //#region @backendFunc
+    const width = process.stdout.columns || 80;
+    const topBottom = '─'.repeat(width);
+
+    const messageLines = message.split(/\r?\n/).map(line => {
+      const inner = ` ${line.trim()} `;
+      const pad = Math.max(0, width - inner.length - 2);
+      return `│${inner}${' '.repeat(pad)}│`;
+    });
+
+    return [topBottom, ...messageLines, topBottom];
+    //#endregion
+  };
   //#endregion
 }
 //#endregion
