@@ -2522,7 +2522,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-  //#region select and execute
+  //#region multiselect and execute
   /**
    * Similar to select but executes action if provided
    * @returns selected and executed value
@@ -2559,6 +2559,14 @@ export namespace UtilsTerminal {
       ...(options as any),
       choices,
     });
+
+    if (Array.isArray(res) && res.length === 0) {
+      return {
+        selected: [] as (keyof CHOICE)[],
+        actionResults: [],
+        actions: [],
+      };
+    }
 
     // clearConsole();
     let actionResults: unknown[] = [];
@@ -2646,7 +2654,7 @@ export namespace UtilsTerminal {
     autocomplete?: boolean;
     defaultSelected?: string;
     hint?: string;
-  }): Promise<T> => {
+  }): Promise<T | undefined> => {
     //#region @backendFunc
     options = _.cloneDeep(options);
     options.hint = _.isNil(options.hint)
@@ -2664,6 +2672,14 @@ export namespace UtilsTerminal {
     }
     let prompt;
     // console.log({ choicesBefore: choices });
+
+    if (!choices || choices.length === 0) {
+      Helpers.info(options.question);
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: '< No choices available. Press any key to continue... > ',
+      });
+      return;
+    }
 
     while (true) {
       try {
