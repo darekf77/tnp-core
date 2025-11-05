@@ -4414,11 +4414,10 @@ export namespace UtilsProcessLogger {
    *
    * Example:
    * const stickyBox = UtilsProcessLogger.createStickyTopBox('My Sticky Message');
-   * stickyBox.draw('Initial log content...');
+   * stickyBox.update('Initial log content...');
    *
    * // Later updates
-   * stickyBox.append('More log content...');
-   * stickyBox.append('Even more log content...');
+   * stickyBox.update('More log content...');
    *
    * // To clear the sticky box and logs
    * stickyBox.clear();
@@ -4436,23 +4435,34 @@ export namespace UtilsProcessLogger {
       render();
     });
 
-    function draw(content: string): void {
-      logBuffer = content.split(/\r?\n/);
-      render();
-    }
-
-    function append(content: string): void {
+    function update(content: string): void {
       logBuffer = content.split(/\r?\n/);
       render();
     }
 
     function render(): void {
-      const boxHeight = boxLines.length + 2; // +2 for blank spacing
-      const availableHeight = Math.max(0, terminalHeight - boxHeight);
+      const width = process.stdout.columns || 80;
+      const height = Math.max(UtilsTerminal.getTerminalHeight(), 10);
+      const boxHeight = boxLines.length + 2; // header + blank line
+      const availableHeight = Math.max(1, height - boxHeight - 1);
 
-      // keep only last N lines to fit screen
-      const visibleLogs = logBuffer.slice(-availableHeight);
+      // split logs into visual lines based on terminal width
+      const wrapped: string[] = [];
+      for (const line of logBuffer) {
+        if (line.length <= width) {
+          wrapped.push(line);
+        } else {
+          // wrap very long lines manually
+          for (let i = 0; i < line.length; i += width) {
+            wrapped.push(line.slice(i, i + width));
+          }
+        }
+      }
 
+      // keep only what fits vertically
+      const visibleLogs = wrapped.slice(-availableHeight);
+
+      const readline = require('readline');
       readline.cursorTo(process.stdout, 0, 0);
       readline.clearScreenDown(process.stdout);
 
@@ -4465,7 +4475,7 @@ export namespace UtilsProcessLogger {
       readline.clearScreenDown(process.stdout);
     }
 
-    return { draw, append, clear };
+    return { update, clear };
     //#endregion
   };
 
