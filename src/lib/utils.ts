@@ -2426,7 +2426,7 @@ export namespace UtilsTerminal {
 
   //#region multiselect
   export const multiselect = async <T = string>(options: {
-    question: string;
+    question?: string;
     /**
      * If true, then only one choice can be selected
      * @deprecated use select instead
@@ -2440,6 +2440,7 @@ export namespace UtilsTerminal {
     const { select } = await import('inquirer-select-pro');
     const fuzzy = await import('fuzzy');
     options = _.cloneDeep(options);
+options.question = options.question || 'Select one or multiple options';
     options.autocomplete = _.isNil(options.autocomplete)
       ? true
       : options.autocomplete;
@@ -2649,7 +2650,7 @@ export namespace UtilsTerminal {
 
   //#region select
   export const select = async <T = string>(options: {
-    question: string;
+    question?: string;
     choices: SelectChoiceValue<T>[] | { [choice: string]: SelectChoice };
     autocomplete?: boolean;
     defaultSelected?: string;
@@ -2657,6 +2658,7 @@ export namespace UtilsTerminal {
   }): Promise<T | undefined> => {
     //#region @backendFunc
     options = _.cloneDeep(options);
+options.question = options.question || 'Select option';
     options.hint = _.isNil(options.hint)
       ? '- Space to select. Return to submit'
       : options.hint;
