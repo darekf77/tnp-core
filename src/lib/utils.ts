@@ -2440,7 +2440,7 @@ export namespace UtilsTerminal {
     const { select } = await import('inquirer-select-pro');
     const fuzzy = await import('fuzzy');
     options = _.cloneDeep(options);
-options.question = options.question || 'Select one or multiple options';
+    options.question = options.question || 'Select one or multiple options';
     options.autocomplete = _.isNil(options.autocomplete)
       ? true
       : options.autocomplete;
@@ -2658,7 +2658,7 @@ options.question = options.question || 'Select one or multiple options';
   }): Promise<T | undefined> => {
     //#region @backendFunc
     options = _.cloneDeep(options);
-options.question = options.question || 'Select option';
+    options.question = options.question || 'Select option';
     options.hint = _.isNil(options.hint)
       ? '- Space to select. Return to submit'
       : options.hint;
@@ -3856,6 +3856,16 @@ export namespace UtilsNetwork {
   };
   //#endregion
 
+  //#region utils network / etc host entry interface
+  export interface EtchostEntry {
+    ip: string;
+    domains: string[];
+    comment: string | null;
+  }
+  //#endregion
+
+  export const SIMULATE_DOMAIN_TAG = '@simulatedDomainByTaon';
+
   //#region utils network / setEtcHost
   /**
    * Add or update a hosts entry
@@ -3929,6 +3939,42 @@ export namespace UtilsNetwork {
   };
   //#endregion
 
+  //#region utils network / get etc host entries by comment
+  export const getEtcHostEntryByComment = (commentOfEntry: string): EtchostEntry[] => {
+    //#region @backendFunc
+    if (!commentOfEntry || /\s/.test(commentOfEntry)) {
+      throw new Error('Invalid comment');
+    }
+
+    const hostsPath = getEtcHostsPath();
+    const entries: EtchostEntry[] = [];
+
+    const lines = (Helpers.readFile(hostsPath) || '').split(/\r?\n/) || [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+
+      // Split off inline comment
+      const [entryPart, ...commentParts] = trimmed.split('#');
+      const comment = commentParts.length
+        ? commentParts.join('#').trim()
+        : null;
+
+      const tokens = entryPart.trim().split(/\s+/);
+      if (tokens.length < 2) continue;
+
+      const [lineIp, ...domains] = tokens;
+      if (comment === commentOfEntry && domains.length > 0) {
+        entries.push({ ip: lineIp, domains, comment });
+      }
+    }
+
+    return entries;
+    //#endregion
+  };
+  //#endregion
+
   //#region utils network /  get etc host entries by ip
   /**
    * Returns all host entries for a given IP address.
@@ -3942,7 +3988,7 @@ export namespace UtilsNetwork {
    */
   export const getEtcHostEntryByIp = (
     ip: string,
-  ): { domains: string[]; comment: string | null }[] => {
+  ): Omit<EtchostEntry, 'ip'>[] => {
     //#region @backendFunc
     const hostsPath = getEtcHostsPath();
 
@@ -3950,8 +3996,8 @@ export namespace UtilsNetwork {
       throw new Error('Invalid IP address');
     }
 
-    const lines = fse.readFileSync(hostsPath, 'utf8').split(/\r?\n/);
-    const results: { domains: string[]; comment: string | null }[] = [];
+    const lines = (Helpers.readFile(hostsPath) || '').split(/\r?\n/) || [];
+    const results: Omit<EtchostEntry, 'ip'>[] = [];
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -4051,11 +4097,7 @@ export namespace UtilsNetwork {
         const url = new URL(
           domain.startsWith('http') ? domain : `http://${domain}`,
         );
-        UtilsNetwork.setEtcHost(
-          url.hostname,
-          '127.0.0.1',
-          '@simulatedDomainByTaon',
-        );
+        UtilsNetwork.setEtcHost(url.hostname, '127.0.0.1', SIMULATE_DOMAIN_TAG);
       }
 
       Helpers.info(`
@@ -4088,7 +4130,9 @@ ${domainOrDomains
         `);
       let closing = false;
       const revertChanges = () => {
-        console.log('Removing domain(s) from /etc/hosts');
+        console.log(
+          `Removing domain(s) from ${UtilsNetwork.getEtcHostsPath()} ...`,
+        );
         for (const domain of domainOrDomains) {
           const url = new URL(
             domain.startsWith('http') ? domain : `http://${domain}`,
