@@ -1,11 +1,11 @@
 //#region imports
-import { commandExistsSync } from './command-exists';
 import { chalk } from './core-imports';
 import { child_process } from './core-imports';
 import { frameworkName } from './framework-name';
 import { requiredForDev } from './required-global-npm-packages';
+import { UtilsOs, UtilsProcess } from './utils';
 
-import { Helpers, UtilsProcess } from './index';
+import { Helpers } from './index';
 //#endregion
 
 export class CLI {
@@ -20,7 +20,7 @@ export class CLI {
     );
     const missingNpm: any[] = [];
     globalDependencies.npm.forEach(pkg => {
-      if (!commandExistsSync(pkg.name)) {
+      if (!UtilsOs.commandExistsSync(pkg.name)) {
         missingNpm.push(pkg);
       }
     });
@@ -54,7 +54,7 @@ export class CLI {
     //#region @backendFunc
     const missingNpm: any[] = [];
     globalDependencies.npm.forEach(pkg => {
-      if (!commandExistsSync(pkg.name)) {
+      if (!UtilsOs.commandExistsSync(pkg.name)) {
         missingNpm.push(pkg);
       }
     });
@@ -72,7 +72,7 @@ export class CLI {
     }
 
     globalDependencies.programs.forEach(p => {
-      if (!commandExistsSync(p.name)) {
+      if (!UtilsOs.commandExistsSync(p.name)) {
         Helpers.error(
           chalk.red(`Missing command line tool "${p.name}".`),
           false,
