@@ -18,6 +18,7 @@ import {
   chalk,
   win32Path,
   isElevated,
+  https,
 } from './core-imports';
 import { dateformat } from './core-imports';
 import { spawn, child_process } from './core-imports';
@@ -1678,9 +1679,11 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  //#region utils os / is running in ssr mode
   export const isRunningInSSRMode = (): boolean => {
     return typeof globalThis.window === 'undefined';
   };
+  //#endregion
 
   //#region utils os / is running in electron
   /**
@@ -1899,6 +1902,7 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  //#region utils os / is running in os with graphics capable environment
   export const isRunningInOsWithGraphicsCapableEnvironment = (): boolean => {
     //#region @backendFunc
     if (process.platform === 'win32') {
@@ -1910,6 +1914,7 @@ export namespace UtilsOs {
     return UtilsOs.isRunningInLinuxGraphicsCapableEnvironment();
     //#endregion
   };
+  //#endregion
 
   //#region utils os / is running in cli mode
   /**
@@ -2042,6 +2047,7 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  //#region utils os / open folder in vscode
   export const openFolderInVSCode = (folderPath: string): void => {
     //#region @backendFunc
     Helpers.taskStarted(`Opening folder in VSCode: "${folderPath}"`);
@@ -2058,7 +2064,9 @@ export namespace UtilsOs {
 
     //#endregion
   };
+  //#endregion
 
+  //#region utils os / open folder in file explorer
   export const openFolderInFileExplorer = (folderPath: string): void => {
     //#region @backendFunc
     if (process.platform === 'win32') {
@@ -2097,6 +2105,7 @@ export namespace UtilsOs {
     );
     //#endregion
   };
+  //#endregion
 
   //#region utils os / get real home directory
   export const getRealHomeDir = (): string => {
@@ -2157,13 +2166,137 @@ export namespace UtilsOs {
   //#endregion
 
   export const isNodeVersionOk = UtilsProcess.isNodeVersionOk;
-
   export const isElectron = isRunningInElectron();
   export const isBrowser = isRunningInBrowser();
   export const isNode = isRunningInNode();
   export const isWebSQL = isRunningInWebSQL();
   export const isVscodeExtension = isRunningInVscodeExtension();
   export const isSSRMode = isRunningInSSRMode();
+  export const isRunningInWindows: boolean = process.platform == 'win32';
+
+  //#region utils os / command exists
+
+  //#region helpers
+  const fileNotExists = async (commandName: string): Promise<boolean> => {
+    try {
+      await fse.access(commandName, fse.constants.F_OK);
+      return false;
+    } catch {
+      return true;
+    }
+  };
+
+  const fileNotExistsSync = (commandName: string): boolean => {
+    try {
+      fse.accessSync(commandName, fse.constants.F_OK);
+      return false;
+    } catch {
+      return true;
+    }
+  };
+
+  const localExecutable = async (commandName: string): Promise<boolean> => {
+    try {
+      await fse.access(commandName, fse.constants.F_OK | fse.constants.X_OK);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const localExecutableSync = (commandName: string): boolean => {
+    try {
+      fse.accessSync(commandName, fse.constants.F_OK | fse.constants.X_OK);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  //#endregion
+
+  //#region command exists (Unix / Windows)
+  const commandExistsUnix = async (commandName: string): Promise<boolean> => {
+    const isFileMissing = await fileNotExists(commandName);
+    if (isFileMissing) {
+      try {
+        const stdout = child_process.execSync(
+          `command -v ${commandName} 2>/dev/null && { echo >&1 '${commandName} found'; exit 0; }`,
+          { encoding: 'utf-8' },
+        );
+        return !!stdout;
+      } catch {
+        return false;
+      }
+    }
+
+    return await localExecutable(commandName);
+  };
+
+  const commandExistsWindows = async (
+    commandName: string,
+  ): Promise<boolean> => {
+    try {
+      const stdout = await Helpers.commandOutputAsStringAsync(
+        `where ${commandName}`,
+      );
+      return !!stdout;
+    } catch {
+      return false;
+    }
+  };
+
+  const commandExistsUnixSync = (commandName: string): boolean => {
+    if (fileNotExistsSync(commandName)) {
+      try {
+        const stdout = child_process.execSync(
+          `command -v ${commandName} 2>/dev/null && { echo >&1 '${commandName} found'; exit 0; }`,
+          { encoding: 'utf-8' },
+        );
+        return !!stdout;
+      } catch {
+        return false;
+      }
+    }
+    return localExecutableSync(commandName);
+  };
+
+  const commandExistsWindowsSync = (commandName: string): boolean => {
+    try {
+      const stdout = Helpers.commandOutputAsString(`where ${commandName}`);
+      return !!stdout;
+    } catch {
+      return false;
+    }
+  };
+  //#endregion
+
+  //#region exported API
+  export const commandExistsAsync = async (
+    commandName: string,
+  ): Promise<boolean> => {
+    try {
+      if (isRunningInWindows) {
+        return await commandExistsWindows(commandName);
+      } else {
+        return await commandExistsUnix(commandName);
+      }
+    } catch (error) {
+      if (frameworkName === 'tnp') console.error(error);
+      return false;
+    }
+  };
+
+  /**
+   * @deprecated use commandExistsAsync
+   */
+  export const commandExistsSync = (commandName: string): boolean => {
+    return isRunningInWindows
+      ? commandExistsWindowsSync(commandName)
+      : commandExistsUnixSync(commandName);
+  };
+  //#endregion
+
+  //#endregion
 }
 //#endregion
 
@@ -4242,6 +4375,148 @@ export namespace UtilsNetwork {
    * @deprecated use UtilsEtcHosts.simulateDomain instead
    */
   export const simulateDomain = UtilsEtcHosts.simulateDomain;
+  //#endregion
+
+  //#region utils network / get local public ip addresses
+
+  //#region utils network / get local public ip addresses / local ip info interface
+  export interface LocalIpInfo {
+    interfaceName: string;
+    address: string;
+    family: 'IPv4' | 'IPv6';
+    internal: boolean;
+    type:"lan" | "wifi" | "other" | "virtual";
+  }
+  //#endregion
+
+  //#region utils network / get local public ip addresses / get interface type from name
+  const isVirtualInterface = (name: string): boolean => {
+    const lname = name.toLowerCase();
+    return (
+      lname.includes("virtual") ||
+      lname.includes("vmware") ||
+      lname.includes("vbox") ||
+      lname.includes("hyper-v") ||
+      lname.includes("wsl") ||
+      lname.includes("docker") ||
+      lname.includes("veth") ||
+      lname.includes("default switch")
+    );
+  };
+
+  const interfaceTypeFromName = (name: string): LocalIpInfo["type"] => {
+    const lname = name.toLowerCase();
+
+    if (isVirtualInterface(lname)) return "virtual";
+    if (lname.includes("eth") || lname.includes("en") || lname.includes("lan")) return "lan";
+    if (lname.includes("wl") || lname.includes("wi-fi") || lname.includes("wifi")) return "wifi";
+    return "other";
+  };
+
+  const sortByPriority = (a: LocalIpInfo, b: LocalIpInfo): number => {
+    const typePriority = { lan: 1, wifi: 2, other: 3, virtual: 4 };
+    const pa = typePriority[a.type];
+    const pb = typePriority[b.type];
+    if (pa !== pb) return pa - pb;
+
+    // Secondary heuristic for tie-breaking (e.g., Ethernet 5 before vEthernet)
+    const nameA = a.interfaceName.toLowerCase();
+    const nameB = b.interfaceName.toLowerCase();
+
+    // prefer physical-looking names
+    const physPriority = (name: string) =>
+      name.includes("ethernet") && !name.includes("vethernet") ? 0 : 1;
+
+    const diff = physPriority(nameA) - physPriority(nameB);
+    if (diff !== 0) return diff;
+
+    return nameA.localeCompare(nameB);
+  };
+  //#endregion
+
+  //#region utils network / get local public ip addresses / get local ip addresses
+  /**
+   * Returns all local IP addresses in preferred order:
+   * LAN → Wi-Fi → Other → Virtual
+   */
+  export const getLocalIpAddresses = async (): Promise<LocalIpInfo[]> => {
+    const interfaces = os.networkInterfaces();
+    const all: LocalIpInfo[] = [];
+
+    for (const [name, addrs] of Object.entries(interfaces)) {
+      if (!addrs) continue;
+      for (const addr of addrs) {
+        if (addr.internal) continue;
+        all.push({
+          interfaceName: name,
+          address: addr.address,
+          family: addr.family as "IPv4" | "IPv6",
+          internal: addr.internal,
+          type: interfaceTypeFromName(name),
+        });
+      }
+    }
+
+    all.sort(sortByPriority);
+    return all;
+  };
+  //#endregion
+
+  //#region utils network / get local public ip addresses / get first local active ip address
+  /**
+   * Returns first active local ipv4 IP (LAN preferred over Wi-Fi).
+   */
+  export const getFirstIpV4LocalActiveIpAddress = async (): Promise<
+    string | null
+  > => {
+    const all = await getLocalIpAddresses().then( a => a.filter( f => f.family === 'IPv4' ) );
+    return all.length > 0 ? all[0].address : null;
+  };
+  //#endregion
+
+  //#region utils network / get local public ip addresses / get current public ip address
+  /**
+   * Returns current public IP address (or null if undetectable).
+   */
+  export const getCurrentPublicIpAddress = async (): Promise<string | null> => {
+    const urls = [
+      'https://api.ipify.org?format=json',
+      'https://ifconfig.me/ip',
+      'https://icanhazip.com',
+    ];
+
+    for (const url of urls) {
+      try {
+        const ip = await new Promise<string>((resolve, reject) => {
+          https
+            .get(url, res => {
+              let data = '';
+              res.on('data', chunk => (data += chunk));
+              res.on('end', () => {
+                try {
+                  const match = data.match(
+                    /(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)/,
+                  );
+                  if (match) resolve(match[1]);
+                  else if (data.trim().length > 0) resolve(data.trim());
+                  else reject(new Error('no ip found'));
+                } catch (e) {
+                  reject(e);
+                }
+              });
+            })
+            .on('error', reject)
+            .setTimeout(3000, () => reject(new Error('timeout')));
+        });
+        if (ip) return ip;
+      } catch {
+        // try next
+      }
+    }
+    return null;
+  };
+  //#endregion
+
   //#endregion
 }
 //#endregion
