@@ -95,7 +95,18 @@ export namespace Utils {
    * Example:
    * new RegExp(escapeStringForRegEx('a.b.c'),'g') => /a\.b\.c/g
    */
-  export const escapeStringForRegEx = (stringForRegExp: string) => {
+  export const escapeStringForRegEx = (
+    stringForRegExp: string,
+    options?: {
+      skipEscapeSlashAndDash?: boolean;
+    },
+  ) => {
+    options = options || ({} as any);
+
+    if (options?.skipEscapeSlashAndDash) {
+      return stringForRegExp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     return stringForRegExp.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
   };
   //#endregion
@@ -3749,6 +3760,295 @@ export namespace UtilsDotFile {
 }
 //#endregion
 
+//#region utils etc hosts
+export namespace UtilsEtcHosts {
+  export const SIMULATE_DOMAIN_TAG = '@simulatedDomainByTaon';
+
+  //#region utils etc hosts / etc host entry interface
+  export interface EtchostEntry {
+    lineIp: string;
+    domains: string[];
+    comment: string;
+  }
+  //#endregion
+
+  //#region utils etc hosts / get etc hosts path
+  export const getPath = (): string => {
+    let HOST_FILE_PATH = '';
+    //#region @backend
+    HOST_FILE_PATH =
+      process.platform === 'win32'
+        ? 'C:/Windows/System32/drivers/etc/hosts'
+        : '/etc/hosts';
+    //#endregion
+    return crossPlatformPath(HOST_FILE_PATH);
+  };
+  //#endregion
+
+  //#region utils etc hosts / get lines from etc hosts
+  export const getLines = (): string[] => {
+    //#region @backendFunc
+    const hostsPath = getPath();
+    const content = Helpers.readFile(hostsPath, '');
+    return content.split(/\r?\n/) || [];
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils etc hosts / get tokens from line
+  export const getTokensData = (
+    line: string,
+  ): {
+    comment: string;
+    domains: string[];
+    lineIp: string;
+  } => {
+    //#region @backendFunc
+    const empty = {
+      domains: [],
+      lineIp: '',
+      comment: '',
+    } as ReturnType<typeof UtilsEtcHosts.getTokensData>;
+
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return empty;
+
+    // Split off inline comment
+    const [entryPart, ...commentParts] = trimmed.split('#');
+    const comment = commentParts.length ? commentParts.join('#').trim() : '';
+
+    const tokens = entryPart.trim().split(/\s+/);
+    if (tokens.length < 2) return empty;
+
+    const [lineIp, ...domains] = tokens;
+
+    return {
+      lineIp,
+      comment,
+      domains,
+    };
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils etc hosts / specyfic entry exists
+  export const specificEntryExists = (domain: string, ip: string): boolean => {
+    //#region @backendFunc
+    const lines = getLines();
+    for (const line of lines) {
+      const { lineIp, domains } = getTokensData(line);
+      if (lineIp === ip && domains.includes(domain)) {
+        return true;
+      }
+    }
+    return false;
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils etc hosts / get Etc Host Entry By Domain
+  export const getEntriesByDomain = (
+    domain: string,
+  ): UtilsEtcHosts.EtchostEntry[] => {
+    //#region @backendFunc
+    if (!domain || /\s/.test(domain)) {
+      throw new Error('Invalid domain');
+    }
+    const entries: UtilsEtcHosts.EtchostEntry[] = [];
+    const lines = UtilsEtcHosts.getLines();
+
+    for (const line of lines) {
+      const data = UtilsEtcHosts.getTokensData(line);
+      const { comment, domains, lineIp } = data;
+      if (domains.includes(domain)) {
+        entries.push(data);
+      }
+    }
+
+    return entries;
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils etc hosts / get etc host entries by comment
+  export const getEntryByComment = (
+    commentOfEntry: string,
+  ): UtilsEtcHosts.EtchostEntry[] => {
+    //#region @backendFunc
+    if (!commentOfEntry || /\s/.test(commentOfEntry)) {
+      throw new Error('Invalid comment');
+    }
+
+    const entries: UtilsEtcHosts.EtchostEntry[] = [];
+    const lines = UtilsEtcHosts.getLines();
+
+    for (const line of lines) {
+      const data = UtilsEtcHosts.getTokensData(line);
+      const { comment, domains, lineIp } = data;
+      if (comment === commentOfEntry && domains.length > 0) {
+        entries.push(data);
+      }
+    }
+
+    return entries;
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils etc hosts / get etc host entries by ip
+  /**
+   * Returns all host entries for a given IP address.
+   */
+  export const getEntriesByIp = (ip: string): UtilsEtcHosts.EtchostEntry[] => {
+    //#region @backendFunc
+
+    if (!ip || /\s/.test(ip)) {
+      throw new Error('Invalid IP address');
+    }
+
+    const lines = UtilsEtcHosts.getLines();
+    const results: Omit<UtilsEtcHosts.EtchostEntry, 'ip'>[] = [];
+
+    for (const line of lines) {
+      const data = UtilsEtcHosts.getTokensData(line);
+      const { comment, domains, lineIp } = data;
+      if (lineIp === ip && domains.length > 0) {
+        results.push(data);
+      }
+    }
+
+    return results;
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils etc hosts / remove entry by domain
+  export const removeEntryByDomain = (domain: string): void => {
+    //#region @backendFunc
+    const hostsPath = getPath();
+
+    const lines = getLines();
+
+    // Filter out lines containing the specified domain
+    const filteredLines = lines.filter(line => {
+      const { domains } = getTokensData(line);
+      return !domains.includes(domain);
+    });
+
+    // Write the updated content back to the hosts file
+    Helpers.writeFile(hostsPath, filteredLines.join(os.EOL));
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils etc hosts / simulate domain in etc hosts
+  export const simulateDomain = async (
+    domainOrDomains: string | string[],
+    options?: {
+      triggerRevertChangesToEtcHosts?: Subject<void>;
+    },
+  ): Promise<void> => {
+    //#region @backendFunc
+    options = options || {};
+    domainOrDomains = _.isArray(domainOrDomains)
+      ? domainOrDomains
+      : [domainOrDomains];
+    for (const domain of domainOrDomains) {
+      if (!UtilsNetwork.isValidDomain(domain)) {
+        Helpers.error(`Invalid domain: "${domain}"`, false, true);
+      }
+    }
+
+    if (!(await isElevated())) {
+      Helpers.error(
+        `You must run this command with elevated privileges (sudo or as administrator)`,
+        false,
+        true,
+      );
+    }
+
+    return await new Promise(resolve => {
+      for (const domain of domainOrDomains) {
+        const url = new URL(
+          domain.startsWith('http') ? domain : `http://${domain}`,
+        );
+        UtilsNetwork.setEtcHost(url.hostname, '127.0.0.1', SIMULATE_DOMAIN_TAG);
+      }
+
+      Helpers.info(`
+
+      You can access the simulated domain(s) at:
+
+${domainOrDomains
+  .map(domain => {
+    const url = new URL(
+      domain.startsWith('http') ? domain : `http://${domain}`,
+    );
+    return chalk.underline(`\thttps://${url.hostname}`);
+  })
+  .join('\n')}
+
+      (${
+        domainOrDomains.length <= 1 ? 'Domain is' : 'Domains are'
+      } now pointing to ${chalk.bold('localhost')}):
+
+      your etc host path:
+      ${chalk.underline(UtilsNetwork.getEtcHostsPath())}
+
+     ${
+       !options.triggerRevertChangesToEtcHosts
+         ? `PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
+      AND STOP SIMULATION`
+         : ''
+     }
+
+      `);
+      let closing = false;
+      const revertChanges = () => {
+        console.log(
+          `Removing domain(s) from ${UtilsNetwork.getEtcHostsPath()} ...`,
+        );
+        for (const domain of domainOrDomains) {
+          const url = new URL(
+            domain.startsWith('http') ? domain : `http://${domain}`,
+          );
+          UtilsNetwork.removeEtcHost(url.hostname);
+        }
+      };
+
+      if (options.triggerRevertChangesToEtcHosts) {
+        const sub = options.triggerRevertChangesToEtcHosts.subscribe(() => {
+          if (closing) {
+            return;
+          }
+          revertChanges();
+          sub.unsubscribe();
+        });
+        resolve(void 0);
+      } else {
+        const currentRawMode = process.stdin.isRaw;
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
+        process.stdin.on('data', () => {
+          if (closing) {
+            return;
+          }
+
+          closing = true;
+          revertChanges();
+          process.stdin.setRawMode(currentRawMode);
+          resolve(void 0);
+        });
+      }
+    });
+
+    //#endregion
+  };
+  //#endregion
+}
+
+//#endregion
+
 //#region utils network
 export namespace UtilsNetwork {
   //#region utils network / isValidIp
@@ -3844,27 +4144,15 @@ export namespace UtilsNetwork {
   //#endregion
 
   //#region utils network / get etc hosts path
-  export const getEtcHostsPath = (): string => {
-    let HOST_FILE_PATH = '';
-    //#region @backend
-    HOST_FILE_PATH =
-      process.platform === 'win32'
-        ? 'C:/Windows/System32/drivers/etc/hosts'
-        : '/etc/hosts';
-    //#endregion
-    return crossPlatformPath(HOST_FILE_PATH);
-  };
+  export const getEtcHostsPath = UtilsEtcHosts.getPath;
   //#endregion
 
-  //#region utils network / etc host entry interface
-  export interface EtchostEntry {
-    ip: string;
-    domains: string[];
-    comment: string | null;
-  }
+  //#region utils network / simulate domain tag constant
+  /**
+   * @deprecated use UtilsEtcHosts.SIMULATE_DOMAIN_TAG instead
+   */
+  export const SIMULATE_DOMAIN_TAG = UtilsEtcHosts.SIMULATE_DOMAIN_TAG;
   //#endregion
-
-  export const SIMULATE_DOMAIN_TAG = '@simulatedDomainByTaon';
 
   //#region utils network / setEtcHost
   /**
@@ -3886,7 +4174,12 @@ export namespace UtilsNetwork {
 
     // Remove any existing lines with this domain
     content = content.filter(
-      line => !new RegExp(`\\b${escapeRegExp(domain)}\\b`).test(line),
+      line =>
+        !new RegExp(
+          `\\b${Utils.escapeStringForRegEx(domain, {
+            skipEscapeSlashAndDash: true,
+          })}\\b`,
+        ).test(line),
     );
 
     // Add new entry
@@ -3899,150 +4192,32 @@ export namespace UtilsNetwork {
   //#endregion
 
   //#region utils network / get Etc Host Entry By Domain
-  export const getEtcHostEntryByDomain = (
-    domain: string,
-  ): { ip: string | null; comment: string | null } => {
-    //#region @backendFunc
-    const hostsPath = getEtcHostsPath();
-
-    if (!domain || /\s/.test(domain)) {
-      throw new Error('Invalid domain');
-    }
-
-    const lines = fse.readFileSync(hostsPath, 'utf8').split(/\r?\n/);
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-
-      // Skip comments or empty lines
-      if (!trimmed || trimmed.startsWith('#')) continue;
-
-      // Extract comment (if any)
-      const [entryPart, ...commentParts] = trimmed.split('#');
-      const comment = commentParts.length
-        ? commentParts.join('#').trim()
-        : null;
-
-      // Split IP + domains by whitespace
-      const tokens = entryPart.trim().split(/\s+/);
-      console.log({ tokens });
-      if (tokens.length < 2) continue;
-
-      const [ip, ...domains] = tokens;
-      if (domains.includes(domain)) {
-        return { ip, comment };
-      }
-    }
-
-    return { ip: null, comment: null };
-    //#endregion
-  };
+  /**
+   * @deprecated use UtilsEtcHosts.getEntriesByDomain instead
+   */
+  export const getEtcHostEntriesByDomain = UtilsEtcHosts.getEntriesByDomain;
   //#endregion
 
   //#region utils network / get etc host entries by comment
-  export const getEtcHostEntryByComment = (commentOfEntry: string): EtchostEntry[] => {
-    //#region @backendFunc
-    if (!commentOfEntry || /\s/.test(commentOfEntry)) {
-      throw new Error('Invalid comment');
-    }
-
-    const hostsPath = getEtcHostsPath();
-    const entries: EtchostEntry[] = [];
-
-    const lines = (Helpers.readFile(hostsPath) || '').split(/\r?\n/) || [];
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-
-      // Split off inline comment
-      const [entryPart, ...commentParts] = trimmed.split('#');
-      const comment = commentParts.length
-        ? commentParts.join('#').trim()
-        : null;
-
-      const tokens = entryPart.trim().split(/\s+/);
-      if (tokens.length < 2) continue;
-
-      const [lineIp, ...domains] = tokens;
-      if (comment === commentOfEntry && domains.length > 0) {
-        entries.push({ ip: lineIp, domains, comment });
-      }
-    }
-
-    return entries;
-    //#endregion
-  };
+  /**
+   * @deprecated use UtilsEtcHosts.getEntryByComment instead
+   */
+  export const getEtcHostEntryByComment = UtilsEtcHosts.getEntryByComment;
   //#endregion
 
-  //#region utils network /  get etc host entries by ip
+  //#region utils network / get etc host entries by ip
   /**
-   * Returns all host entries for a given IP address.
-   *
-   * Example output:
-   *   getEtcHostEntryByIp("127.0.0.1")
-   *   => [
-   *        { domains: ["localhost"], comment: null },
-   *        { domains: ["myapp.local", "dev.local"], comment: "local testing" }
-   *      ]
+   * @deprecated use UtilsEtcHosts.getEntriesByIp instead
    */
-  export const getEtcHostEntryByIp = (
-    ip: string,
-  ): Omit<EtchostEntry, 'ip'>[] => {
-    //#region @backendFunc
-    const hostsPath = getEtcHostsPath();
-
-    if (!ip || /\s/.test(ip)) {
-      throw new Error('Invalid IP address');
-    }
-
-    const lines = (Helpers.readFile(hostsPath) || '').split(/\r?\n/) || [];
-    const results: Omit<EtchostEntry, 'ip'>[] = [];
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-
-      // Split off inline comment
-      const [entryPart, ...commentParts] = trimmed.split('#');
-      const comment = commentParts.length
-        ? commentParts.join('#').trim()
-        : null;
-
-      const tokens = entryPart.trim().split(/\s+/);
-      if (tokens.length < 2) continue;
-
-      const [lineIp, ...domains] = tokens;
-      if (lineIp === ip && domains.length > 0) {
-        results.push({ domains, comment });
-      }
-    }
-
-    return results;
-    //#endregion
-  };
+  export const getEtcHostEntryByIp = UtilsEtcHosts.getEntriesByIp;
   //#endregion
 
   //#region utils network / removeEtcHost
   /**
    * Remove all lines containing the given domain
+   * @deprecated use UtilsEtcHosts.removeEntryByDomain instead
    */
-  export const removeEtcHost = (domain: string): void => {
-    //#region @backendFunc
-    const hostsPath = getEtcHostsPath();
-
-    if (!domain || /\s/.test(domain)) {
-      throw new Error('Invalid domain');
-    }
-
-    let content = fse.readFileSync(hostsPath, 'utf8').split(/\r?\n/);
-    content = content.filter(
-      line => !new RegExp(`\\b${escapeRegExp(domain)}\\b`).test(line),
-    );
-
-    fse.writeFileSync(hostsPath, content.join(os.EOL), 'utf8');
-    //#endregion
-  };
+  export const removeEtcHost = UtilsEtcHosts.removeEntryByDomain;
   //#endregion
 
   //#region utils network / etc host without localhost
@@ -4062,113 +4237,11 @@ export namespace UtilsNetwork {
 
   //#endregion
 
-  // Utility to escape domain for RegExp
-  const escapeRegExp = (s: string): string =>
-    s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
   //#region utils network / simulate domain in etc hosts
-  export const simulateDomain = async (
-    domainOrDomains: string | string[],
-    options?: {
-      triggerRevertChangesToEtcHosts?: Subject<void>;
-    },
-  ): Promise<void> => {
-    //#region @backendFunc
-    options = options || {};
-    domainOrDomains = _.isArray(domainOrDomains)
-      ? domainOrDomains
-      : [domainOrDomains];
-    for (const domain of domainOrDomains) {
-      if (!UtilsNetwork.isValidDomain(domain)) {
-        Helpers.error(`Invalid domain: "${domain}"`, false, true);
-      }
-    }
-
-    if (!(await isElevated())) {
-      Helpers.error(
-        `You must run this command with elevated privileges (sudo or as administrator)`,
-        false,
-        true,
-      );
-    }
-
-    return await new Promise(resolve => {
-      for (const domain of domainOrDomains) {
-        const url = new URL(
-          domain.startsWith('http') ? domain : `http://${domain}`,
-        );
-        UtilsNetwork.setEtcHost(url.hostname, '127.0.0.1', SIMULATE_DOMAIN_TAG);
-      }
-
-      Helpers.info(`
-
-        You can access the simulated domain(s) at:
-
-${domainOrDomains
-  .map(domain => {
-    const url = new URL(
-      domain.startsWith('http') ? domain : `http://${domain}`,
-    );
-    return chalk.underline(`\thttps://${url.hostname}`);
-  })
-  .join('\n')}
-
-        (${
-          domainOrDomains.length <= 1 ? 'Domain is' : 'Domains are'
-        } now pointing to ${chalk.bold('localhost')}):
-
-        your etc host path:
-        ${chalk.underline(UtilsNetwork.getEtcHostsPath())}
-
-       ${
-         !options.triggerRevertChangesToEtcHosts
-           ? `PRESS ANY KEY TO STOP REMOVE DOMAIN FROM /etc/hosts
-        AND STOP SIMULATION`
-           : ''
-       }
-
-        `);
-      let closing = false;
-      const revertChanges = () => {
-        console.log(
-          `Removing domain(s) from ${UtilsNetwork.getEtcHostsPath()} ...`,
-        );
-        for (const domain of domainOrDomains) {
-          const url = new URL(
-            domain.startsWith('http') ? domain : `http://${domain}`,
-          );
-          UtilsNetwork.removeEtcHost(url.hostname);
-        }
-      };
-
-      if (options.triggerRevertChangesToEtcHosts) {
-        const sub = options.triggerRevertChangesToEtcHosts.subscribe(() => {
-          if (closing) {
-            return;
-          }
-          revertChanges();
-          sub.unsubscribe();
-        });
-        resolve(void 0);
-      } else {
-        const currentRawMode = process.stdin.isRaw;
-        process.stdin.setRawMode(true);
-        process.stdin.resume();
-        process.stdin.on('data', () => {
-          if (closing) {
-            return;
-          }
-
-          closing = true;
-          revertChanges();
-          process.stdin.setRawMode(currentRawMode);
-          resolve(void 0);
-        });
-      }
-    });
-
-    //#endregion
-  };
+  /**
+   * @deprecated use UtilsEtcHosts.simulateDomain instead
+   */
+  export const simulateDomain = UtilsEtcHosts.simulateDomain;
   //#endregion
 }
 //#endregion

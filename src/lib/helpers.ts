@@ -1346,6 +1346,9 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / kill process
+  /**
+   * @deprecated use UtilsProcess.killProcess
+   */
   public killProcess(byPid: number) {
     //#region @backend
     // Helpers.run(`kill -9 ${byPid}`).sync()
@@ -1381,6 +1384,10 @@ export class HelpersCore extends HelpersMessages {
   //#endregion
 
   //#region methods / run
+  /**
+   * @deprecated use UtilsProcess
+   * or native child_process exec, spawn
+   */
   public run(command: string, options?: CoreModels.RunOptions) {
     command = Helpers._fixCommand(command);
 
