@@ -3053,6 +3053,19 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
+  export const pressAnyKeyToTryAgainErrorOccurred = async (
+    error: any,
+  ): Promise<void> => {
+    //#region @backendFunc
+    frameworkName === 'tnp' && Helpers.error(error, true, true);
+    await UtilsTerminal.pressAnyKeyToContinueAsync({
+      message: chalk.bold.red(
+        'An error occurred. Press any key to try again...',
+      ),
+    });
+    //#endregion
+  };
+
   //#region press any key
   /**
    * @deprecated use UtilsTerminal.pressAnyKeyToContinueAsync()
