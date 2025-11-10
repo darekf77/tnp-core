@@ -2109,6 +2109,9 @@ export namespace UtilsOs {
 
   //#region utils os / get real home directory
   export const getRealHomeDir = (): string => {
+//#region @browser
+    return '';
+    //#endregion
     //#region @backendFunc
     // 1. If SUDO_USER is set (macOS/Linux sudo)
     if (process.env.SUDO_USER) {
