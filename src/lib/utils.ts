@@ -4184,6 +4184,95 @@ ${domainOrDomains
 
 //#region utils network
 export namespace UtilsNetwork {
+//#region utils network / online server check
+  export interface PingResult {
+    host: string;
+    success: boolean;
+    timeMs?: number; // latency if available
+    output?: string; // raw ping output
+  }
+
+  export async function checkPing(
+    host: string,
+    timeoutMs = 3000,
+  ): Promise<PingResult> {
+    //#region @backendFunc
+    return new Promise(resolve => {
+      const platform = process.platform;
+
+      // platform-specific args
+      let args: string[] = [];
+      if (platform === 'win32') {
+        // Windows ping sends 4 by default; set count to 1 and timeout in ms
+        args = ['-n', '1', '-w', String(timeoutMs), host];
+      } else {
+        // macOS & Linux use -c count and -W timeout (in seconds)
+        const timeoutSec = Math.ceil(timeoutMs / 1000);
+        args = ['-c', '1', '-W', String(timeoutSec), host];
+      }
+
+      const child = spawn('ping', args);
+
+      let output = '';
+      child.stdout.on('data', d => (output += d.toString()));
+      child.stderr.on('data', d => (output += d.toString()));
+
+      const onDone = (success: boolean) => {
+        const timeMatch = output.match(/time[=<]([\d.]+)\s*ms/i);
+        const timeMs = timeMatch ? parseFloat(timeMatch[1]) : undefined;
+        resolve({ host, success, timeMs, output: output.trim() });
+      };
+
+      const timer = setTimeout(() => {
+        child.kill('SIGKILL');
+        onDone(false);
+      }, timeoutMs + 500);
+
+      child.on('exit', code => {
+        clearTimeout(timer);
+        onDone(code === 0);
+      });
+    });
+    //#endregion
+  }
+
+  export const checkIfServerPings = async (
+    host: string,
+    timeoutMs = 3000,
+  ): Promise<boolean> => {
+    //#region @backendFunc
+    const result = await checkPing(host, timeoutMs);
+    return result.success;
+    //#endregion
+  };
+
+  export const checkIfServerOnline = async (
+    host: string,
+    port = 80,
+    timeoutMs = 3000,
+  ): Promise<boolean> => {
+    //#region @backendFunc
+    return new Promise(resolve => {
+      const socket = new net.Socket();
+
+      const onError = (): void => {
+        socket.destroy();
+        resolve(false);
+      };
+
+      socket.setTimeout(timeoutMs);
+      socket.on('error', onError);
+      socket.on('timeout', onError);
+
+      socket.connect(port, host, () => {
+        socket.end();
+        resolve(true);
+      });
+    });
+    //#endregion
+  };
+  //#endregion
+
   //#region utils network / isValidIp
   export const isValidIp = (ip: string): boolean => {
     if (!_.isString(ip)) {
@@ -4385,7 +4474,7 @@ export namespace UtilsNetwork {
     address: string;
     family: 'IPv4' | 'IPv6';
     internal: boolean;
-    type:"lan" | "wifi" | "other" | "virtual";
+    type: 'lan' | 'wifi' | 'other' | 'virtual';
   }
   //#endregion
 
@@ -4393,24 +4482,30 @@ export namespace UtilsNetwork {
   const isVirtualInterface = (name: string): boolean => {
     const lname = name.toLowerCase();
     return (
-      lname.includes("virtual") ||
-      lname.includes("vmware") ||
-      lname.includes("vbox") ||
-      lname.includes("hyper-v") ||
-      lname.includes("wsl") ||
-      lname.includes("docker") ||
-      lname.includes("veth") ||
-      lname.includes("default switch")
+      lname.includes('virtual') ||
+      lname.includes('vmware') ||
+      lname.includes('vbox') ||
+      lname.includes('hyper-v') ||
+      lname.includes('wsl') ||
+      lname.includes('docker') ||
+      lname.includes('veth') ||
+      lname.includes('default switch')
     );
   };
 
-  const interfaceTypeFromName = (name: string): LocalIpInfo["type"] => {
+  const interfaceTypeFromName = (name: string): LocalIpInfo['type'] => {
     const lname = name.toLowerCase();
 
-    if (isVirtualInterface(lname)) return "virtual";
-    if (lname.includes("eth") || lname.includes("en") || lname.includes("lan")) return "lan";
-    if (lname.includes("wl") || lname.includes("wi-fi") || lname.includes("wifi")) return "wifi";
-    return "other";
+    if (isVirtualInterface(lname)) return 'virtual';
+    if (lname.includes('eth') || lname.includes('en') || lname.includes('lan'))
+return 'lan';
+    if (
+lname.includes('wl') ||
+lname.includes('wi-fi') ||
+lname.includes('wifi')
+    )
+return 'wifi';
+    return 'other';
   };
 
   const sortByPriority = (a: LocalIpInfo, b: LocalIpInfo): number => {
@@ -4425,7 +4520,7 @@ export namespace UtilsNetwork {
 
     // prefer physical-looking names
     const physPriority = (name: string) =>
-      name.includes("ethernet") && !name.includes("vethernet") ? 0 : 1;
+      name.includes('ethernet') && !name.includes('vethernet') ? 0 : 1;
 
     const diff = physPriority(nameA) - physPriority(nameB);
     if (diff !== 0) return diff;
@@ -4450,7 +4545,7 @@ export namespace UtilsNetwork {
         all.push({
           interfaceName: name,
           address: addr.address,
-          family: addr.family as "IPv4" | "IPv6",
+          family: addr.family as 'IPv4' | 'IPv6',
           internal: addr.internal,
           type: interfaceTypeFromName(name),
         });
@@ -4469,7 +4564,9 @@ export namespace UtilsNetwork {
   export const getFirstIpV4LocalActiveIpAddress = async (): Promise<
     string | null
   > => {
-    const all = await getLocalIpAddresses().then( a => a.filter( f => f.family === 'IPv4' ) );
+    const all = await getLocalIpAddresses().then(a =>
+a.filter(f => f.family === 'IPv4'),
+);
     return all.length > 0 ? all[0].address : null;
   };
   //#endregion
