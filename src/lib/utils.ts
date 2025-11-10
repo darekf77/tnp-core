@@ -2578,12 +2578,17 @@ export namespace UtilsTerminal {
     onlyOneChoice?: boolean;
     choices: SelectChoiceValue<T>[] | { [choice: string]: SelectChoice };
     autocomplete?: boolean;
+    /**
+     * at least one choice must be selected
+     */
+    required?: boolean;
     defaultSelected?: string[];
   }): Promise<T[]> => {
     //#region @backendFunc
     const { select } = await import('inquirer-select-pro');
     const fuzzy = await import('fuzzy');
     options = _.cloneDeep(options);
+    options.required = !!options.required;
     options.question = options.question || 'Select one or multiple options';
     options.autocomplete = _.isNil(options.autocomplete)
       ? true
@@ -2591,12 +2596,20 @@ export namespace UtilsTerminal {
     const choices = transformChoices(options.choices) as any;
 
     if (Object.keys(choices || {}).length === 0) {
+      Helpers.info(options.question);
+      if (options.required) {
+        throw new Error(
+          'No choices available but at least one selection is required.',
+        );
+      }
       await UtilsTerminal.pressAnyKeyToContinueAsync({
         message: 'No choices available. Press any key to continue...',
       });
       return [];
     }
 
+    while (true) {
+      try {
     const defaultValue = options.defaultSelected || [];
     // console.log({ defaultValue, choices });
     const res = await select({
@@ -2627,8 +2640,22 @@ export namespace UtilsTerminal {
             });
           },
     });
-
-    return (Array.isArray(res) ? res : [res]) as T[];
+const result = (Array.isArray(res) ? res : [res]) as T[];
+// console.log({ result });
+        if (options.required && result.length === 0) {
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message:
+              'You must select at least one option. Press any key to continue...',
+          });
+          continue;
+        }
+        return result;
+      } catch (error) {
+        await UtilsTerminal.pressAnyKeyToContinueAsync({
+          message: 'Something went wrong. Press any key to try again...',
+        });
+      }
+    }
 
     //#region old autocomplete
     // const prompt = new AutoComplete({
