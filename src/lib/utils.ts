@@ -1592,6 +1592,7 @@ in location: ${cwd}
   };
   //#endregion
 
+  //#region utils process / is node version ok
   export const isNodeVersionOk = (options?: {
     required?: string;
     log?: boolean;
@@ -1629,8 +1630,94 @@ in location: ${cwd}
 
     return ok;
   };
+  //#endregion
 }
 //#endregion
+
+/**
+ * ! TODO IN_PROGRESS
+ * async process execution utils
+ */
+export namespace UtilsExecProc {
+  export interface ExecProcOptions {
+    cwd?: string;
+    /**
+     * default true
+     */
+    showOutputColor?: boolean;
+    /**
+     * default true
+     */
+    showOutput?: boolean | 'stdoutOnly' | 'stderrOnly';
+  }
+  /**
+   * TODO @IN_PROGRESS
+   */
+  export class ExecProcResult {
+    constructor(protected readonly child: ChildProcess) {}
+    async waitUntilDone(options?: {
+      /**
+       * default [0]
+       */
+      successCode?: number[];
+      /**
+       * in stdout or stderr
+       */
+      successOutputMessage?:
+        | string
+        | string[]
+        | {
+            stdout?: string | string[];
+            stderr?: string | string[];
+          };
+    }): Promise<boolean> {
+      //#region @backendFunc
+      options = options || {};
+      options.successCode = options.successCode || [0];
+      return new Promise((resolve, reject) => {
+        this.child.once('error', reject);
+        this.child.once('exit', code => {
+          if (options.successCode.includes(code)) {
+            resolve(true);
+            return reject(new Error(`Process exited with code ${code || 0}`));
+          }
+          resolve(false);
+        });
+      });
+      //#endregion
+    }
+  }
+
+  export const spawnAsync = (
+    command,
+    options?: ExecProcOptions,
+  ): ExecProcResult => {
+    options = options || {};
+    options.cwd = crossPlatformPath(options.cwd || process.cwd());
+    const [cmd, ...args] = command.split(' ');
+    const child = spawn(cmd, args, { stdio: 'inherit', ...options });
+
+    return new ExecProcResult(child);
+  };
+
+  export const spawnAdminSudo = async (
+    command: string,
+    options?: ExecProcOptions,
+  ): Promise<void> => {
+    //#region @backendFunc
+    options = options || {};
+    const sudoExists = await UtilsOs.commandExistsAsync('sudo');
+    if (!sudoExists) {
+      throw new Error(`'sudo' command not found on this system.`);
+    }
+    command = `sudo ${command}`;
+    const res = await spawnAsync(command);
+    await res.waitUntilDone();
+    //#endregion
+  };
+}
+
+export namespace UtilsFileOperation {}
 
 //#region utils os
 export namespace UtilsOs {
@@ -2109,7 +2196,7 @@ export namespace UtilsOs {
 
   //#region utils os / get real home directory
   export const getRealHomeDir = (): string => {
-//#region @browser
+    //#region @browser
     return '';
     //#endregion
     //#region @backendFunc
@@ -2613,38 +2700,38 @@ export namespace UtilsTerminal {
 
     while (true) {
       try {
-    const defaultValue = options.defaultSelected || [];
-    // console.log({ defaultValue, choices });
-    const res = await select({
-      message: options.question,
-      // options: choices,
-      clearInputWhenSelected: true,
-      emptyText: '<< No results >>',
-      multiple: !options.onlyOneChoice,
-      canToggleAll: true,
-      pageSize: 10,
-      loop: true,
-      defaultValue,
-      options: !options.autocomplete
-        ? choices
-        : (input = '') => {
-            if (!input) {
-              return choices;
-            }
-            const fuzzyResult = fuzzy.filter(
-              input,
-              choices.map(f => f.name),
-            );
-            return fuzzyResult.map(el => {
-              return {
-                name: el.original,
-                value: choices.find(c => c.name === el.original).value,
-              };
-            });
-          },
-    });
-const result = (Array.isArray(res) ? res : [res]) as T[];
-// console.log({ result });
+        const defaultValue = options.defaultSelected || [];
+        // console.log({ defaultValue, choices });
+        const res = await select({
+          message: options.question,
+          // options: choices,
+          clearInputWhenSelected: true,
+          emptyText: '<< No results >>',
+          multiple: !options.onlyOneChoice,
+          canToggleAll: true,
+          pageSize: 10,
+          loop: true,
+          defaultValue,
+          options: !options.autocomplete
+            ? choices
+            : (input = '') => {
+                if (!input) {
+                  return choices;
+                }
+                const fuzzyResult = fuzzy.filter(
+                  input,
+                  choices.map(f => f.name),
+                );
+                return fuzzyResult.map(el => {
+                  return {
+                    name: el.original,
+                    value: choices.find(c => c.name === el.original).value,
+                  };
+                });
+              },
+        });
+        const result = (Array.isArray(res) ? res : [res]) as T[];
+        // console.log({ result });
         if (options.required && result.length === 0) {
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message:
@@ -4227,7 +4314,7 @@ ${domainOrDomains
 
 //#region utils network
 export namespace UtilsNetwork {
-//#region utils network / online server check
+  //#region utils network / online server check
   export interface PingResult {
     host: string;
     success: boolean;
@@ -4541,13 +4628,13 @@ export namespace UtilsNetwork {
 
     if (isVirtualInterface(lname)) return 'virtual';
     if (lname.includes('eth') || lname.includes('en') || lname.includes('lan'))
-return 'lan';
+      return 'lan';
     if (
-lname.includes('wl') ||
-lname.includes('wi-fi') ||
-lname.includes('wifi')
+      lname.includes('wl') ||
+      lname.includes('wi-fi') ||
+      lname.includes('wifi')
     )
-return 'wifi';
+      return 'wifi';
     return 'other';
   };
 
@@ -4608,8 +4695,8 @@ return 'wifi';
     string | null
   > => {
     const all = await getLocalIpAddresses().then(a =>
-a.filter(f => f.family === 'IPv4'),
-);
+      a.filter(f => f.family === 'IPv4'),
+    );
     return all.length > 0 ? all[0].address : null;
   };
   //#endregion
