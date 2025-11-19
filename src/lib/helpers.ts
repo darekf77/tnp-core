@@ -2641,6 +2641,10 @@ command: ${command}
   //#endregion
   //#endregion
 
+  /**
+   * return absolute paths for files inside folder or link to folder
+   * @returns absoulte pathes to files from path
+   */
   getFilesFrom(
     folderOrLinkToFolder: string | string[],
     options: {
