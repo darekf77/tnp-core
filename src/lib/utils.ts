@@ -1592,6 +1592,7 @@ in location: ${cwd}
   };
   //#endregion
 
+  //#region utils process / is node version ok
   export const isNodeVersionOk = (options?: {
     required?: string;
     log?: boolean;
@@ -1629,6 +1630,326 @@ in location: ${cwd}
 
     return ok;
   };
+  //#endregion
+}
+//#endregion
+
+//#region TODO IN_PROGRESS utils messages
+/**
+ * TODO @LAST @IN_PROGRESS
+ * - utils for messages
+ * - export when ready
+ * - should be ready for everything async refactor
+ */
+namespace UtilsMessages {}
+//#endregion
+
+//#region TODO IN_PROGRESS utils exec process
+/**
+ * ! TODO @LAST @IN_PROGRESS
+ * - async process execution utils
+ * - export when ready
+ * - should be ready for everything async refactor
+ */
+namespace UtilsExecProc {
+  export interface ExecProcOptions {
+    cwd?: string;
+    /**
+     * default true
+     */
+    showOutputColor?: boolean;
+    /**
+     * default true
+     */
+    showOutput?: boolean | 'stdoutOnly' | 'stderrOnly';
+  }
+  /**
+   * ! TODO @IN_PROGRESS implement all options and test
+   */
+  export class ExecProcResult {
+    constructor(
+      protected readonly child: ChildProcess,
+      protected readonly command: string,
+    ) {}
+    async waitUntilDoneOrThrow(options?: {
+      /**
+       * default [0]
+       */
+      successCode?: number[];
+      /**
+       * in stdout or stderr
+       */
+      successOutputMessage?:
+        | string
+        | string[]
+        | {
+            stdout?: string | string[];
+            stderr?: string | string[];
+          };
+
+      /**
+       * in stdout or stderr
+       */
+      failOutputMessage?:
+        | string
+        | string[]
+        | {
+            stdout?: string | string[];
+            stderr?: string | string[];
+          };
+    }): Promise<boolean> {
+      //#region @backendFunc
+      options = options || {};
+      options.successCode = options.successCode || [0];
+      return new Promise((resolve, reject) => {
+        this.child.once('error', reject);
+        this.child.once('exit', code => {
+          if (options.successCode.includes(code)) {
+            resolve(true);
+            return reject(new Error(`Process exited with code ${code || 0}`));
+          }
+          reject(
+            new Error(`
+            Execution failed. Command:
+            ${chalk.bold(this.command)}
+
+            Process exited with code ${code || 0}`),
+          );
+        });
+      });
+      //#endregion
+    }
+  }
+
+  /**
+   * @TODO @IN_PROGRESS
+   */
+  export const spawnAsync = (
+    command,
+    options?: ExecProcOptions,
+  ): ExecProcResult => {
+    options = options || {};
+    options.cwd = crossPlatformPath(options.cwd || process.cwd());
+    const [cmd, ...args] = command.split(' ');
+
+    const child = spawn(cmd, args, { stdio: 'inherit', ...options });
+
+    return new ExecProcResult(child, command);
+  };
+
+  /**
+   * @TODO @IN_PROGRESS
+   */
+  export const spawnAdminSudo = async (
+    command: string,
+    options?: ExecProcOptions,
+  ): Promise<void> => {
+    //#region @backendFunc
+    options = options || {};
+    const sudoExists = await UtilsOs.commandExistsAsync('sudo');
+    if (!sudoExists) {
+      throw new Error(`'sudo' command not found on this system.`);
+    }
+    command = `sudo ${command}`;
+    const res = await spawnAsync(command);
+    await res.waitUntilDoneOrThrow();
+    //#endregion
+  };
+
+  //#region utils exec process / execute until end or throw
+  /**
+   * @TODO @IN_PROGRESS
+   */
+  export const executeUntilEndOrThrow = async ({
+    command,
+    cwd,
+  }: {
+    command: string;
+    cwd: string;
+  }): Promise<void> => {
+    //#region @backendFunc
+    const child = await spawnAsync(command, { cwd }).waitUntilDoneOrThrow();
+    // await child.waitUntilDoneOrThrow();
+    //#endregion
+  };
+  //#endregion
+}
+//#endregion
+
+//#region TODO IN_PROGRESS utils files folders operations
+/**
+ * TODO @LAST @IN_PROGRESS
+ * - utils for files and folders operations
+ * - export when ready
+ * - should be ready for everything async refactor
+ */
+namespace UtilsFilesFoldersOperations {
+  //#region utils files folders operations / remove options
+  export interface UtilsFilesFoldersOperationsRemoveOptions {
+    recursive?: boolean;
+    waitForUserActionOnError?: boolean;
+  }
+  //#endregion
+
+  //#region utils files folders operations / remove file or folder or link
+  /**
+   * remove file or folder or link
+   */
+  export const remove = async (
+    absolutePath: string | string[],
+    options?: UtilsFilesFoldersOperationsRemoveOptions,
+  ): Promise<boolean> => {
+    //#region @backendFunc
+    try {
+      // await fs.unlink(options.absolutePath);
+    } catch (error) {}
+    return void 0;
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils files folders operations / remove file or folder or link
+  /**
+   * remove file or folder or link
+   */
+  export const removeByPattern = async (
+    globPattern: string | string[],
+    options?: UtilsFilesFoldersOperationsRemoveOptions,
+  ): Promise<boolean> => {
+    //#region @backendFunc
+    try {
+      // await fs.unlink(options.absolutePath);
+    } catch (error) {}
+    return void 0;
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils files folders operations / get files from
+  export async function getFilesFromAsync(
+    folderOrLinkToFolder: string | string[],
+    options: {
+      recursive?: boolean;
+      followSymlinks?: boolean;
+    } = {},
+  ): Promise<string[]> {
+    return null;
+    //#region @backendFunc
+    // folderOrLinkToFolder = crossPlatformPath(folderOrLinkToFolder) as string;
+    // const { recursive = false, followSymlinks = true } = options;
+
+    // const visited = new Set<string>();
+    // const results: string[] = [];
+
+    // const scan = async (dir: string): Promise<void> => {
+    //   if (visited.has(dir)) return;
+    //   visited.add(dir);
+
+    //   let entries: fs.Dirent[];
+    //   try {
+    //     entries = await fse.readdir(dir, { withFileTypes: true });
+    //   } catch {
+    //     return; // skip unreadable folders
+    //   }
+
+    //   for (const entry of entries) {
+    //     const fullPath = path.join(dir, entry.name);
+
+    //     if (entry.isSymbolicLink()) {
+    //       let realPath: string;
+    //       try {
+    //         realPath = await fse.realpath(fullPath);
+    //       } catch {
+    //         continue; // broken symlink -> skip
+    //       }
+
+    //       let stats;
+    //       try {
+    //         stats = await fse.stat(realPath);
+    //       } catch {
+    //         continue; // can't stat -> skip
+    //       }
+
+    //       if (stats.isDirectory()) {
+    //         if (recursive && followSymlinks) {
+    //           await scan(realPath);
+    //         }
+    //       } else if (stats.isFile()) {
+    //         results.push(fullPath);
+    //       }
+    //     } else if (entry.isDirectory()) {
+    //       if (recursive) {
+    //         await scan(fullPath);
+    //       }
+    //     } else if (entry.isFile()) {
+    //       results.push(fullPath);
+    //     }
+    //   }
+    // };
+
+    // await scan(path.resolve(folderOrLinkToFolder));
+
+    // return results.map(crossPlatformPath);
+    //#endregion
+  }
+  //#endregion
+
+  //#region utils files folders operations / read file
+  /**
+   * TODO @IN_PROGRESS
+   */
+  export const readFileAsync = async (
+    absoluteFilePath: string | string[],
+    options?: {
+      defaultValueWhenNotExists?: string | undefined;
+      notTrim?: boolean;
+    },
+  ): Promise<string | undefined> => {
+    return void 0;
+  };
+  //#endregion
+
+  //#region utils files folders operations / write file
+  export type WriteFileAsyncInput =
+    | string
+    | object
+    //#region @backend
+    | Buffer;
+  //#endregion
+
+  /**
+   * TODO @IN_PROGRESS
+   */
+  export const writeFileAsync = async (
+    absoluteFilePath: string | string[],
+    input: WriteFileAsyncInput,
+    options?: { overrideSameFile?: boolean; preventParentFile?: boolean },
+  ): Promise<boolean> => {
+    return void 0;
+  };
+  //#endregion
+
+  //#region utils files folders operations / is existed symlink
+  /**
+   * TODO @IN_PROGRESS
+   */
+  export const isExistedSymlink = async (
+    absoluteFilePath: string | string[],
+  ): Promise<boolean> => {
+    return void 0;
+  };
+  //#endregion
+
+  //#region utils files folders operations / is un existed link
+  /**
+   * TODO @IN_PROGRESS
+   */
+  export const isUnExistedLink = async (
+    absoluteFilePath: string | string[],
+  ): Promise<boolean> => {
+    return void 0;
+  };
+  //#endregion
 }
 //#endregion
 
@@ -2109,7 +2430,7 @@ export namespace UtilsOs {
 
   //#region utils os / get real home directory
   export const getRealHomeDir = (): string => {
-//#region @browser
+    //#region @browser
     return '';
     //#endregion
     //#region @backendFunc
@@ -2368,7 +2689,7 @@ export namespace UtilsMigrations {
 
 //#region utils terminal
 export namespace UtilsTerminal {
-  //#region models
+  //#region utils terminal / models
   export interface SelectChoice {
     /**
      * Title of the choice
@@ -2391,15 +2712,15 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-  //#region wait
+  //#region utils terminal / wait
   export const wait = Utils.wait;
   //#endregion
 
-  //#region wait milliseconds
+  //#region utils terminal / wait milliseconds
   export const waitMilliseconds = Utils.waitMilliseconds;
   //#endregion
 
-  //#region is verbose mode
+  //#region utils terminal / is verbose mode
   /**
    * Check if cli is running in verbose mode
    * @returns true if cli is running with arugment -verbose
@@ -2411,6 +2732,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
+  //#region utils terminal / wait for user any key
   export const waitForUserAnyKey = async (
     callback: () => void | Promise<void>,
     options?: {
@@ -2467,8 +2789,9 @@ export namespace UtilsTerminal {
     });
     //#endregion
   };
+  //#endregion
 
-  //#region get terminal height
+  //#region utils terminal / get terminal height
   export const getTerminalHeight = (): number => {
     //#region @backendFunc
     if (process.stdout.rows && process.stdout.rows > 10) {
@@ -2496,7 +2819,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-  //#region clear
+  //#region utils terminal / clear
   export const clearConsole = (): void => {
     //#region @backendFunc
     Helpers.msgCacheClear();
@@ -2548,7 +2871,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-  //#region transform choices
+  //#region utils terminal / transform choices
   const transformChoices = (choices: any): SelectChoiceValue[] => {
     //#region @backendFunc
     if (!_.isArray(choices) && _.isObject(choices)) {
@@ -2571,7 +2894,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-  //#region multiselect
+  //#region utils terminal / multiselect
   export const multiselect = async <T = string>(options: {
     question?: string;
     /**
@@ -2613,38 +2936,38 @@ export namespace UtilsTerminal {
 
     while (true) {
       try {
-    const defaultValue = options.defaultSelected || [];
-    // console.log({ defaultValue, choices });
-    const res = await select({
-      message: options.question,
-      // options: choices,
-      clearInputWhenSelected: true,
-      emptyText: '<< No results >>',
-      multiple: !options.onlyOneChoice,
-      canToggleAll: true,
-      pageSize: 10,
-      loop: true,
-      defaultValue,
-      options: !options.autocomplete
-        ? choices
-        : (input = '') => {
-            if (!input) {
-              return choices;
-            }
-            const fuzzyResult = fuzzy.filter(
-              input,
-              choices.map(f => f.name),
-            );
-            return fuzzyResult.map(el => {
-              return {
-                name: el.original,
-                value: choices.find(c => c.name === el.original).value,
-              };
-            });
-          },
-    });
-const result = (Array.isArray(res) ? res : [res]) as T[];
-// console.log({ result });
+        const defaultValue = options.defaultSelected || [];
+        // console.log({ defaultValue, choices });
+        const res = await select({
+          message: options.question,
+          // options: choices,
+          clearInputWhenSelected: true,
+          emptyText: '<< No results >>',
+          multiple: !options.onlyOneChoice,
+          canToggleAll: true,
+          pageSize: 10,
+          loop: true,
+          defaultValue,
+          options: !options.autocomplete
+            ? choices
+            : (input = '') => {
+                if (!input) {
+                  return choices;
+                }
+                const fuzzyResult = fuzzy.filter(
+                  input,
+                  choices.map(f => f.name),
+                );
+                return fuzzyResult.map(el => {
+                  return {
+                    name: el.original,
+                    value: choices.find(c => c.name === el.original).value,
+                  };
+                });
+              },
+        });
+        const result = (Array.isArray(res) ? res : [res]) as T[];
+        // console.log({ result });
         if (options.required && result.length === 0) {
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message:
@@ -2697,7 +3020,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region multiselect and execute
+  //#region utils terminal / multiselect and execute
   /**
    * Similar to select but executes action if provided
    * @returns selected and executed value
@@ -2766,7 +3089,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region select and execute
+  //#region utils terminal / select and execute
   /**
    * Similar to select but executes action if provided
    * @returns selected and executed value
@@ -2822,7 +3145,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region select
+  //#region utils terminal / select
   export const select = async <T = string>(options: {
     question?: string;
     choices: SelectChoiceValue<T>[] | { [choice: string]: SelectChoice };
@@ -2912,7 +3235,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
 
   //#endregion
 
-  //#region pipe enter to stdin
+  //#region utils terminal / pipe enter to stdin
   export const pipeEnterToStdin = (): void => {
     //#region @backendFunc
     process.stdin.push('\n');
@@ -2920,7 +3243,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region input
+  //#region utils terminal / input
   export const input = async ({
     defaultValue,
     question,
@@ -2960,7 +3283,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region confirm
+  //#region utils terminal / confirm
   export const confirm = async (options?: {
     /**
      * default: Are you sure?
@@ -3057,7 +3380,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region press any key to continue
+  //#region utils terminal / press any key to continue
   export const pressAnyKeyToContinueAsync = (options?: {
     message?: string;
   }): Promise<void> => {
@@ -3083,6 +3406,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
+  //#region utils terminal / press any key to try again error occurred
   export const pressAnyKeyToTryAgainErrorOccurred = async (
     error: any,
   ): Promise<void> => {
@@ -3095,8 +3419,9 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
     });
     //#endregion
   };
+  //#endregion
 
-  //#region press any key
+  //#region utils terminal / press any key
   /**
    * @deprecated use UtilsTerminal.pressAnyKeyToContinueAsync()
    */
@@ -3132,7 +3457,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region preview long list as select
+  //#region utils terminal / preview long list as select
   export const previewLongList = async (
     list: string | string[],
     listName = 'List',
@@ -3158,7 +3483,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region preview long list with 'less' (git log like)
+  //#region utils terminal /  preview long list with 'less' (git log like)
   /**
    * Displays a long list in the console using a pager like `less`.
    * Returns a Promise that resolves when the user exits the pager.
@@ -3215,7 +3540,7 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
   };
   //#endregion
 
-  //#region draw big text
+  //#region utils terminal /  draw big text
   export const drawBigText = async (
     text: string,
     options?: {
@@ -3243,6 +3568,126 @@ const result = (Array.isArray(res) ? res : [res]) as T[];
     });
     console.log(output.string);
     return output.string;
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils terminal / configure bash or shell
+  /**
+   * @TODO @IN_PROGRESS
+   * - export when done
+   * Configure bash or powershell prompt to show current folder and git branch
+   */
+  const configureBashOrShell = async (): Promise<void> => {
+    //#region @backendFunc
+
+    //#region configure bash
+    const configureBash = () => {
+      const configBase = `
+      # Extract git branch (if any)
+  parse_git_branch() {
+      git branch --show-current 2>/dev/null
+  }
+
+  # PS1 with only folder basename
+  export PS1="\\[\\e[32m\\]\\W\\[\\e[33m\\] \\$(parse_git_branch)\\[\\e[0m\\]\\$ "
+
+
+      `;
+    };
+    //#endregion
+
+    //#region configure powershell
+    const ConfigurePowerSHell = () => {
+      // "terminal.integrated.profiles.windows": {
+      //   "PowerShell Core": {
+      //     "path": "C:\\Users\\darek\\AppData\\Local\\Microsoft\\WindowsApps\\pwsh.exe"
+      //   }
+      // },
+
+      // notepad $PROFILE
+      //     `$env:PATH += ";${UtilsOs.getRealHomeDir()}\AppData\Local\Programs\oh-my-posh\bin"
+      // oh-my-posh init pwsh --config "C:\Users\darek\AppData\Local\Programs\oh-my-posh\themes\jandedobbeleer.omp.json" | Invoke-Expression`
+      // function readlink($Path) {
+      //     (Get-Item $Path).Target
+      // }
+
+      // Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+      const powershellConfig = {
+        $schema:
+          'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json',
+        console_title_template: '{{ .Folder }}',
+        blocks: [
+          {
+            type: 'prompt',
+            alignment: 'left',
+            segments: [
+              // {
+              //   properties: {
+              //     cache_duration: 'none',
+              //   },
+              //   template: '{{ .UserName }}@{{ .HostName }} ',
+              //   foreground: '#00FF00',
+              //   type: 'session',
+              //   style: 'plain',
+              // },
+              {
+                properties: {
+                  cache_duration: 'none',
+                },
+                template: 'POWERSHELL ',
+                foreground: '#FF69B4',
+                type: 'shell',
+                style: 'plain',
+              },
+              // only basename
+              {
+                type: 'path',
+                style: 'plain',
+                template: '{{ .Folder }}',
+                foreground: '#D4AF37',
+                properties: {
+                  style: 'agnoster',
+                },
+              },
+              // {
+              //   properties: {
+              //     cache_duration: 'none',
+              //     style: 'full',
+              //   },
+              //   template: '{{ .Path }} ',
+              //   foreground: '#D4AF37',
+              //   type: 'path',
+              //   style: 'plain',
+              // },
+              {
+                properties: {
+                  branch_icon: '',
+                  cache_duration: 'none',
+                  display_stash_count: false,
+                  display_status: false,
+                  display_upstream_icon: false,
+                },
+                template: '({{ .HEAD }})',
+                foreground: '#3399FF',
+                type: 'git',
+                style: 'plain',
+              },
+            ],
+          },
+        ],
+        version: 3,
+        final_space: true,
+      };
+
+      const powerShellDesktJson = crossPlatformPath(
+        `${UtilsOs.getRealHomeDir()}/AppData/Local/Programs/oh-my-posh/themes/jandedobbeleer.omp.json`,
+      );
+    };
+    //#endregion
+
+    // TODO terminal UI menu to select bash or powershell
     //#endregion
   };
   //#endregion
@@ -4227,7 +4672,7 @@ ${domainOrDomains
 
 //#region utils network
 export namespace UtilsNetwork {
-//#region utils network / online server check
+  //#region utils network / online server check
   export interface PingResult {
     host: string;
     success: boolean;
@@ -4541,13 +4986,13 @@ export namespace UtilsNetwork {
 
     if (isVirtualInterface(lname)) return 'virtual';
     if (lname.includes('eth') || lname.includes('en') || lname.includes('lan'))
-return 'lan';
+      return 'lan';
     if (
-lname.includes('wl') ||
-lname.includes('wi-fi') ||
-lname.includes('wifi')
+      lname.includes('wl') ||
+      lname.includes('wi-fi') ||
+      lname.includes('wifi')
     )
-return 'wifi';
+      return 'wifi';
     return 'other';
   };
 
@@ -4608,8 +5053,8 @@ return 'wifi';
     string | null
   > => {
     const all = await getLocalIpAddresses().then(a =>
-a.filter(f => f.family === 'IPv4'),
-);
+      a.filter(f => f.family === 'IPv4'),
+    );
     return all.length > 0 ? all[0].address : null;
   };
   //#endregion
