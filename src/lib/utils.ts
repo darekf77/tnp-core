@@ -1592,6 +1592,78 @@ in location: ${cwd}
   };
   //#endregion
 
+  //#region utils process / kill all other node processes except itself
+  /**
+   * Kills all Node.js processes except the current process.
+   * Works on Windows, macOS, and Linux.
+   * @returns {number} Number of processes killed
+   */
+  export const killAllOtherNodeProcesses = async (): Promise<void> => {
+    //#region @backendFunc
+    const currentPid = process.pid;
+    let killedCount = 0;
+
+    try {
+      let cmd;
+      let lines;
+
+      if (os.platform() === 'win32') {
+        // Windows: use tasklist and taskkill
+        cmd = `tasklist /FI "IMAGENAME eq node.exe" /FO CSV`;
+        const output = child_process.execSync(cmd, { encoding: 'utf8' });
+        lines = output.trim().split('\n').slice(1); // skip header
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const cols = line.split(',').map(s => s.replace(/^"|"$/g, '').trim());
+          const imageName = cols[0];
+          const pid = parseInt(cols[1], 10);
+
+          if (
+            imageName.toLowerCase() === 'node.exe' &&
+            pid !== currentPid &&
+            !isNaN(pid)
+          ) {
+            try {
+              process.kill(pid); // or execSync(`taskkill /PID ${pid} /F`);
+              console.log(`Killed node.exe PID: ${pid}`);
+              killedCount++;
+            } catch (err) {
+              // Process might have already exited
+            }
+          }
+        }
+      } else {
+        // Linux & macOS: use ps and kill
+        cmd = `ps -eo pid,command | grep -E "[n]ode( |$)"`;
+        const output = child_process.execSync(cmd, { encoding: 'utf8' });
+        lines = output.trim().split('\n');
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const parts = line.trim().split(/\s+/);
+          const pid = parseInt(parts[0], 10);
+
+          if (!isNaN(pid) && pid !== currentPid) {
+            try {
+              process.kill(pid, 'SIGKILL');
+              console.log(`Killed node PID: ${pid}`);
+              killedCount++;
+            } catch (err) {
+              // Ignore if process no longer exists or access denied
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error while killing node processes:', error.message);
+    }
+
+    console.log(`Total other node processes killed: ${killedCount}`);
+    //#endregion
+  };
+  //#endregion
+
   //#region utils process / is node version ok
   export const isNodeVersionOk = (options?: {
     required?: string;
