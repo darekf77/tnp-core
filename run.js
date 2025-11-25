@@ -6,7 +6,14 @@ const fse = require('fs-extra');
 const argsMinimist = require('minimist')(process.argv);
 
 const pathToDist = path.join(process.cwd(), 'dist');
+const pathToDatabases = path.join(process.cwd(), 'databases');
 const pathToDistApp = path.join(pathToDist, 'app.js');
+
+try {
+  fse.ensureDirSync(pathToDatabases);
+} catch (error) {
+
+}
 
 const encoding = 'utf8';
 var secondsWaitAfterDistDetected = 5;
