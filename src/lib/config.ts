@@ -25,7 +25,7 @@ if (global && !global['ENV']) {
 //#endregion
 
 //#region resolve tnp location
-// @LAST RESOLVE TNP LOCATION !!! for each context and RELEASE TNP-CONFIG
+// @LAST RESOLVE TNP LOCATION !!! for each context and RELEASE TNP-CORE
 let dirnameForTnp: string;
 //#region @backend
 dirnameForTnp = crossPlatformPath(path.resolve(__dirname, '..'));
