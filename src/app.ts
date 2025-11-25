@@ -9,7 +9,7 @@ import Aura from '@primeng/themes/aura'; // @browser
 import { MaterialCssVarsModule } from 'angular-material-css-vars'; // @browser
 import { providePrimeNG } from 'primeng/config'; // @browser
 import { Observable, map } from 'rxjs';
-import { Taon, BaseContext, TAON_CONTEXT } from 'taon/src';
+import { Taon, TaonBaseContext, TAON_CONTEXT } from 'taon/src';
 import { UtilsOs } from 'tnp-core/src';
 
 import { HOST_URL, FRONTEND_HOST_URL } from './app.hosts';
@@ -158,7 +158,7 @@ var MainContext = Taon.createContext(() => ({
   appId: APP_ID,
   frontendHost: FRONTEND_HOST_URL,
   contextName: 'MainContext',
-  contexts: { BaseContext },
+  contexts: { TaonBaseContext },
   //#region @websql
   migrations: {
     UserMigration,

@@ -9,3 +9,6 @@ export * from './core-cli';
 export * from './required-global-npm-packages';
 export { HelpersCore as CoreHelpers, CommandOutputOptions } from './helpers';
 export let Helpers = Base.InstanceCore;
+
+export * from './config';
+export * from './constants';
