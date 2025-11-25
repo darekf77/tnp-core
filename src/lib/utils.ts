@@ -1743,6 +1743,7 @@ namespace UtilsExecProc {
       protected readonly child: ChildProcess,
       protected readonly command: string,
     ) {}
+
     async waitUntilDoneOrThrow(options?: {
       /**
        * default [0]
@@ -2568,7 +2569,11 @@ export namespace UtilsOs {
   export const isWebSQL = isRunningInWebSQL();
   export const isVscodeExtension = isRunningInVscodeExtension();
   export const isSSRMode = isRunningInSSRMode();
-  export const isRunningInWindows: boolean = process.platform == 'win32';
+  let isRunningInWindowsTmp: boolean = false;
+  //#region @backend
+  isRunningInWindowsTmp = process.platform == 'win32';
+  //#endregion
+  export const isRunningInWindows = isRunningInWindowsTmp;
 
   //#region utils os / command exists
 
@@ -5257,11 +5262,17 @@ export namespace UtilsProcessLogger {
   > {
     //#region fields & getters
     private _logFilePath: string | null = null;
+
     private writeStream: WriteStream | null = null;
+
     private _processLogFilename: string | null = null;
+
     private lastNLinesFromStderr: string[] = [];
+
     private lastNLinesFromStdout: string[] = [];
+
     private lastNLinesFromOfOutput: string[] = [];
+
     public get processLogFilename(): string | null {
       return this._processLogFilename;
     }
