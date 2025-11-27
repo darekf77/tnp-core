@@ -3484,16 +3484,23 @@ export namespace UtilsTerminal {
   //#endregion
 
   //#region utils terminal / press any key to try again error occurred
+/**
+   * @returns true if user wants to try again, false otherwise
+   */
   export const pressAnyKeyToTryAgainErrorOccurred = async (
     error: any,
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     //#region @backendFunc
     frameworkName === 'tnp' && Helpers.error(error, true, true);
-    await UtilsTerminal.pressAnyKeyToContinueAsync({
-      message: chalk.bold.red(
-        'An error occurred. Press any key to try again...',
-      ),
-    });
+
+    if (
+      !(await UtilsTerminal.confirm({
+      message: 'An error occurred. Do you want to try again?',
+      }))
+    ) {
+      return false;
+    }
+    return true;
     //#endregion
   };
   //#endregion
