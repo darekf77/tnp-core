@@ -3484,7 +3484,7 @@ export namespace UtilsTerminal {
   //#endregion
 
   //#region utils terminal / press any key to try again error occurred
-/**
+  /**
    * @returns true if user wants to try again, false otherwise
    */
   export const pressAnyKeyToTryAgainErrorOccurred = async (
@@ -3495,7 +3495,7 @@ export namespace UtilsTerminal {
 
     if (
       !(await UtilsTerminal.confirm({
-      message: 'An error occurred. Do you want to try again?',
+        message: 'An error occurred. Do you want to try again?',
       }))
     ) {
       return false;
@@ -4301,6 +4301,37 @@ export namespace UtilsDotFile {
         return parseValue(rest.join('='));
       }
     }
+    //#endregion
+  };
+  //#endregion
+
+  //#region add comment at the beginning of dot file
+  export const addCommentAtTheBeginningOfDotFile = (
+    dotFileAbsPath: string | string[],
+    comment: string,
+  ): void => {
+    //#region @backendFunc
+    dotFileAbsPath = crossPlatformPath(dotFileAbsPath);
+
+    let envContent = '';
+    if (fse.existsSync(dotFileAbsPath)) {
+      envContent = Helpers.readFile(dotFileAbsPath, '');
+    } else {
+      Helpers.writeFile(dotFileAbsPath, '');
+      Helpers.warn(
+        `[${frameworkName}-core] Created ${path.basename(dotFileAbsPath)}`,
+      );
+      envContent = '';
+    }
+
+    const commentLines = comment
+      .split('\n')
+      .map(line => `# ${line}`)
+      .join('\n');
+
+    envContent = `${commentLines}\n${envContent}`;
+
+    Helpers.writeFile(dotFileAbsPath, envContent);
     //#endregion
   };
   //#endregion
