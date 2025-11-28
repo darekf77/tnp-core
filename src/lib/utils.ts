@@ -1,6 +1,6 @@
 //#region imports
 import { Blob } from 'buffer'; // @backend
-import { ChildProcess } from 'child_process';
+import { ChildProcess, ExecSyncOptions } from 'child_process';
 import * as crypto from 'crypto'; // @backend
 import type { WriteStream } from 'fs';
 import * as net from 'net';
@@ -25,7 +25,7 @@ import { spawn, child_process } from './core-imports';
 import { fse } from './core-imports';
 import { CoreModels } from './core-models';
 
-import { frameworkName, Helpers } from './index';
+import { config, frameworkName, Helpers } from './index';
 
 //#endregion
 
@@ -1703,6 +1703,30 @@ in location: ${cwd}
     return ok;
   };
   //#endregion
+
+  export const getPathOfExecutable = async (
+    command: string,
+  ): Promise<string | null> => {
+    //#region @backendFunc
+    const cmd = command.replace(/\.(exe|bat|cmd)$/i, '');
+    const isWin = process.platform === 'win32';
+    const checkCmd = isWin
+      ? `where ${cmd}`
+      : `command -v ${cmd} || which ${cmd}`;
+
+    const shell = UtilsProcess.getBashOrShellName();
+
+    try {
+      const { stdout } = await UtilsExecProc.spawnAsync(checkCmd, {
+        showOutput: false,
+      }).getOutput(shell);
+      const firstLine = stdout.trim().split(/\r?\n/)[0].trim();
+      return firstLine ? crossPlatformPath(firstLine) : null;
+    } catch (e) {
+      return null;
+    }
+    //#endregion
+  };
 }
 //#endregion
 
@@ -1716,16 +1740,21 @@ in location: ${cwd}
 namespace UtilsMessages {}
 //#endregion
 
-//#region TODO IN_PROGRESS utils exec process
+//#region utils exec process
 /**
- * ! TODO @LAST @IN_PROGRESS
- * - async process execution utils
- * - export when ready
- * - should be ready for everything async refactor
+ * Async api for executing child processes
+ * (proper handling of stdout / stderr and options)
  */
-namespace UtilsExecProc {
-  export interface ExecProcOptions {
+export namespace UtilsExecProc {
+  //#region utils exec process / exec proc options and class
+  interface ExecProcOptions {
     cwd?: string;
+    /**
+     * default true
+     * true -> good for long outputs
+     * false -> good for short outputs (speed things up)
+     */
+    biggerBuffer?: boolean;
     /**
      * default true
      */
@@ -1734,47 +1763,283 @@ namespace UtilsExecProc {
      * default true
      */
     showOutput?: boolean | 'stdoutOnly' | 'stderrOnly';
+    /**
+     * default process.env
+     */
+    env?: { [key: string]: string };
   }
+  //#endregion
+
+  //#region utils exec process / exec proc wait until done or throw
+  interface ExecProcWaitUntilDoneOrThrow {
+    /**
+     * default [0]
+     */
+    successCode?: number[];
+    /**
+     * in stdout or stderr
+     */
+    successOutputMessage?:
+      | string
+      | string[]
+      | {
+          stdout?: string | string[];
+          stderr?: string | string[];
+        };
+
+    /**
+     * in stdout or stderr
+     */
+    failOutputMessage?:
+      | string
+      | string[]
+      | {
+          stdout?: string | string[];
+          stderr?: string | string[];
+        };
+  }
+  //#endregion
+
+  //#region utils exec process / exec proc result class
   /**
-   * ! TODO @IN_PROGRESS implement all options and test
+   * This class expose function that are usually needed when working
+   * with child processes (without digging into low level child_process module)
    */
-  export class ExecProcResult {
+  class ExecProcResult {
+    //#region fields & getters
+    private stdoutFromCommand: string = '';
+
+    private stderrFromCommand: string = '';
+
+    private child: ChildProcess;
+
+    //#region fields & getters / get max buffer
+    private get maxBuffer(): number | undefined {
+      //#region @backendFunc
+      let maxBuffer = Helpers.bigMaxBuffer;
+      if (
+        _.isBoolean(this.execProcOptions?.biggerBuffer) &&
+        !this.execProcOptions.biggerBuffer
+      ) {
+        maxBuffer = undefined;
+      }
+      return maxBuffer;
+      //#endregion
+    }
+    //#endregion
+
+    //#region fields & getters / get env
+    private get env(): { [key: string]: string } {
+      //#region @backendFunc
+      let env = { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'development' };
+      if (
+        _.isBoolean(this.execProcOptions.showOutputColor) &&
+        !this.execProcOptions.showOutputColor
+      ) {
+        delete env.FORCE_COLOR;
+        delete env.NODE_ENV;
+      }
+      if (this.execProcOptions.env) {
+        env = { ...env, ...this.execProcOptions.env };
+      }
+      return env;
+      //#endregion
+    }
+    //#endregion
+
+    //#endregion
+
+    //#region constructor
     constructor(
-      protected readonly child: ChildProcess,
       protected readonly command: string,
+      protected readonly args: string[],
+      protected readonly execProcOptions: ExecProcOptions = {},
     ) {}
+    //#endregion
 
-    async waitUntilDoneOrThrow(options?: {
-      /**
-       * default [0]
-       */
-      successCode?: number[];
-      /**
-       * in stdout or stderr
-       */
-      successOutputMessage?:
-        | string
-        | string[]
-        | {
-            stdout?: string | string[];
-            stderr?: string | string[];
-          };
+    //#region get output
+    public async getOutput(
+      shell?: any,
+    ): Promise<{ stdout: string; stderr: string }> {
+      //#region @backendFunc
 
-      /**
-       * in stdout or stderr
-       */
-      failOutputMessage?:
-        | string
-        | string[]
-        | {
-            stdout?: string | string[];
-            stderr?: string | string[];
-          };
-    }): Promise<boolean> {
+      let stdio: any = 'pipe';
+
+      this.child = spawn(this.command, this.args, {
+        stdio,
+        env: this.env,
+        maxBuffer: this.maxBuffer,
+        shell,
+      });
+
+      return await new Promise<Awaited<ReturnType<typeof this.getOutput>>>(
+        (resolve, reject) => {
+          this.child.stdout.on('data', data => {
+            const strData = data?.toString() || '';
+            this.stdoutFromCommand += strData;
+            if (this.execProcOptions.showOutput) {
+              process.stdout.write(strData);
+            }
+          });
+
+          this.child.stderr.on('data', data => {
+            const strData = data?.toString() || '';
+            this.stderrFromCommand += strData;
+            if (this.execProcOptions.showOutput) {
+              process.stderr.write(strData);
+            }
+          });
+
+          this.child.once('error', err => {
+            config.frameworkName === 'tnp' && console.error(err);
+            reject(err);
+          });
+          this.child.once('exit', () => {
+            setTimeout(() => {
+              resolve({
+                stdout: this.stdoutFromCommand,
+                stderr: this.stderrFromCommand,
+              });
+            }, 100); // ensure all data events are processed
+          });
+        },
+      );
+      //#endregion
+    }
+    //#endregion;
+
+    public async getStdoutWithoutShowingOrThrow(): Promise<string> {
+      const { stdout } = await this.getOutput();
+      return stdout;
+    }
+
+    //#region exec proc wait until done or throw
+    public async waitUntilDoneOrThrow(
+      options?: ExecProcWaitUntilDoneOrThrow,
+    ): Promise<boolean> {
       //#region @backendFunc
       options = options || {};
       options.successCode = options.successCode || [0];
+
+      let stdio: any = 'inherit';
+      if (this.execProcOptions.showOutput === false) {
+        stdio = 'ignore';
+      } else if (this.execProcOptions.showOutput === 'stdoutOnly') {
+        stdio = ['inherit', 'inherit', 'ignore'];
+      } else if (this.execProcOptions.showOutput === 'stderrOnly') {
+        stdio = ['inherit', 'ignore', 'inherit'];
+      }
+
+      this.child = spawn(this.command, this.args, {
+        stdio,
+        env: this.env,
+        maxBuffer: this.maxBuffer,
+      });
+
+      //#region prepare success / fail output messages
+      const successOutputMessageStdout: string[] = Array.isArray(
+        options.successOutputMessage,
+      )
+        ? options.successOutputMessage
+        : typeof options.successOutputMessage === 'string'
+          ? [options.successOutputMessage]
+          : options.successOutputMessage &&
+              Array.isArray(options.successOutputMessage.stdout)
+            ? options.successOutputMessage.stdout
+            : options.successOutputMessage &&
+                typeof options.successOutputMessage.stdout === 'string'
+              ? [options.successOutputMessage.stdout]
+              : [];
+
+      const successOutputMessageStderr: string[] = Array.isArray(
+        options.successOutputMessage,
+      )
+        ? options.successOutputMessage
+        : typeof options.successOutputMessage === 'string'
+          ? [options.successOutputMessage]
+          : options.successOutputMessage &&
+              Array.isArray(options.successOutputMessage.stderr)
+            ? options.successOutputMessage.stderr
+            : options.successOutputMessage &&
+                typeof options.successOutputMessage.stderr === 'string'
+              ? [options.successOutputMessage.stderr]
+              : [];
+
+      const failOutputMessageStdout: string[] = Array.isArray(
+        options.failOutputMessage,
+      )
+        ? options.failOutputMessage
+        : typeof options.failOutputMessage === 'string'
+          ? [options.failOutputMessage]
+          : options.failOutputMessage &&
+              Array.isArray(options.failOutputMessage.stdout)
+            ? options.failOutputMessage.stdout
+            : options.failOutputMessage &&
+                typeof options.failOutputMessage.stdout === 'string'
+              ? [options.failOutputMessage.stdout]
+              : [];
+
+      const failOutputMessageStderr: string[] = Array.isArray(
+        options.failOutputMessage,
+      )
+        ? options.failOutputMessage
+        : typeof options.failOutputMessage === 'string'
+          ? [options.failOutputMessage]
+          : options.failOutputMessage &&
+              Array.isArray(options.failOutputMessage.stderr)
+            ? options.failOutputMessage.stderr
+            : options.failOutputMessage &&
+                typeof options.failOutputMessage.stderr === 'string'
+              ? [options.failOutputMessage.stderr]
+              : [];
+
+      //#endregion
+
       return new Promise((resolve, reject) => {
+        // when ignored in stdio, these will be null
+        this.child.stdout?.on('data', data => {
+          const strData = data?.toString() || '';
+          for (const successMsg of successOutputMessageStdout) {
+            if (strData.includes(successMsg)) {
+              resolve(true);
+              return;
+            }
+          }
+          for (const failMsg of failOutputMessageStdout) {
+            if (strData.includes(failMsg)) {
+              return reject(
+                new Error(`
+              Execution failed. Command:
+              ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}
+
+              Fail message found in stdout: ${chalk.bold(failMsg)}`),
+              );
+            }
+          }
+        });
+
+        // when ignored in stdio, these will be null
+        this.child.stderr?.on('data', data => {
+          const strData = data?.toString() || '';
+          for (const successMsg of successOutputMessageStderr) {
+            if (strData.includes(successMsg)) {
+              resolve(true);
+              return;
+            }
+          }
+          for (const failMsg of failOutputMessageStderr) {
+            if (strData.includes(failMsg)) {
+              return reject(
+                new Error(`
+              Execution failed. Command:
+              ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}
+
+              Fail message found in stderr: ${chalk.bold(failMsg)}`),
+              );
+            }
+          }
+        });
+
         this.child.once('error', reject);
         this.child.once('exit', code => {
           if (options.successCode.includes(code)) {
@@ -1784,7 +2049,7 @@ namespace UtilsExecProc {
           reject(
             new Error(`
             Execution failed. Command:
-            ${chalk.bold(this.command)}
+            ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}
 
             Process exited with code ${code || 0}`),
           );
@@ -1792,8 +2057,11 @@ namespace UtilsExecProc {
       });
       //#endregion
     }
+    //#endregion
   }
+  //#endregion
 
+  //#region utils exec process / spawn async
   /**
    * @TODO @IN_PROGRESS
    */
@@ -1804,12 +2072,11 @@ namespace UtilsExecProc {
     options = options || {};
     options.cwd = crossPlatformPath(options.cwd || process.cwd());
     const [cmd, ...args] = command.split(' ');
-
-    const child = spawn(cmd, args, { stdio: 'inherit', ...options });
-
-    return new ExecProcResult(child, command);
+    return new ExecProcResult(cmd, args);
   };
+  //#endregion
 
+  //#region utils exec process / spawn admin sudo
   /**
    * @TODO @IN_PROGRESS
    */
@@ -1819,15 +2086,19 @@ namespace UtilsExecProc {
   ): Promise<void> => {
     //#region @backendFunc
     options = options || {};
-    const sudoExists = await UtilsOs.commandExistsAsync('sudo');
-    if (!sudoExists) {
-      throw new Error(`'sudo' command not found on this system.`);
+    const isSudoInProperModeForTaon = await UtilsSudo.isInProperModeForTaon({
+      displayErrorMessage: true,
+    });
+
+    if (!isSudoInProperModeForTaon) {
+      return;
     }
     command = `sudo ${command}`;
     const res = await spawnAsync(command);
     await res.waitUntilDoneOrThrow();
     //#endregion
   };
+  //#endregion
 
   //#region utils exec process / execute until end or throw
   /**
@@ -1841,8 +2112,168 @@ namespace UtilsExecProc {
     cwd: string;
   }): Promise<void> => {
     //#region @backendFunc
-    const child = await spawnAsync(command, { cwd }).waitUntilDoneOrThrow();
-    // await child.waitUntilDoneOrThrow();
+    const child = spawnAsync(command, { cwd });
+    await child.waitUntilDoneOrThrow();
+    //#endregion
+  };
+  //#endregion
+
+  export const getStdoutWithoutShowingOrThrow = async ({
+    command,
+    cwd,
+  }: {
+    command: string;
+    cwd: string;
+  }): Promise<string> => {
+    //#region @backendFunc
+    const child = spawnAsync(command, { cwd });
+    return await child.getStdoutWithoutShowingOrThrow();
+    //#endregion
+  };
+}
+//#endregion
+
+//#region utils sudo
+export namespace UtilsSudo {
+  //#region utils sudo / sudo status enum
+  /**
+   * All possible sudo states on Windows 11 (24H2+)
+   */
+  enum SudoStatus {
+    NotInstalled = 'NotInstalled',
+    Disabled = 'Disabled',
+    Enabled_ForceNewWindow = 'Enabled_ForceNewWindow', // Enabled = 2
+    Enabled_Inline = 'Enabled_Inline', // Enabled = 3 ← current default
+    Unknown = 'Unknown',
+  }
+  //#endregion
+  /**
+   * @returns true if current process is elevated (admin or sudo root), false otherwise
+   */
+  export const isCurrentProcessElevated = async (): Promise<boolean> => {
+    return await isElevated();
+  };
+
+  //#region utils sudo / utils sudo status label
+  /**
+   * Human-readable descriptions
+   */
+  const SudoStatusLabel: Record<SudoStatus, string> = {
+    [SudoStatus.NotInstalled]: 'sudo is not installed',
+    [SudoStatus.Disabled]: 'sudo is disabled',
+    [SudoStatus.Enabled_ForceNewWindow]:
+      'sudo enabled → opens new window (ForceNewWindow)',
+    [SudoStatus.Enabled_Inline]:
+      'sudo enabled → inline mode (runs in same window)',
+    [SudoStatus.Unknown]: 'sudo present but status unknown',
+  };
+  //#endregion
+
+  //#region utils sudo / get sudo enabled value
+  /**
+   * Read the Enabled DWORD value from registry
+   */
+  async function getSudoEnabledValue(): Promise<number | null> {
+    //#region @backendFunc
+    const execAsync = promisify(child_process.exec);
+    try {
+      const { stdout } = await execAsync(
+        'reg query "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Sudo" /v Enabled',
+        { windowsHide: true },
+      );
+
+      const match = stdout.trim().match(/Enabled\s+REG_DWORD\s+0x([0-9a-f]+)/i);
+      if (!match) return null;
+
+      return parseInt(match[1], 16);
+    } catch {
+      return null;
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region utils sudo / get status
+  /**
+   * Main function – returns detailed sudo status
+   */
+  export async function getStatus(): Promise<{
+    status: SudoStatus;
+    label: string;
+    isAvailable: boolean;
+    isInline: boolean;
+  }> {
+    //#region @backendFunc
+    const hasCommand = await UtilsOs.commandExistsAsync('sudo');
+
+    if (!hasCommand) {
+      return {
+        status: SudoStatus.NotInstalled,
+        label: SudoStatusLabel[SudoStatus.NotInstalled],
+        isAvailable: false,
+        isInline: false,
+      };
+    }
+
+    if (!UtilsOs.isRunningInWindows) {
+      return {
+        status: SudoStatus.Enabled_Inline,
+        label: 'sudo is available (non-Windows OS)',
+        isAvailable: true,
+        isInline: true,
+      };
+    }
+
+    const enabledValue = await getSudoEnabledValue();
+
+    let status: SudoStatus;
+
+    switch (enabledValue) {
+      case 0:
+        status = SudoStatus.Disabled;
+        break;
+      case 2:
+        status = SudoStatus.Enabled_ForceNewWindow;
+        break;
+      case 3:
+        status = SudoStatus.Enabled_Inline;
+        break;
+      default:
+        status = SudoStatus.Unknown;
+        break;
+    }
+
+    return {
+      status,
+      label: SudoStatusLabel[status],
+      isAvailable: true,
+      isInline: status === SudoStatus.Enabled_Inline,
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region utils sudo / is sudo available
+  /**
+   * check if sudo is available and in proper mode
+   */
+  export const isInProperModeForTaon = async ({
+    displayErrorMessage = false,
+  }: {
+    displayErrorMessage?: boolean;
+  }): Promise<boolean> => {
+    //#region @backendFunc
+    const sudoStatus = await getStatus();
+    const isInProperMode = sudoStatus.isAvailable && sudoStatus.isInline;
+    if (!isInProperMode) {
+      if (displayErrorMessage) {
+        Helpers.error(
+          `Command ${chalk.bold('"sudo"')} is not available in inline mode. Current status: ${sudoStatus.label}.
+Please install/enable sudo in inline mode for proper functionality.`,
+        );
+      }
+    }
+    return isInProperMode;
     //#endregion
   };
   //#endregion
