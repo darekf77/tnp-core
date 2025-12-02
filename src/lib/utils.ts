@@ -3129,6 +3129,55 @@ export namespace UtilsOs {
   //#endregion
 
   //#endregion
+
+  //#region utils os / python module exists
+  export const pipxPackageExists = (packageName: string): Promise<boolean> => {
+    //#region @backendFunc
+    return new Promise(resolve => {
+      child_process.exec(`pipx list`, (err, stdout) => {
+        if (err) return resolve(false);
+        resolve(stdout.includes(packageName));
+      });
+    });
+    //#endregion
+  };
+
+  export const pipxNestedPackageExists = (
+    mainPackageName: string,
+    targetNestedFromMainPackage: string,
+  ): Promise<boolean> => {
+    //#region @backendFunc
+    return new Promise(resolve => {
+      child_process.exec(
+        `pipx runpip ${mainPackageName} freeze`,
+        (err, stdout) => {
+          if (err) return resolve(false);
+          const packages = stdout
+            .split('\n')
+            .map(p => p.trim().toLowerCase().split('==')[0]);
+          resolve(packages.includes(targetNestedFromMainPackage.toLowerCase()));
+        },
+      );
+    });
+    //#endregion
+  };
+
+  export const pythonModuleExists = async (
+    moduleName: string,
+    pythonPath = 'python3',
+  ): Promise<boolean> => {
+    //#region @backendFunc
+    return new Promise(resolve => {
+      child_process.exec(
+        `${pythonPath} -c "import ${moduleName}"`,
+        (error, _stdout, _stderr) => {
+          resolve(!error); // true if module exists, false if not
+        },
+      );
+    });
+    //#endregion
+  };
+  //#endregion
 }
 //#endregion
 
