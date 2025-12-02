@@ -3187,15 +3187,21 @@ export namespace UtilsOs {
     //#endregion
   };
 
+  const normalizeModuleName = (name: string): string => {
+    return name.replace(/-/g, '_');
+  };
+
   export const pythonModuleExists = async (
     moduleName: string,
+    // pythonPath = process.platform === 'win32' ? 'python' : 'python3',
     pythonPath = 'python3',
   ): Promise<boolean> => {
     //#region @backendFunc
     return new Promise(resolve => {
       child_process.exec(
-        `${pythonPath} -c "import ${moduleName}"`,
+        `${pythonPath} -c "import ${normalizeModuleName(moduleName)}"`,
         (error, _stdout, _stderr) => {
+          // console.log({ error });
           resolve(!error); // true if module exists, false if not
         },
       );
