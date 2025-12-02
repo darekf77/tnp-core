@@ -1870,6 +1870,7 @@ export namespace UtilsExecProc {
         env: this.env,
         maxBuffer: this.maxBuffer,
         shell,
+        cwd: this.execProcOptions.cwd,
       });
 
       return await new Promise<Awaited<ReturnType<typeof this.getOutput>>>(
@@ -1908,10 +1909,12 @@ export namespace UtilsExecProc {
     }
     //#endregion;
 
+    //#region get stdout without showing or throw
     public async getStdoutWithoutShowingOrThrow(): Promise<string> {
       const { stdout } = await this.getOutput();
       return stdout;
     }
+    //#endregion
 
     //#region exec proc wait until done or throw
     public async waitUntilDoneOrThrow(
@@ -1920,6 +1923,7 @@ export namespace UtilsExecProc {
       //#region @backendFunc
       options = options || {};
       options.successCode = options.successCode || [0];
+      let isRejected = false;
 
       let stdio: any = 'inherit';
       if (this.execProcOptions.showOutput === false) {
@@ -1934,6 +1938,7 @@ export namespace UtilsExecProc {
         stdio,
         env: this.env,
         maxBuffer: this.maxBuffer,
+        cwd: this.execProcOptions.cwd,
       });
 
       //#region prepare success / fail output messages
@@ -2005,15 +2010,18 @@ export namespace UtilsExecProc {
               return;
             }
           }
-          for (const failMsg of failOutputMessageStdout) {
-            if (strData.includes(failMsg)) {
-              return reject(
-                new Error(`
-              Execution failed. Command:
+          if (!isRejected) {
+            isRejected = true;
+            for (const failMsg of failOutputMessageStdout) {
+              if (strData.includes(failMsg)) {
+                return reject(
+                  new Error(`
+[waitUntilDoneOrThrow][stdout] Execution failed. Command:
               ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}
 
               Fail message found in stdout: ${chalk.bold(failMsg)}`),
-              );
+                );
+              }
             }
           }
         });
@@ -2027,32 +2035,43 @@ export namespace UtilsExecProc {
               return;
             }
           }
-          for (const failMsg of failOutputMessageStderr) {
-            if (strData.includes(failMsg)) {
-              return reject(
-                new Error(`
-              Execution failed. Command:
+          if (!isRejected) {
+            isRejected = true;
+            for (const failMsg of failOutputMessageStderr) {
+              if (strData.includes(failMsg)) {
+                return reject(
+                  new Error(`
+[waitUntilDoneOrThrow][stderr] Execution failed. Command:
               ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}
 
               Fail message found in stderr: ${chalk.bold(failMsg)}`),
-              );
+                );
+              }
             }
           }
         });
 
-        this.child.once('error', reject);
+        this.child.once('error', (...args) => {
+          if (!isRejected) {
+            isRejected = true;
+            reject(...args);
+          }
+        });
         this.child.once('exit', code => {
           if (options.successCode.includes(code)) {
             resolve(true);
-            return reject(new Error(`Process exited with code ${code || 0}`));
+            return;
           }
-          reject(
-            new Error(`
-            Execution failed. Command:
+          if (!isRejected) {
+            isRejected = true;
+            reject(
+              new Error(`
+[waitUntilDoneOrThrow][exit] Execution failed. Command:
             ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}
 
             Process exited with code ${code || 0}`),
-          );
+            );
+          }
         });
       });
       //#endregion
@@ -2066,7 +2085,7 @@ export namespace UtilsExecProc {
    * @TODO @IN_PROGRESS
    */
   export const spawnAsync = (
-    command,
+    command: string,
     options?: ExecProcOptions,
   ): ExecProcResult => {
     options = options || {};
@@ -2118,6 +2137,7 @@ export namespace UtilsExecProc {
   };
   //#endregion
 
+  //#region utils exec process / get stdout without showing or throw
   export const getStdoutWithoutShowingOrThrow = async ({
     command,
     cwd,
@@ -2130,6 +2150,7 @@ export namespace UtilsExecProc {
     return await child.getStdoutWithoutShowingOrThrow();
     //#endregion
   };
+  //#endregion
 }
 //#endregion
 
@@ -2268,7 +2289,11 @@ export namespace UtilsSudo {
     if (!isInProperMode) {
       if (displayErrorMessage) {
         Helpers.error(
-          `Command ${chalk.bold('"sudo"')} is not available in inline mode. Current status: ${sudoStatus.label}.
+          `Command ${chalk.bold(
+            '"sudo"',
+          )} is not available in inline mode. Current status: ${
+            sudoStatus.label
+          }.
 Please install/enable sudo in inline mode for proper functionality.`,
         );
       }
@@ -5329,6 +5354,9 @@ export namespace UtilsNetwork {
     //#endregion
   };
 
+  /**
+   * Check if a server is online by attempting to open a TCP connection.
+   */
   export const checkIfServerOnline = async (
     host: string,
     port = 80,
