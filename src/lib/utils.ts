@@ -665,6 +665,13 @@ export namespace Utils {
 }
 //#endregion
 
+export namespace UtilsStringRegex {
+  export const containsNonAscii = (pathStringOrPathParts: string): boolean => {
+    const hasNonAscii = /[^\u0000-\u0080]+/.test(pathStringOrPathParts); // eslint-disable-line no-control-regex
+    return hasNonAscii;
+  };
+}
+
 //#region utils process
 export namespace UtilsProcess {
   //#region utils process / process start options
