@@ -1744,7 +1744,35 @@ in location: ${cwd}
  * - export when ready
  * - should be ready for everything async refactor
  */
-namespace UtilsMessages {}
+export namespace UtilsMessages {
+  //#region utils messages / compilation wrapper
+  export const compilationWrapper = async (
+    fn: () => any,
+    taskName: string = 'Task',
+    executionType:
+      | 'Compilation of'
+      | 'Code execution of'
+      | 'Event:' = 'Compilation of',
+  ): Promise<void> => {
+    //#region @backendFunc
+    // global?.spinner?.start();
+    const currentDate = (): string => {
+      return `[${dateformat(new Date(), 'HH:MM:ss')}]`;
+    };
+    if (!fn || !_.isFunction(fn)) {
+      throw `${executionType} wrapper: "${fn}" is not a function.`;
+    }
+
+    Helpers.taskStarted(
+      `${currentDate()} ${executionType}\n "${taskName}" Started..`,
+    );
+    await fn();
+    Helpers.taskDone(`${currentDate()} ${executionType}\n "${taskName}" Done`);
+    // global?.spinner?.stop();
+    //#endregion
+  };
+  //#endregion
+}
 //#endregion
 
 //#region utils exec process
@@ -1914,7 +1942,7 @@ export namespace UtilsExecProc {
       );
       //#endregion
     }
-    //#endregion;
+    //#endregion
 
     //#region get stdout without showing or throw
     public async getStdoutWithoutShowingOrThrow(): Promise<string> {
