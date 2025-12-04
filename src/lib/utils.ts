@@ -3232,9 +3232,17 @@ export namespace UtilsOs {
     pythonPath = 'python3',
   ): Promise<boolean> => {
     //#region @backendFunc
+    moduleName = normalizeModuleName(moduleName);
+    // TODO QUICK_FIX
+    const existsGlobalCommand = await UtilsOs.commandExistsAsync(moduleName);
+    // if installed globally - should be ok ... ??? TODO
+    if (existsGlobalCommand) {
+      return true;
+    }
+
     return new Promise(resolve => {
       child_process.exec(
-        `${pythonPath} -c "import ${normalizeModuleName(moduleName)}"`,
+        `${pythonPath} -c "import ${moduleName}"`,
         (error, _stdout, _stderr) => {
           // console.log({ error });
           resolve(!error); // true if module exists, false if not
