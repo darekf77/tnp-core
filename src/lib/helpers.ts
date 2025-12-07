@@ -1,5 +1,12 @@
-//#region import
-//#region @backend
+//#region imports
+import { Blob } from 'buffer'; // @backend
+import type { ChildProcess } from 'child_process';
+
+import { Dirent, Stats } from 'fs-extra'; // @backend
+import * as json5Write from 'json10-writer/src'; // @backend
+import { Subject, Subscription } from 'rxjs'; // @browser
+
+import { encoding } from './constants';
 import {
   fse,
   os,
@@ -12,26 +19,23 @@ import {
   win32Path,
   glob,
   fkill,
-} from './core-imports';
-import * as json5Write from 'json10-writer/src';
-import { Blob } from 'buffer'; // @backend
-import { Dirent, Stats } from 'fs-extra';
-//#endregion
-//#region @browser
-import { Subject, Subscription } from 'rxjs';
-//#endregion
+} from './core-imports'; // @backend
 import { _, path, crossPlatformPath } from './core-imports';
-import { UtilsJson, UtilsProcess, UtilsTerminal } from './utils';
-import { Helpers, Utils, UtilsOs } from './index';
-import { HelpersMessages } from './helpers-messages';
 import { CoreModels } from './core-models';
+import { HelpersMessages } from './helpers-messages';
+import {
+  UtilsJson,
+  UtilsProcess,
+  UtilsFilesFoldersSync,
+  UtilsTerminal,
+} from './utils';
 
-import type { ChildProcess } from 'child_process';
+import { Helpers, Utils, UtilsOs } from './index';
 //#endregion
 
 //#region constants
 declare const global: any;
-const encoding = 'utf8';
+
 //#region @backend
 const forceTrace = !global.hideLog;
 //#endregion
@@ -64,6 +68,7 @@ export interface CommandOutputOptions {
 export class HelpersCore extends HelpersMessages {
   //#region singleton
   private static _instanceCore: HelpersCore;
+
   public static get InstanceCore() {
     if (!HelpersCore._instanceCore) {
       HelpersCore._instanceCore = new HelpersCore();
@@ -75,6 +80,7 @@ export class HelpersCore extends HelpersMessages {
   //#region fields / getters
   //#region @backend
   readonly processes: ChildProcess[] = [];
+
   //#endregion
   readonly bigMaxBuffer = 2024 * 500;
 
@@ -2151,7 +2157,7 @@ command: ${command}
    * does not make sense
    * @deprecated
    */
-  private isFile(pathToFileOrMaybeFolder: string) {
+  public isFile(pathToFileOrMaybeFolder: string) {
     //#region @backendFunc
     return (
       pathToFileOrMaybeFolder &&
@@ -2197,6 +2203,7 @@ command: ${command}
   }
 
   /**
+   * @deprecated use UtilsFilesFoldersSync.readFile
    * wrapper for fs.readFileSync
    */
   readFile(
@@ -2204,30 +2211,10 @@ command: ${command}
     defaultValueWhenNotExists = void 0 as string,
     notTrim = false,
   ): string | undefined {
-    //#region @backendFunc
-    absoluteFilePath = crossPlatformPath(absoluteFilePath);
-    absoluteFilePath = absoluteFilePath as string;
-
-    if (!fse.existsSync(absoluteFilePath)) {
-      return defaultValueWhenNotExists;
-    }
-    if (fse.lstatSync(absoluteFilePath).isDirectory()) {
-      return defaultValueWhenNotExists;
-    }
-    if (notTrim) {
-      return fse
-        .readFileSync(absoluteFilePath, {
-          encoding,
-        })
-        .toString();
-    }
-    return fse
-      .readFileSync(absoluteFilePath, {
-        encoding,
-      })
-      .toString()
-      .trim();
-    //#endregion
+    return UtilsFilesFoldersSync.readFile(absoluteFilePath, {
+      defaultValueWhenNotExists,
+      notTrim,
+    });
   }
   //#endregion
 
@@ -2330,6 +2317,7 @@ command: ${command}
   //#region methods / write file
   //#region @backend
   /**
+   * @deprecated use UtilsFilesFoldersSync.writeFile
    * wrapper for fs.writeFileSync
    */
   writeFile(
@@ -2342,82 +2330,7 @@ command: ${command}
     //#endregion
     options?: { overrideSameFile?: boolean; preventParentFile?: boolean },
   ): boolean {
-    if (_.isArray(absoluteFilePath)) {
-      absoluteFilePath = path.join.apply(this, absoluteFilePath);
-    }
-    absoluteFilePath = absoluteFilePath as string;
-    // Helpers.info(`[taon-core] writeFile: ${absoluteFilePath}`);
-    // debugger
-    if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
-      const beforePath = absoluteFilePath;
-      absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
-      // Helpers.logWarn(
-      //   `[taon-core] WRITTING JSON into real path:
-      // original: ${beforePath}
-      // real    : ${absoluteFilePath}
-      // `,
-      //   forceTrace,
-      // );
-    }
-
-    const { preventParentFile, overrideSameFile } = options || {};
-    const dontWriteSameFile = !overrideSameFile;
-
-    if (preventParentFile) {
-      if (
-        Helpers.isFile(path.dirname(absoluteFilePath as string)) &&
-        fse.existsSync(path.dirname(absoluteFilePath as string))
-      ) {
-        fse.unlinkSync(path.dirname(absoluteFilePath as string));
-      }
-    }
-
-    if (
-      fse.existsSync(absoluteFilePath) &&
-      fse.lstatSync(absoluteFilePath).isDirectory()
-    ) {
-      Helpers.warn(
-        `[taon-core] Trying to write file content into directory:
-        ${absoluteFilePath}
-        `,
-      );
-      return false;
-    }
-
-    if (!fse.existsSync(path.dirname(absoluteFilePath as string))) {
-      try {
-        Helpers.mkdirp(path.dirname(absoluteFilePath as string));
-      } catch (error) {
-        Helpers.error(
-          `Not able to create directory: ${path.dirname(absoluteFilePath as string)}`,
-        );
-      }
-    }
-
-    if (Helpers.isBuffer(input)) {
-      fse.writeFileSync(absoluteFilePath, input);
-      return true;
-    }
-
-    if (_.isObject(input)) {
-      input = Helpers.stringify(input);
-    } else if (!_.isString(input)) {
-      input = '';
-    }
-    if (dontWriteSameFile) {
-      if (fse.existsSync(absoluteFilePath)) {
-        const existedInput = Helpers.readFile(absoluteFilePath);
-        if (input === existedInput) {
-          // Helpers.log(`[helpers][writeFile] not writing same file (good thing): ${absoluteFilePath}`);
-          return false;
-        }
-      }
-    }
-
-    fse.writeFileSync(absoluteFilePath, input, {
-      encoding,
-    });
-    return true;
+    return UtilsFilesFoldersSync.writeFile(absoluteFilePath, input, options);
   }
   //#endregion
   //#endregion
@@ -2484,6 +2397,7 @@ command: ${command}
     }
     return true;
   }
+
   writeJson5(absoluteFilePath: string | string[], input: object) {
     return Helpers.writeJson(absoluteFilePath, input, { writeJson5: true });
   }

@@ -10,6 +10,7 @@ import { promisify } from 'util';
 import axios, { AxiosResponse } from 'axios';
 import { Subject } from 'rxjs';
 
+import { encoding } from './constants';
 import {
   path,
   _,
@@ -26,7 +27,6 @@ import { fse } from './core-imports';
 import { CoreModels } from './core-models';
 
 import { config, frameworkName, Helpers } from './index';
-
 //#endregion
 
 const BLOB_SUPPORTED_IN_SQLJS = false;
@@ -667,7 +667,7 @@ export namespace Utils {
 
 export namespace UtilsStringRegex {
   export const containsNonAscii = (pathStringOrPathParts: string): boolean => {
-    const hasNonAscii = /[^\u0000-\u0080]+/.test(pathStringOrPathParts); // eslint-disable-line no-control-regex
+    const hasNonAscii = /[^\u0000-\u0080]+/.test(pathStringOrPathParts);
     return hasNonAscii;
   };
 }
@@ -1134,7 +1134,7 @@ in location: ${cwd}
     try {
       // Execute the 'where' command to find bash.exe
       const gitBashPath = child_process
-        .execSync('where bash.exe', { encoding: 'utf8' })
+        .execSync('where bash.exe', { encoding })
         .split('\n')[0]
         .trim();
 
@@ -1617,7 +1617,7 @@ in location: ${cwd}
       if (os.platform() === 'win32') {
         // Windows: use tasklist and taskkill
         cmd = `tasklist /FI "IMAGENAME eq node.exe" /FO CSV`;
-        const output = child_process.execSync(cmd, { encoding: 'utf8' });
+        const output = child_process.execSync(cmd, { encoding });
         lines = output.trim().split('\n').slice(1); // skip header
 
         for (const line of lines) {
@@ -1643,7 +1643,7 @@ in location: ${cwd}
       } else {
         // Linux & macOS: use ps and kill
         cmd = `ps -eo pid,command | grep -E "[n]ode( |$)"`;
-        const output = child_process.execSync(cmd, { encoding: 'utf8' });
+        const output = child_process.execSync(cmd, { encoding });
         lines = output.trim().split('\n');
 
         for (const line of lines) {
@@ -2340,16 +2340,206 @@ Please install/enable sudo in inline mode for proper functionality.`,
 }
 //#endregion
 
-//#region TODO IN_PROGRESS utils files folders operations
+//#region utils files folders sync
+export namespace UtilsFilesFoldersSync {
+  //#region utils files folders sync / read file
+  export const readFile = (
+    absoluteFilePath: string | string[], // @ts-ignore
+
+    options?: {
+      defaultValueWhenNotExists?: string | undefined;
+      notTrim?: boolean;
+      /**
+       * Default false
+       */
+      readImagesWithoutEncodingUtf8?: boolean;
+      /**
+       * Default false
+       */
+      forceReadWithoutEncodingUtf8?: boolean;
+    },
+  ): string | undefined => {
+    //#region @backendFunc
+    options = options || {};
+    absoluteFilePath = crossPlatformPath(absoluteFilePath);
+    absoluteFilePath = absoluteFilePath as string;
+
+    if (!fse.existsSync(absoluteFilePath)) {
+      return options.defaultValueWhenNotExists;
+    }
+    if (fse.lstatSync(absoluteFilePath).isDirectory()) {
+      return options.defaultValueWhenNotExists;
+    }
+    const optFs = {
+      encoding,
+    };
+
+    let shouldBeReadWithoutEncoding = false;
+    if (options.readImagesWithoutEncodingUtf8) {
+      const ext = path.extname(absoluteFilePath).replace('.', '').toLowerCase();
+      if (CoreModels.ImageFileExtensionArr.includes(ext as any)) {
+        shouldBeReadWithoutEncoding = true;
+        Helpers.logWarn(
+          `File ${path.basename(absoluteFilePath)} is read without utf8 encoding as it is an image file.`,
+        );
+        delete optFs.encoding;
+      }
+    }
+
+    if (
+      (options.readImagesWithoutEncodingUtf8 && shouldBeReadWithoutEncoding) ||
+      options.forceReadWithoutEncodingUtf8
+    ) {
+      return fse.readFileSync(absoluteFilePath, optFs);
+    }
+
+    if (options.notTrim) {
+      return fse.readFileSync(absoluteFilePath, optFs).toString();
+    }
+    return fse.readFileSync(absoluteFilePath, optFs).toString().trim();
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils files folders sync / write file
+  export const writeFile = (
+    absoluteFilePath: string | string[],
+    input: string | object | Buffer,
+    options?: {
+      /**
+       * Default false
+       * by default it will not write the file if the content is exactly the same
+       */
+      overrideSameFile?: boolean;
+      preventParentFile?: boolean;
+      /**
+       * Default false
+       */
+      writeImagesWithoutEncodingUtf8?: boolean;
+      /**
+       * Default false
+       */
+      forceReadWithoutEncodingUtf8?: boolean;
+    },
+  ): boolean => {
+    //#region @backendFunc
+    options = options || {};
+    absoluteFilePath = crossPlatformPath(absoluteFilePath) as string;
+    const dontWriteSameFile = !options.overrideSameFile;
+
+    //#region writing into link - make sense or not TODO
+    // Helpers.info(`[taon-core] writeFile: ${absoluteFilePath}`);
+    // debugger
+    // if (Helpers.isExistedSymlink(absoluteFilePath as any)) {
+    //   const beforePath = absoluteFilePath;
+    //   absoluteFilePath = fse.realpathSync(absoluteFilePath as any);
+    //   // Helpers.logWarn(
+    //   //   `[taon-core] WRITTING JSON into real path:
+    //   // original: ${beforePath}
+    //   // real    : ${absoluteFilePath}
+    //   // `,
+    //   //   forceTrace,
+    //   // );
+    // }
+    //#endregion
+
+    //#region prevent parent file
+    if (options.preventParentFile) {
+      if (
+        Helpers.isFile(path.dirname(absoluteFilePath as string)) &&
+        fse.existsSync(path.dirname(absoluteFilePath as string))
+      ) {
+        fse.unlinkSync(path.dirname(absoluteFilePath as string));
+      }
+    }
+    //#endregion
+
+    //#region check if file is directory
+    if (
+      fse.existsSync(absoluteFilePath) &&
+      fse.lstatSync(absoluteFilePath).isDirectory()
+    ) {
+      Helpers.warn(
+        `[taon-core] Trying to write file content into directory:
+        ${absoluteFilePath}
+        `,
+      );
+      return false;
+    }
+    //#endregion
+
+    //#region create parent folder if not exists
+    if (!fse.existsSync(path.dirname(absoluteFilePath as string))) {
+      try {
+        Helpers.mkdirp(path.dirname(absoluteFilePath as string));
+      } catch (error) {
+        Helpers.error(
+          `Not able to create directory: ${path.dirname(absoluteFilePath as string)}`,
+        );
+      }
+    }
+    //#endregion
+
+    //#region write buffer without encoding
+    if (Helpers.isBuffer(input)) {
+      fse.writeFileSync(absoluteFilePath, input);
+      return true;
+    }
+    //#endregion
+
+    if (_.isObject(input)) {
+      input = Helpers.stringify(input);
+    } else if (!_.isString(input)) {
+      input = '';
+    }
+
+    //#region avoid writing same file content
+    if (dontWriteSameFile) {
+      if (fse.existsSync(absoluteFilePath)) {
+        const existedInput = Helpers.readFile(absoluteFilePath);
+        if (input === existedInput) {
+          // Helpers.log(`[helpers][writeFile] not writing same file (good thing): ${absoluteFilePath}`);
+          return false;
+        }
+      }
+    }
+    //#endregion
+
+    const fsOps = {
+      encoding,
+    };
+
+    if (options.writeImagesWithoutEncodingUtf8) {
+      const ext = path.extname(absoluteFilePath).replace('.', '').toLowerCase();
+      if (CoreModels.ImageFileExtensionArr.includes(ext as any)) {
+        Helpers.logWarn(
+          `File ${path.basename(absoluteFilePath)} is written without utf8 encoding as it is an image file.`,
+        );
+        delete fsOps.encoding;
+      }
+    }
+    if (options.forceReadWithoutEncodingUtf8) {
+      delete fsOps.encoding;
+    }
+
+    fse.writeFileSync(absoluteFilePath, input, fsOps);
+    return true;
+    //#endregion
+  };
+  //#endregion
+}
+//#endregion
+
+//#region utils files folders
 /**
  * TODO @LAST @IN_PROGRESS
  * - utils for files and folders operations
  * - export when ready
  * - should be ready for everything async refactor
  */
-namespace UtilsFilesFoldersOperations {
+namespace UtilsFilesFolders {
   //#region utils files folders operations / remove options
-  export interface UtilsFilesFoldersOperationsRemoveOptions {
+  interface UtilsFilesFoldersOperationsRemoveOptions {
     recursive?: boolean;
     waitForUserActionOnError?: boolean;
   }
@@ -2359,7 +2549,7 @@ namespace UtilsFilesFoldersOperations {
   /**
    * remove file or folder or link
    */
-  export const remove = async (
+  const remove = async (
     absolutePath: string | string[],
     options?: UtilsFilesFoldersOperationsRemoveOptions,
   ): Promise<boolean> => {
@@ -2376,7 +2566,7 @@ namespace UtilsFilesFoldersOperations {
   /**
    * remove file or folder or link
    */
-  export const removeByPattern = async (
+  const removeByPattern = async (
     globPattern: string | string[],
     options?: UtilsFilesFoldersOperationsRemoveOptions,
   ): Promise<boolean> => {
@@ -2390,7 +2580,7 @@ namespace UtilsFilesFoldersOperations {
   //#endregion
 
   //#region utils files folders operations / get files from
-  export async function getFilesFromAsync(
+  async function getFilesFromAsync(
     folderOrLinkToFolder: string | string[],
     options: {
       recursive?: boolean;
@@ -2462,7 +2652,7 @@ namespace UtilsFilesFoldersOperations {
   /**
    * TODO @IN_PROGRESS
    */
-  export const readFileAsync = async (
+  const readFileAsync = async (
     absoluteFilePath: string | string[],
     options?: {
       defaultValueWhenNotExists?: string | undefined;
@@ -2474,7 +2664,7 @@ namespace UtilsFilesFoldersOperations {
   //#endregion
 
   //#region utils files folders operations / write file
-  export type WriteFileAsyncInput =
+  type WriteFileAsyncInput =
     | string
     | object
     //#region @backend
@@ -2484,7 +2674,7 @@ namespace UtilsFilesFoldersOperations {
   /**
    * TODO @IN_PROGRESS
    */
-  export const writeFileAsync = async (
+  const writeFileAsync = async (
     absoluteFilePath: string | string[],
     input: WriteFileAsyncInput,
     options?: { overrideSameFile?: boolean; preventParentFile?: boolean },
@@ -2497,7 +2687,7 @@ namespace UtilsFilesFoldersOperations {
   /**
    * TODO @IN_PROGRESS
    */
-  export const isExistedSymlink = async (
+  const isExistedSymlink = async (
     absoluteFilePath: string | string[],
   ): Promise<boolean> => {
     return void 0;
@@ -2508,7 +2698,7 @@ namespace UtilsFilesFoldersOperations {
   /**
    * TODO @IN_PROGRESS
    */
-  export const isUnExistedLink = async (
+  const isUnExistedLink = async (
     absoluteFilePath: string | string[],
   ): Promise<boolean> => {
     return void 0;

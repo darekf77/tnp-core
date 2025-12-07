@@ -412,3 +412,5 @@ export const notAllowedProjectNames = [
   ...notAllowedNames,
   ...backendNodejsOnlyFiles,
 ];
+
+export const encoding = 'utf8';
