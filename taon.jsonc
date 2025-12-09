@@ -38,7 +38,8 @@
   "appId": "com.domain.example.tnp-core",
 
   "autoReleaseConfigAllowedItems": [{
-    "artifactName": "npm-lib-and-cli-tool"
+    "artifactName": "npm-lib-and-cli-tool",
+    "taskName": "npm"
   }],
 
   "isCoreProject": false,
