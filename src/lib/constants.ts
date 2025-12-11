@@ -1,18 +1,43 @@
 import type { CoreModels } from './core-models';
 
 export const urlRepoTaon = 'https://github.com/darekf77/taon.git';
-export const urlRepoTaonContainers = 'https://github.com/darekf77/taon-containers.git';
+export const urlRepoTaonContainers =
+  'https://github.com/darekf77/taon-containers.git';
+
+export const LibTypeObj = Object.freeze({
+  ISOMORPHIC_LIB: 'isomorphic-lib',
+  CONTAINER: 'container',
+  UNKNOWN_NPM_PROJECT: 'unknown-npm-project',
+});
 
 export const GlobalLibTypeName = {
   //#region @backend
-  isomorphicLib: 'isomorphic-lib',
-  container: 'container',
+  isomorphicLib: LibTypeObj.ISOMORPHIC_LIB,
+  container: LibTypeObj.CONTAINER,
+  /**
+   * @deprecated
+   */
   docker: 'docker',
-  unknowNpmProject: 'unknow-npm-project',
+  unknowNpmProject: LibTypeObj.UNKNOWN_NPM_PROJECT,
+  /**
+   * @deprecated
+   */
   vscodeExt: 'vscode-ext',
+  /**
+   * @deprecated
+   */
   chromeExt: 'chrome-ext',
+  /**
+   * @deprecated
+   */
   singleFileProject: 'single-file-project',
+  /**
+   * @deprecated
+   */
   navi: 'navi',
+  /**
+   * @deprecated
+   */
   scenario: 'scenario',
   //#endregion
 };

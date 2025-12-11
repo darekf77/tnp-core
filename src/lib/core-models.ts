@@ -1,6 +1,7 @@
 import type { ChildProcess } from 'child_process';
 
 import { PackageJson } from 'type-fest';
+import { LibTypeObj } from './constants';
 
 export namespace CoreModels {
   //#region package
@@ -266,9 +267,7 @@ export namespace CoreModels {
   //#region lib type
   export type LibType =
     | BaseProjectType
-    | 'isomorphic-lib' // + https://github.com/maximegris/angular-electron
-    | 'container'
-    | 'unknown-npm-project';
+    | (typeof LibTypeObj)[keyof typeof LibTypeObj];
   //#endregion
 
   //#region new factory type
