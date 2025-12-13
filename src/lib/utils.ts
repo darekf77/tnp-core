@@ -10,7 +10,7 @@ import { promisify } from 'util';
 import axios, { AxiosResponse } from 'axios';
 import { Subject } from 'rxjs';
 
-import { encoding } from './constants';
+import { dotTaonFolder, encoding } from './constants';
 import {
   path,
   _,
@@ -4333,7 +4333,7 @@ export namespace UtilsTerminal {
 
       const tmpFilePath = crossPlatformPath([
         UtilsOs.getRealHomeDir(),
-        '.taon/temp-file-preview',
+        `${dotTaonFolder}/temp-file-preview`,
         `taon-preview-${Date.now()}.txt`,
       ]);
       const pagerArgs = isWindows

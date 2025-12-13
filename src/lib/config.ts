@@ -82,29 +82,9 @@ export const config = {
   placeholders: {
     forProjectsInEnvironmentFile: '//<PLACEHOLDER_FOR_PROJECTS>',
   },
-  array: {
-    isomorphicPackages: 'isomorphicPackages',
-  },
   frameworkName,
-  /**
-   * @deprecated pacakge json will be generated
-   */
-  packageJsonFrameworkKey: 'tnp',
-  frameworkNames: {
-    productionFrameworkName: 'taon',
-    developmentFrameworkName: 'tnp',
-  },
   startPort: 6001,
   frameworks: ['bootstrap', 'ionic', 'material'] as CoreModels.UIFramework[],
-  //#region @backend
-  tempFiles: {
-    FILE_NAME_ISOMORPHIC_PACKAGES: 'tmp-isomorphic-packages.json',
-  },
-  pathes: {
-    logoSvg: 'logo.svg',
-    logoPng: 'logo.png',
-  },
-  //#endregion
   /**
    * @deprecated use folderName instead
    */
@@ -122,9 +102,6 @@ export const config = {
    */
   file: fileName,
   reservedArgumentsNamesUglify: ['reservedExpOne', 'reservedExpSec'],
-  filesExtensions: {
-    filetemplate: 'filetemplate',
-  },
   // environmentName,
   localLibs: [
     //#region @backend

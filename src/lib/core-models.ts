@@ -1,6 +1,6 @@
 import type { ChildProcess } from 'child_process';
 
-import { PackageJson } from 'type-fest';
+import { LibTypeEnum } from './constants';
 
 export namespace CoreModels {
   //#region package
@@ -52,6 +52,13 @@ export namespace CoreModels {
   //#endregion
 
   export type ReleaseVersionType = 'major' | 'minor' | 'patch';
+
+  export enum ReleaseVersionTypeEnum {
+    MAJOR = 'major',
+    MINOR = 'minor',
+    PATCH = 'patch',
+  }
+
   export type PreReleaseVersionTag = 'alpha' | 'beta' | 'rc' | 'next';
   export const NpmSpecialVersions = [
     'latest',
@@ -266,9 +273,7 @@ export namespace CoreModels {
   //#region lib type
   export type LibType =
     | BaseProjectType
-    | 'isomorphic-lib' // + https://github.com/maximegris/angular-electron
-    | 'container'
-    | 'unknown-npm-project';
+    | (typeof LibTypeEnum)[keyof typeof LibTypeEnum];
   //#endregion
 
   //#region new factory type

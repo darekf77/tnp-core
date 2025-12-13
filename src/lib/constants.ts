@@ -1,22 +1,64 @@
 import type { CoreModels } from './core-models';
 
-export const urlRepoTaon = 'https://github.com/darekf77/taon.git';
-export const urlRepoTaonContainers = 'https://github.com/darekf77/taon-containers.git';
+export const taonContainers = 'taon-containers';
+
+export const taonProjects = 'taon-projects';
+
+export const dockerTemplates = 'docker-templates';
+
+export const tnpPackageName = 'tnp';
+
+export const taonPackageName = 'taon';
+
+export const dotTaonFolder = `.taon`;
+
+export const dotTnpFolder = `.tnp`;
+
+export const urlRepoTaon = `https://github.com/darekf77/${taonPackageName}.git`;
+export const urlRepoTaonContainers = `https://github.com/darekf77/${taonContainers}.git`;
+
+export enum LibTypeEnum {
+  ISOMORPHIC_LIB = 'isomorphic-lib',
+  CONTAINER = 'container',
+  UNKNOWN_NPM_PROJECT = 'unknown-npm-project',
+  UNKNOWN = 'unknown',
+}
 
 export const GlobalLibTypeName = {
   //#region @backend
-  isomorphicLib: 'isomorphic-lib',
-  container: 'container',
+  isomorphicLib: LibTypeEnum.ISOMORPHIC_LIB,
+  container: LibTypeEnum.CONTAINER,
+  /**
+   * @deprecated
+   */
   docker: 'docker',
-  unknowNpmProject: 'unknow-npm-project',
+  unknowNpmProject: LibTypeEnum.UNKNOWN_NPM_PROJECT,
+  /**
+   * @deprecated
+   */
   vscodeExt: 'vscode-ext',
+  /**
+   * @deprecated
+   */
   chromeExt: 'chrome-ext',
+  /**
+   * @deprecated
+   */
   singleFileProject: 'single-file-project',
+  /**
+   * @deprecated
+   */
   navi: 'navi',
+  /**
+   * @deprecated
+   */
   scenario: 'scenario',
   //#endregion
 };
 
+/**
+ * @deprecated
+ */
 export const LibTypeArr: CoreModels.LibType[] = [
   //#region @backend
   GlobalLibTypeName.isomorphicLib,
@@ -30,18 +72,8 @@ export const LibTypeArr: CoreModels.LibType[] = [
   //#endregion
 ] as CoreModels.LibType[];
 
-export const CoreLibCategoryArr: CoreModels.CoreLibCategory[] = [
-  // TODO this is for what ?
-  //#region @backend
-  GlobalLibTypeName.isomorphicLib,
-  GlobalLibTypeName.docker,
-  'common',
-  //#endregion
-] as CoreModels.CoreLibCategory[];
-
 //#region constants / files not allowed to clean
 export const filesNotAllowedToClean = {
-  //#region @backend
   _gitignore: '.gitignore',
   _npmrc: '.npmrc',
   _npmignore: '.npmignore',
@@ -49,7 +81,6 @@ export const filesNotAllowedToClean = {
   _editorconfig: '.editorconfig',
   _angularCli_json: '.angular-cli.json',
   _vscode_launch_json: '.vscode/launch.json',
-  //#endregion
 };
 //#endregion
 
@@ -65,9 +96,6 @@ export const fileName = {
   build_config_js: 'build-config.js',
   local_config: 'local-config',
   start_backend_ts: 'start.backend.ts',
-  result_packages_json: 'result-packages.json',
-  build_info_generated_ts: 'build-info._auto-generated_.ts',
-  index_generated_ts: 'index._auto-generated_.ts',
   docs_config_jsonc: 'docs-config.jsonc',
   package_json: 'package.json',
   taon_jsonc: 'taon.jsonc',
@@ -124,7 +152,6 @@ export const fileName = {
    */
   tmpDockerImageId: 'tmp-docker-image-id',
   tmp_recent_json: 'recent.json',
-  tmpIsomorphicPackagesJson: 'tmp-isomorphic-packages.json',
   tsconfig_json: 'tsconfig.json',
   tsconfig_lib_json: 'tsconfig.lib.json',
   README_MD: 'README.md',
@@ -179,6 +206,7 @@ export const folderName = {
   out: 'out',
   app: 'app',
   lib: 'lib',
+  tests: 'tests',
   libraries: 'libraries',
   libs: 'libs',
   source: 'source',
