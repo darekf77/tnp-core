@@ -2370,7 +2370,9 @@ export namespace UtilsFilesFoldersSync {
     if (fse.lstatSync(absoluteFilePath).isDirectory()) {
       return options.defaultValueWhenNotExists;
     }
-    const optFs = {
+    const optFs:{
+      encoding?: BufferEncoding;
+    } = {
       encoding,
     };
 
@@ -2390,7 +2392,7 @@ export namespace UtilsFilesFoldersSync {
       (options.readImagesWithoutEncodingUtf8 && shouldBeReadWithoutEncoding) ||
       options.forceReadWithoutEncodingUtf8
     ) {
-      return fse.readFileSync(absoluteFilePath, optFs);
+      return fse.readFileSync(absoluteFilePath, optFs) as any; // TODO QUICK_FIX @LAST
     }
 
     if (options.notTrim) {
@@ -2505,7 +2507,9 @@ export namespace UtilsFilesFoldersSync {
     }
     //#endregion
 
-    const fsOps = {
+    const fsOps:{
+      encoding?: BufferEncoding;
+    } = {
       encoding,
     };
 
