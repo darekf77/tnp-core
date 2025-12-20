@@ -2556,74 +2556,31 @@ command: ${command}
   //#endregion
 
   /**
+   * @deprecated use UtilsFilesFoldersSync.getFilesFrom
    * return absolute paths for files inside folder or link to folder
-   * @returns absoulte pathes to files from path
    */
-  getFilesFrom(
+  public getFilesFrom(
     folderOrLinkToFolder: string | string[],
-    options: {
-      recursive?: boolean;
-      followSymlinks?: boolean;
-    } = {},
+    options?: UtilsFilesFoldersSync.UtilsFilesFoldersSyncGetFilesFromOptions,
   ): string[] {
-    //#region @backendFunc
-    folderOrLinkToFolder = crossPlatformPath(folderOrLinkToFolder) as string;
-    const { recursive = false, followSymlinks = true } = options;
+    return UtilsFilesFoldersSync.getFilesFrom(folderOrLinkToFolder, options);
+  }
 
-    const visited = new Set<string>();
-    const results: string[] = [];
-
-    const scan = (dir: string) => {
-      if (visited.has(dir)) return;
-      visited.add(dir);
-
-      let entries: Dirent[];
-
-      try {
-        entries = fse.readdirSync(dir, { withFileTypes: true });
-      } catch (e) {
-        return; // Skip folders we cannot access
-      }
-
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name);
-
-        if (entry.isSymbolicLink()) {
-          let realPath: string;
-          try {
-            realPath = fse.realpathSync(fullPath);
-          } catch (e) {
-            continue; // Broken symlink – skip
-          }
-
-          const stats = fse.statSync(realPath);
-          if (stats.isDirectory()) {
-            if (followSymlinks && recursive) {
-              scan(realPath);
-            }
-          } else if (stats.isFile()) {
-            results.push(fullPath);
-          }
-        } else if (entry.isDirectory()) {
-          if (recursive) {
-            scan(fullPath);
-          }
-        } else if (entry.isFile()) {
-          results.push(fullPath);
-        }
-      }
-    };
-
-    scan(path.resolve(folderOrLinkToFolder));
-
-    return results.map(crossPlatformPath);
-    //#endregion
+  /**
+   * @deprecated use UtilsFilesFoldersSync.getFoldersFrom
+   * return absolute paths for folders inside folder or link to folder
+   */
+  public getFoldersFrom(
+    folderOrLinkToFolder: string | string[],
+    options?: UtilsFilesFoldersSync.UtilsFilesFoldersSyncGetFilesFromOptions,
+  ): string[] {
+    return UtilsFilesFoldersSync.getFoldersFrom(folderOrLinkToFolder, options);
   }
 
   //#region methods / files from
   //#region @backend
   /**
-   * @deprecated use getFilesFrom
+   * @deprecated use UtilsFilesFoldersSync.filesFrom
    * return absolute paths for folders inside folders
    */
   public filesFrom(

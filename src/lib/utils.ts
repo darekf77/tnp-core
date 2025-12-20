@@ -2,15 +2,16 @@
 import { Blob } from 'buffer'; // @backend
 import { ChildProcess, ExecSyncOptions } from 'child_process';
 import * as crypto from 'crypto'; // @backend
-import type { WriteStream } from 'fs';
+import type { Dirent, WriteStream } from 'fs';
 import * as net from 'net';
 import { URL } from 'url'; // @backend
 import { promisify } from 'util';
 
 import axios, { AxiosResponse } from 'axios';
+import * as micromatch from 'micromatch'; // @backend
 import { Subject } from 'rxjs';
 
-import { dotTaonFolder, encoding } from './constants';
+import { dotTaonFolder, dotTnpFolder, encoding } from './constants';
 import {
   path,
   _,
@@ -2342,6 +2343,24 @@ Please install/enable sudo in inline mode for proper functionality.`,
 
 //#region utils files folders sync
 export namespace UtilsFilesFoldersSync {
+  export const IGNORE_FOLDERS_FILES_PATTERNS = [
+    // '**/node_modules/**/*.*',
+    '**/node_modules/**',
+    // '**/node_modules',
+    // '**/git/**/*.*',
+    '**/.git/**/**',
+    // '**/.git',
+    // `**/${dotTaonFolder}/**/*.*`,
+    `**/${dotTaonFolder}/**`,
+    // `**/${dotTaonFolder}`,
+    // `**/${dotTnpFolder}/**/*.*`,
+    `**/${dotTnpFolder}/**`,
+    // `**/${dotTnpFolder}`,
+    '**/tmp-*',
+    // `**/tmp-*/**/*.*`,
+    '**/tmp-*/**',
+  ];
+
   //#region utils files folders sync / read file
   export const readFile = (
     absoluteFilePath: string | string[], // @ts-ignore
@@ -2370,7 +2389,7 @@ export namespace UtilsFilesFoldersSync {
     if (fse.lstatSync(absoluteFilePath).isDirectory()) {
       return options.defaultValueWhenNotExists;
     }
-    const optFs:{
+    const optFs: {
       encoding?: BufferEncoding;
     } = {
       encoding,
@@ -2382,7 +2401,9 @@ export namespace UtilsFilesFoldersSync {
       if (CoreModels.ImageFileExtensionArr.includes(ext as any)) {
         shouldBeReadWithoutEncoding = true;
         Helpers.logWarn(
-          `File ${path.basename(absoluteFilePath)} is read without utf8 encoding as it is an image file.`,
+          `File ${path.basename(
+            absoluteFilePath,
+          )} is read without utf8 encoding as it is an image file.`,
         );
         delete optFs.encoding;
       }
@@ -2476,7 +2497,9 @@ export namespace UtilsFilesFoldersSync {
         Helpers.mkdirp(path.dirname(absoluteFilePath as string));
       } catch (error) {
         Helpers.error(
-          `Not able to create directory: ${path.dirname(absoluteFilePath as string)}`,
+          `Not able to create directory: ${path.dirname(
+            absoluteFilePath as string,
+          )}`,
         );
       }
     }
@@ -2507,7 +2530,7 @@ export namespace UtilsFilesFoldersSync {
     }
     //#endregion
 
-    const fsOps:{
+    const fsOps: {
       encoding?: BufferEncoding;
     } = {
       encoding,
@@ -2517,7 +2540,9 @@ export namespace UtilsFilesFoldersSync {
       const ext = path.extname(absoluteFilePath).replace('.', '').toLowerCase();
       if (CoreModels.ImageFileExtensionArr.includes(ext as any)) {
         Helpers.logWarn(
-          `File ${path.basename(absoluteFilePath)} is written without utf8 encoding as it is an image file.`,
+          `File ${path.basename(
+            absoluteFilePath,
+          )} is written without utf8 encoding as it is an image file.`,
         );
         delete fsOps.encoding;
       }
@@ -2531,6 +2556,189 @@ export namespace UtilsFilesFoldersSync {
     //#endregion
   };
   //#endregion
+
+  //#region utils files folders sync / get files or folder
+
+  export interface UtilsFilesFoldersSyncGetFilesFromOptions {
+    recursive?: boolean;
+    followSymlinks?: boolean;
+    /**
+     * glob patterns to omit from result
+     */
+    omitPatterns?: string[];
+  }
+
+  //#region utils files folders sync / walk fs tree
+  const walkFsTree = (
+    root: string,
+    options: {
+      recursive: boolean;
+      followSymlinks: boolean;
+      omitPatterns?: string[];
+      onFile?: (path: string) => void;
+      onDirectory?: (path: string) => void;
+    },
+  ): void => {
+    //#region @backendFunc
+    const visitedRealPaths = new Set<string>();
+
+    const allowedInResult = (pathToFileOrFolder: string) => {
+      pathToFileOrFolder = crossPlatformPath(pathToFileOrFolder);
+      if (options.omitPatterns.length === 0) {
+        return true;
+      }
+
+      // const exclude = anymatch(options.omitPatterns, pathToFileOrFolder);
+
+      const exclude = micromatch.isMatch(
+        pathToFileOrFolder,
+        options.omitPatterns,
+        {
+          dot: true,
+        },
+      );
+
+      // if (!exclude
+      //   //  && pathToFileOrFolder.includes('node_modules')
+      //   ) {
+      //   console.log(pathToFileOrFolder)
+      // }
+
+      return !exclude;
+    };
+
+    const scan = (dir: string) => {
+      let realDir: string;
+      try {
+        realDir = fse.realpathSync(dir);
+      } catch {
+        return;
+      }
+
+      if (visitedRealPaths.has(realDir)) return;
+      visitedRealPaths.add(realDir);
+
+      let entries: Dirent[];
+      try {
+        entries = fse.readdirSync(dir, { withFileTypes: true });
+      } catch {
+        return;
+      }
+
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+
+        // ─────────────── symlink ───────────────
+        if (entry.isSymbolicLink()) {
+          let realPath: string;
+          try {
+            realPath = fse.realpathSync(fullPath);
+          } catch {
+            continue;
+          }
+
+          let stats;
+          try {
+            stats = fse.statSync(realPath);
+          } catch {
+            continue;
+          }
+
+          if (stats.isDirectory()) {
+            if (options.onDirectory && allowedInResult(fullPath)) {
+              options.onDirectory(fullPath);
+            }
+            if (options.followSymlinks && options.recursive) {
+              scan(realPath);
+            }
+          } else if (stats.isFile()) {
+            if (options.onFile && allowedInResult(fullPath)) {
+              options.onFile(fullPath);
+            }
+          }
+
+          continue;
+        }
+
+        // ─────────────── directory ───────────────
+        if (entry.isDirectory()) {
+          if (options.onDirectory && allowedInResult(fullPath)) {
+            options.onDirectory(fullPath);
+          }
+          if (options.recursive) {
+            scan(fullPath);
+          }
+          continue;
+        }
+
+        // ─────────────── file ───────────────
+        if (entry.isFile()) {
+          if (options.onFile && allowedInResult(fullPath)) {
+            options.onFile(fullPath);
+          }
+        }
+      }
+    };
+
+    scan(path.resolve(root));
+
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils files folders sync / get files from
+  /**
+   * return absolute paths for files inside folder or link to folder
+   */
+  export const getFilesFrom = (
+    folderOrLinkToFolder: string | string[],
+    options?: UtilsFilesFoldersSyncGetFilesFromOptions,
+  ): string[] => {
+    //#region @backendFunc
+    options = options || {};
+    const { recursive = false, followSymlinks = true } = options;
+
+    const results: string[] = [];
+
+    walkFsTree(crossPlatformPath(folderOrLinkToFolder), {
+      recursive,
+      followSymlinks,
+      omitPatterns: options.omitPatterns || [],
+      onFile: file => results.push(file),
+    });
+
+    return results.map(crossPlatformPath);
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils files and folder sync / get folders from
+  /**
+   * return absolute paths for folders inside folder or link to folder
+   */
+  export const getFoldersFrom = (
+    folderOrLinkToFolder: string | string[],
+    options?: UtilsFilesFoldersSyncGetFilesFromOptions,
+  ): string[] => {
+    //#region @backendFunc
+    options = options || {};
+    const { recursive = false, followSymlinks = true } = options;
+
+    const results: string[] = [];
+
+    walkFsTree(crossPlatformPath(folderOrLinkToFolder), {
+      recursive,
+      followSymlinks,
+      omitPatterns: options.omitPatterns || [],
+      onDirectory: dir => results.push(dir),
+    });
+
+    return results.map(crossPlatformPath);
+    //#endregion
+  };
+  //#endregion
+
+  //#endregion
 }
 //#endregion
 
@@ -2541,7 +2749,13 @@ export namespace UtilsFilesFoldersSync {
  * - export when ready
  * - should be ready for everything async refactor
  */
-namespace UtilsFilesFolders {
+export namespace UtilsFilesFolders {
+  /**
+   * Patterns that should be always ignored
+   */
+  export const IGNORE_FOLDERS_FILES_PATTERNS =
+    UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS;
+
   //#region utils files folders operations / remove options
   interface UtilsFilesFoldersOperationsRemoveOptions {
     recursive?: boolean;
@@ -4535,6 +4749,7 @@ export namespace UtilsJson {
 
   //#region get attributes from jsonc or json5 file
   /**
+   * ! TODO handle packages like zone.js with dot
    * Get attributes from jsonc or json5 file
    * @param jsonDeepPath lodash path to property in json ex. deep.path.to.prop
    * @param fileContent jsonc or json5 - json with comments
@@ -4563,6 +4778,7 @@ export namespace UtilsJson {
     }, []);
     // console.log({ pathParts });
     // const pathParts = jsonDeepPath.split('.');
+    // const keyName = pathParts.pop()!.replace(/^\["(.+)"\]$/, '$1');
     const keyName = pathParts.pop()!.replace(/^\["(.+)"\]$/, '$1');
     let currentPath = '';
     let attributes: AttrJsoncProp[] = [];
