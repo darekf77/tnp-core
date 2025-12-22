@@ -1114,7 +1114,7 @@ in location: ${cwd}
         if (resolveAfterAnyExitCode || exitCode === 0) {
           resolve();
         } else {
-          reject(new Error(`Process exited with code ${exitCode}`));
+          reject(new Error(`[startAsyncChildProcessCommandUntil] Process exited with code ${exitCode}`));
         }
       });
 
@@ -2105,7 +2105,7 @@ export namespace UtilsExecProc {
 [waitUntilDoneOrThrow][exit] Execution failed. Command:
             ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}
 
-            Process exited with code ${code || 0}`),
+[waitUntilDoneOrThrow]Process exited with code ${code}`),
             );
           }
         });
