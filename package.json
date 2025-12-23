@@ -1,6 +1,6 @@
 {
   "name": "tnp-core",
-  "version": "21.0.16",
+  "version": "21.0.17",
   "scripts": {
     "mkdocs": "python3 -m mkdocs",
     "taon init": "taon init",
