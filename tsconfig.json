@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.isomorphic.json",
   "compilerOptions": {
-    "moduleResolution": "bundler",
+    "moduleResolution": "nodenext",
     "strictNullChecks": false,
     "rootDir": "./src",
     "paths": {
