@@ -1114,7 +1114,11 @@ in location: ${cwd}
         if (resolveAfterAnyExitCode || exitCode === 0) {
           resolve();
         } else {
-          reject(new Error(`[startAsyncChildProcessCommandUntil] Process exited with code ${exitCode}`));
+          reject(
+            new Error(
+              `[startAsyncChildProcessCommandUntil] Process exited with code ${exitCode}`,
+            ),
+          );
         }
       });
 
@@ -3478,44 +3482,53 @@ export namespace UtilsOs {
 
   //#region helpers
   const fileNotExists = async (commandName: string): Promise<boolean> => {
+    //#region @backendFunc
     try {
       await fse.access(commandName, fse.constants.F_OK);
       return false;
     } catch {
       return true;
     }
+    //#endregion
   };
 
   const fileNotExistsSync = (commandName: string): boolean => {
+    //#region @backendFunc
     try {
       fse.accessSync(commandName, fse.constants.F_OK);
       return false;
     } catch {
       return true;
     }
+    //#endregion
   };
 
   const localExecutable = async (commandName: string): Promise<boolean> => {
+    //#region @backendFunc
     try {
       await fse.access(commandName, fse.constants.F_OK | fse.constants.X_OK);
       return true;
     } catch {
       return false;
     }
+    //#endregion
   };
 
   const localExecutableSync = (commandName: string): boolean => {
+    //#region @backendFunc
     try {
       fse.accessSync(commandName, fse.constants.F_OK | fse.constants.X_OK);
       return true;
     } catch {
       return false;
     }
+    //#endregion
   };
   //#endregion
 
   //#region command exists (Unix / Windows)
   const commandExistsUnix = async (commandName: string): Promise<boolean> => {
+    //#region @backendFunc
     const isFileMissing = await fileNotExists(commandName);
     if (isFileMissing) {
       try {
@@ -3530,11 +3543,13 @@ export namespace UtilsOs {
     }
 
     return await localExecutable(commandName);
+    //#endregion
   };
 
   const commandExistsWindows = async (
     commandName: string,
   ): Promise<boolean> => {
+    //#region @backendFunc
     try {
       const stdout = await Helpers.commandOutputAsStringAsync(
         `where ${commandName}`,
@@ -3543,9 +3558,11 @@ export namespace UtilsOs {
     } catch {
       return false;
     }
+    //#endregion
   };
 
   const commandExistsUnixSync = (commandName: string): boolean => {
+    //#region @backendFunc
     if (fileNotExistsSync(commandName)) {
       try {
         const stdout = child_process.execSync(
@@ -3558,15 +3575,18 @@ export namespace UtilsOs {
       }
     }
     return localExecutableSync(commandName);
+    //#endregion
   };
 
   const commandExistsWindowsSync = (commandName: string): boolean => {
+    //#region @backendFunc
     try {
       const stdout = Helpers.commandOutputAsString(`where ${commandName}`);
       return !!stdout;
     } catch {
       return false;
     }
+    //#endregion
   };
   //#endregion
 
@@ -3574,6 +3594,7 @@ export namespace UtilsOs {
   export const commandExistsAsync = async (
     commandName: string,
   ): Promise<boolean> => {
+    //#region @backendFunc
     try {
       if (isRunningInWindows) {
         return await commandExistsWindows(commandName);
@@ -3584,6 +3605,7 @@ export namespace UtilsOs {
       if (frameworkName === 'tnp') console.error(error);
       return false;
     }
+    //#endregion
   };
 
   /**
@@ -5916,11 +5938,11 @@ export namespace UtilsNetwork {
     } else if (_.isString(portOrHost)) {
       try {
         url = new URL(portOrHost);
-      } catch (error) {}
+      } catch (error: unknown) {}
       if (isValidIp(portOrHost)) {
         try {
           url = new URL(`${defaultProtocol}//${portOrHost}`);
-        } catch (error) {
+        } catch (error: unknown) {
           Helpers.warn(`Not able to get port from ${portOrHost}`);
         }
       }
@@ -6105,6 +6127,7 @@ export namespace UtilsNetwork {
    * LAN → Wi-Fi → Other → Virtual
    */
   export const getLocalIpAddresses = async (): Promise<LocalIpInfo[]> => {
+    //#region @backendFunc
     const interfaces = os.networkInterfaces();
     const all: LocalIpInfo[] = [];
 
@@ -6124,6 +6147,7 @@ export namespace UtilsNetwork {
 
     all.sort(sortByPriority);
     return all;
+    //#endregion
   };
   //#endregion
 
@@ -6134,10 +6158,12 @@ export namespace UtilsNetwork {
   export const getFirstIpV4LocalActiveIpAddress = async (): Promise<
     string | null
   > => {
+    //#region @backendFunc
     const all = await getLocalIpAddresses().then(a =>
       a.filter(f => f.family === 'IPv4'),
     );
     return all.length > 0 ? all[0].address : null;
+    //#endregion
   };
   //#endregion
 
@@ -6146,6 +6172,7 @@ export namespace UtilsNetwork {
    * Returns current public IP address (or null if undetectable).
    */
   export const getCurrentPublicIpAddress = async (): Promise<string | null> => {
+    //#region @backendFunc
     const urls = [
       'https://api.ipify.org?format=json',
       'https://ifconfig.me/ip',
@@ -6167,7 +6194,7 @@ export namespace UtilsNetwork {
                   if (match) resolve(match[1]);
                   else if (data.trim().length > 0) resolve(data.trim());
                   else reject(new Error('no ip found'));
-                } catch (e) {
+                } catch  (e) {
                   reject(e);
                 }
               });
@@ -6176,11 +6203,12 @@ export namespace UtilsNetwork {
             .setTimeout(3000, () => reject(new Error('timeout')));
         });
         if (ip) return ip;
-      } catch {
+      } catch (e) {
         // try next
       }
     }
     return null;
+    //#endregion
   };
   //#endregion
 
@@ -6198,8 +6226,10 @@ export namespace UtilsNetwork {
  */
 export namespace UtilsProcessLogger {
   //#region utils process / process file logger options
-  export interface ProcessFileLoggerOptions
-    extends Record<string, string | number | boolean | undefined> {
+  export interface ProcessFileLoggerOptions extends Record<
+    string,
+    string | number | boolean | undefined
+  > {
     name: string;
     id?: string | number;
     pid?: number;

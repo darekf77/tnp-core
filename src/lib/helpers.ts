@@ -1555,7 +1555,7 @@ export class HelpersCore extends HelpersMessages {
               exitSub.next(exitCode);
               subscribtions.forEach(s => s.unsubscribe());
             });
-          }).catch(e => {
+          }).catch((e: unknown) => {
             console.error(e);
             console.error(`Something wrong with your mock funciton`);
             exitSub.next(1);
