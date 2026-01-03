@@ -5387,7 +5387,9 @@ export namespace UtilsDotFile {
     const lines = envContent.split(/\r?\n/);
 
     for (const line of lines) {
-      const trimmed = line.trim();
+      const trimmed = line
+        .replace(/\s+#.*$/, '') // remove inline comments
+        .trim();
       if (!trimmed || trimmed.startsWith('#')) continue;
 
       const [key, ...rest] = trimmed.split('=');
