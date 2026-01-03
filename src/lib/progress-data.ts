@@ -64,7 +64,8 @@ export class PROGRESS_DATA implements IPROGRESS_DATA {
           callbackOnFounded(single);
         }
       } catch (err) {
-        Helpers.error(err, true, true);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        Helpers.error(errMsg, true, true);
         Helpers.error(
           `ProgresssBarData: fail to parse "${progress}"`,
           true,

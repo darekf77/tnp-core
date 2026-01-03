@@ -2369,7 +2369,11 @@ command: ${command}
       try {
         var writer = json5Write.load(existedContent);
       } catch (error) {
-        console.error(error?.message);
+        if (error instanceof Error) {
+          console.error(error?.message);
+        } else {
+          console.error(error);
+        }
         Helpers.error(
           `Pleas fix your jsonc file (json with comments) in
         ${absoluteFilePath}`,

@@ -1668,7 +1668,8 @@ in location: ${cwd}
         }
       }
     } catch (error) {
-      console.error('Error while killing node processes:', error.message);
+      const errMsg = error instanceof Error ? error : new Error(String(error));
+      console.error('Error while killing node processes:', errMsg);
     }
 
     console.log(`Total other node processes killed: ${killedCount}`);
@@ -4481,10 +4482,11 @@ export namespace UtilsTerminal {
    * @returns true if user wants to try again, false otherwise
    */
   export const pressAnyKeyToTryAgainErrorOccurred = async (
-    error: any,
+    error: unknown,
   ): Promise<boolean> => {
     //#region @backendFunc
-    frameworkName === 'tnp' && Helpers.error(error, true, true);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    frameworkName === 'tnp' && Helpers.error(errMsg, true, true);
 
     if (
       !(await UtilsTerminal.confirm({
@@ -6205,7 +6207,7 @@ export namespace UtilsNetwork {
                   if (match) resolve(match[1]);
                   else if (data.trim().length > 0) resolve(data.trim());
                   else reject(new Error('no ip found'));
-                } catch  (e) {
+                } catch (e) {
                   reject(e);
                 }
               });
