@@ -3465,6 +3465,15 @@ export namespace UtilsOs {
   };
   //#endregion
 
+  export const isRunningNodeDebugger = (): boolean => {
+    //#region @browser
+    return false;
+    //#endregion
+    //#region @backendFunc
+    return process.execArgv.some(arg => arg.startsWith('--inspect'));
+    //#endregion
+  };
+
   export const isNodeVersionOk = UtilsProcess.isNodeVersionOk;
   export const isElectron = isRunningInElectron();
   export const isBrowser = isRunningInBrowser();
