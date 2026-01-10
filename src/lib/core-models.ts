@@ -671,4 +671,14 @@ export namespace CoreModels {
   export const ClassNameStaticProperty = '$$className$$';
 
   export const TaonHttpErrorCustomProp = '$$taonError$$';
-}
+
+  /**
+   * Absolute path to project children;
+   */
+  export const pathToChildren = 'path-to-children';
+
+  /**
+   * Absolute path to project parent;
+   */
+  export const parentLocation = 'parent-location';
+  }
