@@ -361,6 +361,10 @@ export const TAGS = {
   CUT_CODE_IF_FALSE: '@cutCode' + 'IfFalse',
   COMMENT_REGION: `//${'#reg' + 'ion'}`,
   COMMENT_END_REGION: `//${'#end' + 'region'}`,
+  APP_TS_GENERATED: `${'@app-ts-gene' + 'rated'}`,
+  APP_TS_PLACEHOLDER_IMPORTS: `${'@place' + 'holder-for-imports'}`,
+  APP_TS_PLACEHOLDER_ROUTES: `${'@place' + 'holder-for-routes'}`,
+  APP_TS_PLACEHOLDER_CONTEXTS_INIT: `${'@place' + 'holder-for-contexts-init'}`,
 };
 
 export const BaselineSiteJoinprefix = '__';
