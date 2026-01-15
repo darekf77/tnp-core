@@ -6268,7 +6268,7 @@ export namespace UtilsProcessLogger {
   //#region utils process / constants
   const dummyFilename = 'file.log';
 
-  export const baseDirTaonProcessLogs = crossPlatformPath([
+  export const baseDirTaonProcessLogs = ()=> crossPlatformPath([
     UtilsOs.getRealHomeDir(),
     '.taon',
     'log-files-for',
@@ -6343,7 +6343,7 @@ export namespace UtilsProcessLogger {
     ) {
       //#region @backend
       this.options = options || {};
-      this.options.baseDir = this.options.baseDir || baseDirTaonProcessLogs;
+      this.options.baseDir = this.options.baseDir || baseDirTaonProcessLogs();
 
       try {
         fse.mkdirSync(this.options.baseDir, { recursive: true });
