@@ -3472,8 +3472,11 @@ export namespace UtilsOs {
     | 'cursor'
     | 'theia'
     | 'idea'
-    | 'idea64'
-    | 'unknown-editor--please-install-vscode';
+    | 'idea64';
+
+  export type UnknownEditor = 'unknown-editor--please-install-vscode';
+
+  export type EditorProcess = `${Editor}` | 'code-oss'; // group alias
 
   export const EditorArr: Editor[] = [
     'code',
@@ -3484,60 +3487,160 @@ export namespace UtilsOs {
     'idea64',
   ];
 
+  export const EDITOR_PROCESSES: Record<EditorProcess, string[]> = {
+    code: ['code', 'Code'],
+    codium: ['codium', 'VSCodium'],
+    cursor: ['cursor', 'Cursor'],
+    theia: ['theia', 'TheiaIDE'],
+    'code-oss': [
+      'code',
+      'Code',
+      'codium',
+      'VSCodium',
+      'cursor',
+      'Cursor',
+      'theia',
+      'TheiaIDE',
+    ],
+    idea: ['idea', 'idea64', 'IntelliJ IDEA'],
+    idea64: ['idea64', 'idea', 'IntelliJ IDEA'],
+  };
+
+  const killProcesses = (names: string[]) => {
+    //#region @backendFunc
+    if (process.platform === 'win32') {
+      for (const name of names) {
+        try {
+          Helpers.run(`taskkill /f /im ${name}.exe`).sync();
+        } catch (error) {}
+      }
+    } else {
+      // fkill is fast and already in your stack
+      for (const name of names) {
+        try {
+          Helpers.run(`fkill -f ${name}`).sync();
+        } catch (error) {}
+      }
+    }
+    //#endregion
+  };
+
+  export const killAllEditor = (editor: EditorProcess) => {
+    //#region @backendFunc
+    const processes = EDITOR_PROCESSES[editor];
+    if (!processes) return;
+
+    killProcesses(processes);
+    process.exit(0);
+    //#endregion
+  };
+
   export const detectEditor = (): Editor => {
     //#region @backendFunc
-    // --- Code-OSS family (VS Code, Codium, Cursor) ---
-    if (process.env.VSCODE_IPC_HOOK_CLI || process.env.VSCODE_PID) {
-      const bin = (process.argv[0] || '').toLowerCase();
 
-      if (bin.includes('cursor')) return 'cursor';
-      if (bin.includes('codium')) return 'codium';
+    const env = process.env;
 
-      // fallback for:
-      // - code
-      // - code-insiders
-      // - wrapped binaries
-      return 'code';
-    }
-
-    // --- Eclipse Theia ---
-    if (process.env.THEIA_PARENT_PID || process.env.THEIA_WEBVIEW_ENDPOINT) {
+    // --- Eclipse Theia (strong signals) ---
+    if (
+      env.THEIA_PARENT_PID ||
+      env.THEIA_WEBVIEW_ENDPOINT ||
+      env.THEIA_APP_PROJECT_PATH ||
+      env.THEIA_ELECTRON_TOKEN
+    ) {
       return 'theia';
     }
 
-    // --- IntelliJ IDEA (heuristic) ---
-    // Works when:
-    // - launched from IDE terminal
-    // - run via IDE run configuration
-    const ideaIndicators = [
-      process.env.IDEA_INITIAL_DIRECTORY,
-      process.env.JB_IDE_BROWSER,
-      process.env.JB_IDE,
-    ];
+    // --- Code-OSS family (Code / Codium / Cursor) ---
+    const askpassNode = (env.VSCODE_GIT_ASKPASS_NODE || '').toLowerCase();
 
-    if (ideaIndicators.some(Boolean)) {
-      return 'idea';
+    if (askpassNode) {
+      if (askpassNode.includes('cursor')) return 'cursor';
+      if (askpassNode.includes('codium')) return 'codium';
+      if (askpassNode.includes('code')) return 'code';
     }
 
-    // Fallback: binary name
-    const bin = (process.argv[0] || '').toLowerCase();
-    if (bin.includes('idea') || bin.includes('idea64')) {
-      return 'idea';
-    }
-
-    if (commandExistsSync('code')) {
+    // Backup: still inside VS Code–like env
+    if (env.VSCODE_IPC_HOOK_CLI || env.VSCODE_PID) {
       return 'code';
     }
 
-    if (commandExistsSync('idea')) {
+    // --- IntelliJ IDEA ---
+    if (env.IDEA_INITIAL_DIRECTORY || env.JB_IDE || env.JB_IDE_BROWSER) {
       return 'idea';
     }
 
-    if (commandExistsSync('idea64')) {
-      return 'idea64';
+    // --- Binary name fallback ---
+    const bin = (process.argv[0] || '').toLowerCase();
+    if (bin.includes('cursor')) return 'cursor';
+    if (bin.includes('codium')) return 'codium';
+    if (bin.includes('idea64')) return 'idea64';
+    if (bin.includes('idea')) return 'idea';
+    if (bin.includes('code')) return 'code';
+
+    // --- CLI availability fallback ---
+    if (commandExistsSync('cursor')) return 'cursor';
+    if (commandExistsSync('codium')) return 'codium';
+    if (commandExistsSync('code')) return 'code';
+    if (commandExistsSync('idea64')) return 'idea64';
+    if (commandExistsSync('idea')) return 'idea';
+
+    return 'unknown-editor--please-install-vscode' as any;
+    //#endregion
+  };
+
+  export const getEditorSettingsJsonPath = (
+    editor: Editor,
+    platform: NodeJS.Platform = process.platform,
+    env: NodeJS.ProcessEnv = process.env,
+  ): string | undefined => {
+    //#region @backendFunc
+    const home = UtilsOs.getRealHomeDir();
+
+    const winAppData = crossPlatformPath(env.APPDATA);
+    const macAppSupport = crossPlatformPath([
+      home,
+      'Library',
+      'Application Support',
+    ]);
+    const linuxConfig = crossPlatformPath([home, '.config']);
+
+    const baseDirs: Record<
+      string,
+      { win?: string; mac?: string; linux?: string }
+    > = {
+      code: {
+        win: winAppData && crossPlatformPath([winAppData, 'Code']),
+        mac: crossPlatformPath([macAppSupport, 'Code']),
+        linux: crossPlatformPath([linuxConfig, 'Code']),
+      },
+      codium: {
+        win: winAppData && crossPlatformPath([winAppData, 'VSCodium']),
+        mac: crossPlatformPath([macAppSupport, 'VSCodium']),
+        linux: crossPlatformPath([linuxConfig, 'VSCodium']),
+      },
+      cursor: {
+        win: winAppData && crossPlatformPath([winAppData, 'Cursor']),
+        mac: crossPlatformPath([macAppSupport, 'Cursor']),
+        linux: crossPlatformPath([linuxConfig, 'Cursor']),
+      },
+      theia: {},
+    };
+
+    const base =
+      platform === 'win32'
+        ? baseDirs[editor].win
+        : platform === 'darwin'
+          ? baseDirs[editor].mac
+          : baseDirs[editor].linux;
+
+    if (!base) {
+      if(editor === 'theia') {
+        return crossPlatformPath([process.cwd(),'.theia', 'settings.json']);
+      }
+      return
     }
 
-    return 'unknown-editor--please-install-vscode';
+    return crossPlatformPath([base, 'User', 'settings.json']);
     //#endregion
   };
 
