@@ -3350,7 +3350,7 @@ export namespace UtilsOs {
     //#region @backendFunc
     Helpers.taskStarted(`Opening folder in VSCode: "${folderPath}"`);
     try {
-      Helpers.run(`code .`, {
+      Helpers.run(`${UtilsOs.detectEditor()} .`, {
         cwd: folderPath,
         silence: true,
         output: false,
@@ -3465,6 +3465,81 @@ export namespace UtilsOs {
     //#endregion
   };
   //#endregion
+
+  export type Editor =
+    | 'code'
+    | 'codium'
+    | 'cursor'
+    | 'theia'
+    | 'idea'
+    | 'idea64'
+    | 'unknown-editor--please-install-vscode';
+
+  export const EditorArr: Editor[] = [
+    'code',
+    'codium',
+    'cursor',
+    'theia',
+    'idea',
+    'idea64',
+  ];
+
+  export const detectEditor = (): Editor => {
+    //#region @backendFunc
+    // --- Code-OSS family (VS Code, Codium, Cursor) ---
+    if (process.env.VSCODE_IPC_HOOK_CLI || process.env.VSCODE_PID) {
+      const bin = (process.argv[0] || '').toLowerCase();
+
+      if (bin.includes('cursor')) return 'cursor';
+      if (bin.includes('codium')) return 'codium';
+
+      // fallback for:
+      // - code
+      // - code-insiders
+      // - wrapped binaries
+      return 'code';
+    }
+
+    // --- Eclipse Theia ---
+    if (process.env.THEIA_PARENT_PID || process.env.THEIA_WEBVIEW_ENDPOINT) {
+      return 'theia';
+    }
+
+    // --- IntelliJ IDEA (heuristic) ---
+    // Works when:
+    // - launched from IDE terminal
+    // - run via IDE run configuration
+    const ideaIndicators = [
+      process.env.IDEA_INITIAL_DIRECTORY,
+      process.env.JB_IDE_BROWSER,
+      process.env.JB_IDE,
+    ];
+
+    if (ideaIndicators.some(Boolean)) {
+      return 'idea';
+    }
+
+    // Fallback: binary name
+    const bin = (process.argv[0] || '').toLowerCase();
+    if (bin.includes('idea') || bin.includes('idea64')) {
+      return 'idea';
+    }
+
+    if (commandExistsSync('code')) {
+      return 'code';
+    }
+
+    if (commandExistsSync('idea')) {
+      return 'idea';
+    }
+
+    if (commandExistsSync('idea64')) {
+      return 'idea64';
+    }
+
+    return 'unknown-editor--please-install-vscode';
+    //#endregion
+  };
 
   export const isRunningNodeDebugger = (): boolean => {
     //#region @browser
@@ -6268,11 +6343,8 @@ export namespace UtilsProcessLogger {
   //#region utils process / constants
   const dummyFilename = 'file.log';
 
-  export const baseDirTaonProcessLogs = ()=> crossPlatformPath([
-    UtilsOs.getRealHomeDir(),
-    '.taon',
-    'log-files-for',
-  ]);
+  export const baseDirTaonProcessLogs = () =>
+    crossPlatformPath([UtilsOs.getRealHomeDir(), '.taon', 'log-files-for']);
   //#endregion
 
   //#region utils process / get log files
