@@ -1,6 +1,6 @@
 import type { ChildProcess } from 'child_process';
 
-import { LibTypeEnum } from './constants';
+import { LibTypeEnum, LibTypeNames } from './constants';
 
 export namespace CoreModels {
   //#region package
@@ -74,92 +74,79 @@ export namespace CoreModels {
   //#endregion
 
   //#region environment name
-  /**
-   * Available application environments.
-   */
-  export const EnvironmentName = Object.freeze({
+
+  export enum EnvironmentName {
     /**
      * Default environment, typically for artifact without application
      * or for storing common data
      */
-    __: '__',
-
+    __ = '__',
     /**
      * Local development environment, typically the developer's machine.
      */
-    LOCALHOST: 'localhost',
-
+    LOCALHOST = 'localhost',
     /**
      * Development environment used by engineers to deploy and test new features.
      */
-    DEV: 'dev',
-
+    DEV = 'dev',
     /**
      * Staging environment used for final validations before production.
      */
-    STAGE: 'stage',
-
+    STAGE = 'stage',
     /**
      * Production environment serving live users.
      */
-    PROD: 'prod',
-
+    PROD = 'prod',
     /**
-     * Automated test environment for running unit, integration, or automated tests.
+     *  Automated test environment for running unit, integration, or automated tests.
      */
-    TEST: 'test',
-
+    TEST = 'test',
     /**
      * Quality assurance environment designated for manual and exploratory testing.
      */
-    QA: 'qa',
-
+    QA = 'qa',
     /**
      * Sandbox environment for experimenting and integration without affecting other environments.
      */
-    SANDBOX: 'sandbox',
-
+    SANDBOX = 'sandbox',
     /**
      * User Acceptance Testing environment where clients or stakeholders validate the release candidate.
      */
-    UAT: 'uat',
-
+    UAT = 'uat',
     /**
      * Pre-production environment, closely mirroring production for final testing and validation.
      */
-    PREPROD: 'preprod',
-
+    PREPROD = 'preprod',
     /**
      * Demonstration environment specifically configured for client presentations and demos.
      */
-    DEMO: 'demo',
-
+    DEMO = 'demo',
     /**
      * Documentation environment for hosting and managing project documentation.
      */
-    DOCS: 'docs',
-
+    DOCS = 'docs',
     /**
      * Demonstration environment ONLY html files, typically used for static pages or documentation.
      * This environment is not intended for dynamic content or server-side processing.
      * Perfect to github pages or similar.
      * It is not intended for production use and should not be used for any critical applications or services.
      */
-    STATIC_PAGES: 'static-pages',
-
+    STATIC_PAGES = 'static-pages',
     /**
      * Continuous Integration environment used by CI/CD pipelines for automated builds and deployments.
      */
-    CI: 'ci',
-
+    CI = 'ci',
     /**
      * Training environment dedicated to internal team onboarding and training activities.
      */
-    TRAINING: 'training',
-  });
+    TRAINING = 'training',
+    /**
+     * Staging environment used for final validations before production.
+     */
+    STAGING = 'staging',
+  }
 
-  export type EnvironmentNameTaon =
-    (typeof EnvironmentName)[keyof typeof EnvironmentName];
+  export type EnvironmentNameTaon = `${EnvironmentName}`;
 
   //#endregion
 
@@ -271,9 +258,8 @@ export namespace CoreModels {
   //#endregion
 
   //#region lib type
-  export type LibType =
-    | BaseProjectType
-    | (typeof LibTypeEnum)[keyof typeof LibTypeEnum];
+  export type LibType = BaseProjectType | LibTypeNames;
+
   //#endregion
 
   //#region new factory type
@@ -681,4 +667,4 @@ export namespace CoreModels {
    * Absolute path to project parent;
    */
   export const parentLocation = 'parent-location';
-  }
+}

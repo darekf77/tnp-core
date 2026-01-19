@@ -24,6 +24,8 @@ export enum LibTypeEnum {
   UNKNOWN = 'unknown',
 }
 
+export type LibTypeNames = `${LibTypeEnum}`;
+
 export const GlobalLibTypeName = {
   //#region @backend
   isomorphicLib: LibTypeEnum.ISOMORPHIC_LIB,
