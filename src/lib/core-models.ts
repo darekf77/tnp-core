@@ -612,17 +612,6 @@ export namespace CoreModels {
     compilerOptions: CompilerOptions;
     angularCompilerOptions: AngularCompilerOptions;
   }
-
-  export interface TscCompileOptions {
-    cwd: string;
-    watch?: boolean;
-    outDir?: 'dist';
-    generateDeclarations?: boolean;
-    tsExe?: string;
-    diagnostics?: boolean;
-    hideErrors?: boolean;
-    debug?: boolean;
-  }
   //#endregion
 
   export type CfontStyle =
