@@ -1,4 +1,5 @@
 //#region imports
+import 'reflect-metadata';
 import { Blob } from 'buffer'; // @backend
 import { ChildProcess, ExecSyncOptions } from 'child_process';
 import * as crypto from 'crypto'; // @backend
