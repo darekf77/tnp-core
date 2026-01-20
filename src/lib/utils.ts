@@ -641,12 +641,11 @@ export namespace Utils {
 
     //#region binay utils / get blob from url
     export async function getBlobFrom(url: string): Promise<Blob> {
-      const response: AxiosResponse<Blob> = await axios({
+      return (await axios({
         url,
         method: 'get',
         responseType: 'blob',
-      });
-      return response.data;
+      })).data;
     }
     //#endregion
   }
@@ -1922,7 +1921,7 @@ export namespace UtilsExecProc {
         cwd: this.execProcOptions.cwd,
       });
 
-      return await new Promise<Awaited<ReturnType<typeof this.getOutput>>>(
+      return await new Promise<{ stdout: string; stderr: string }>(
         (resolve, reject) => {
           this.child.stdout.on('data', data => {
             const strData = data?.toString() || '';
