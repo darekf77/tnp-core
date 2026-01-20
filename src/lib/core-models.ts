@@ -575,45 +575,6 @@ export namespace CoreModels {
   }
   //#endregion
 
-  //#region tsconfig
-  interface AngularCompilerOptions {
-    fullTemplateTypeCheck: boolean;
-    strictInjectionParameters: boolean;
-    compilationMode: string;
-    preserveSymlinks: boolean;
-    enableIvy: boolean;
-  }
-
-  interface CompilerOptions {
-    baseUrl: string;
-    outDir: string;
-    sourceMap: boolean;
-    declaration: boolean;
-    strictNullChecks: boolean;
-    downlevelIteration: boolean;
-    experimentalDecorators: boolean;
-    emitDecoratorMetadata: boolean;
-    esModuleInterop: boolean;
-    module: string;
-    moduleResolution: string;
-    importHelpers: boolean;
-    skipLibCheck: boolean;
-    target: string;
-    typeRoots: string[];
-    types: string[];
-    lib: string[];
-    paths: { [fullPackageName: string]: string[] };
-    useDefineForClassFields: boolean;
-  }
-  export interface TsConfigJson {
-    extends: string;
-    exclude: string[];
-    compileOnSave: boolean;
-    compilerOptions: CompilerOptions;
-    angularCompilerOptions: AngularCompilerOptions;
-  }
-  //#endregion
-
   export type CfontStyle =
     | 'block'
     | 'slick'
