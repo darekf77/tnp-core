@@ -2,8 +2,6 @@
   "type": "isomorphic-lib",
   "version": "v21",
 
-  "isomorphicDependenciesForNpmLib": ["json10-writer"],
-
   "dependenciesNamesForNpmLib": [
     "axios",
     "glob",
@@ -45,6 +43,8 @@
   ],
 
   "isCoreProject": false,
+
+  "isomorphicDependenciesForNpmLib": ["json10-writer"],
 
   "resources": ["README.md"],
 
