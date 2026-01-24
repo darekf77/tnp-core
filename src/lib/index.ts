@@ -1,4 +1,5 @@
 export * from './framework-name';
+export * from './lodash.namespace';
 export * from './core-imports';
 export * from './core-models';
 export * from './core-config';

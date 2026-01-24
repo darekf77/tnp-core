@@ -31,7 +31,8 @@ import jQuery from 'jquery';
 import { chalk as chalkMock } from './node-chalk-mock';
 import { path as pathMock } from './node-path-mock';
 //#endregion
-import * as _ from 'lodash';
+import { _ } from './lodash.namespace';
+export { _ } from './lodash.namespace';
 import * as q from 'q';
 import * as dateformat from 'dateformat';
 import { Chalk } from 'chalk';
@@ -347,7 +348,6 @@ const crossPlatformPath = (
 
 //#region exports
 export {
-  _,
   q,
   dateformat,
   crossPlatformPath,
