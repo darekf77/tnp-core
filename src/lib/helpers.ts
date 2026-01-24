@@ -4,6 +4,7 @@ import type { ChildProcess } from 'child_process';
 
 import { Dirent, Stats } from 'fs-extra'; // @backend
 import * as json5Write from 'json10-writer/src'; // @backend
+import { parse as json5Parse } from 'json5';
 import { Subject, Subscription } from 'rxjs'; // @browser
 
 import { encoding } from './constants';
@@ -22,7 +23,6 @@ import {
 } from './core-imports'; // @backend
 import { _, path, crossPlatformPath } from './core-imports';
 import { CoreModels } from './core-models';
-import { HelpersMessages } from './helpers-messages';
 import {
   UtilsJson,
   UtilsProcess,
@@ -30,18 +30,62 @@ import {
   UtilsTerminal,
 } from './utils';
 
-import { Helpers, Utils, UtilsOs } from './index';
+import { frameworkName, PROGRESS_DATA, Utils, UtilsOs } from './index';
 //#endregion
 
 //#region constants
 declare const global: any;
-
 //#region @backend
 const forceTrace = !global.hideLog;
 //#endregion
 const WEBSQL_PROC_MOCK_PROCESSES_PID = {};
 const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
 
+const KEY = {
+  LAST_ERROR: Symbol(),
+  LAST_INFO: Symbol(),
+  LAST_WARN: Symbol(),
+  LAST_LOG: Symbol(),
+  LAST_SUCCESS: Symbol(),
+  LAST_TASK_STARTED: Symbol(),
+  LAST_TASK_DONE: Symbol(),
+};
+const KEY_COUNT = {
+  LAST_ERROR: Symbol(),
+  LAST_INFO: Symbol(),
+  LAST_WARN: Symbol(),
+  LAST_LOG: Symbol(),
+  LAST_SUCCESS: Symbol(),
+  LAST_TASK_STARTED: Symbol(),
+  LAST_TASK_DONE: Symbol(),
+};
+const KEY_IMPORTANTCE = {
+  LAST_ERROR: Symbol(),
+  LAST_INFO: Symbol(),
+  LAST_WARN: Symbol(),
+  LAST_LOG: Symbol(),
+  LAST_SUCCESS: Symbol(),
+  LAST_TASK_STARTED: Symbol(),
+  LAST_TASK_DONE: Symbol(),
+};
+//#region @backend
+global[KEY_COUNT.LAST_ERROR] = 0;
+global[KEY_COUNT.LAST_INFO] = 0;
+global[KEY_COUNT.LAST_WARN] = 0;
+global[KEY_COUNT.LAST_LOG] = 0;
+global[KEY_COUNT.LAST_SUCCESS] = 0;
+global[KEY_COUNT.LAST_TASK_STARTED] = 0;
+global[KEY_COUNT.LAST_TASK_DONE] = 0;
+global[KEY_IMPORTANTCE.LAST_ERROR] = 0;
+global[KEY_IMPORTANTCE.LAST_INFO] = 0;
+global[KEY_IMPORTANTCE.LAST_WARN] = 0;
+global[KEY_IMPORTANTCE.LAST_LOG] = 0;
+global[KEY_IMPORTANTCE.LAST_SUCCESS] = 0;
+global[KEY_IMPORTANTCE.LAST_TASK_STARTED] = 0;
+global[KEY_IMPORTANTCE.LAST_TASK_DONE] = 0;
+const useSpinner = global['spinnerInParentProcess'];
+//#endregion
+const LIMIT = 10;
 //#endregion
 
 //#region models
@@ -50,7 +94,6 @@ export interface RunSyncOrAsyncOptions {
   context?: object;
   arrayOfParams?: any[];
 }
-
 export interface CommandOutputOptions {
   biggerBuffer?: boolean;
   showOnlyLastLine?: boolean;
@@ -60,114 +103,537 @@ export interface CommandOutputOptions {
 }
 //#endregion
 
-// TODO UNCOMMENT
-// const globalProcessStdout = {};
-// const globalProcessStder = {};
-// const maxProcessHistoryLinesChekc = 20;
+export namespace Helpers {
+  export const getIsBrowser = () => {
+    return UtilsOs.isRunningInBrowser();
+  };
+  export const getIsWebSQL = () => {
+    return UtilsOs.isRunningInWebSQL();
+  };
+  export const getIsNode = () => {
+    return UtilsOs.isRunningInNode();
+  };
+  export const getIsElectron = () => {
+    return UtilsOs.isRunningInElectron();
+  };
+  export const contain = (arr: any[], item: any): boolean => {
+    return (
+      arr.filter(l => {
+        if (l instanceof RegExp) {
+          return l.test(item);
+        }
+        if (l === item) {
+          return true;
+        }
+        if (
+          item.match && typeof item.match === 'function' ? item.match(l) : false
+        ) {
+          return true;
+        }
+        return false;
+      }).length > 0
+    );
+  };
 
-export class HelpersCore extends HelpersMessages {
-  //#region singleton
-  private static _instanceCore: HelpersCore;
-
-  public static get InstanceCore() {
-    if (!HelpersCore._instanceCore) {
-      HelpersCore._instanceCore = new HelpersCore();
+  //#region transformData
+  /**
+   * @param details any data to be transformed
+   * @returns string ready to be displayed
+   */
+  const transformData = (details: any): string => {
+    if (typeof details === 'object') {
+      // if (Array.isArray(details)) {
+      //   return details.join('\n');
+      // }
+      try {
+        const json = JSON.stringify(details, null, 2);
+        details = json;
+      } catch (error) {
+        return details;
+      }
     }
-    return HelpersCore._instanceCore;
-  }
+    return details;
+  };
   //#endregion
 
-  //#region fields / getters
-  //#region @backend
-  readonly processes: ChildProcess[] = [];
-
-  //#endregion
-  readonly bigMaxBuffer = 2024 * 500;
-
-  //#region @backend
-  /**
-   * @deprecated use UtilsOs
-   */
-  get isRunningIn() {
-    return {
-      /**
-       * @deprecated use UtilsOs.isRunningInMochaTest()
-       */
-      mochaTest() {
-        return UtilsOs.isRunningInMochaTest();
-      },
-      /**
-       * @deprecated use UtilsOs.isRunningInCliMode()
-       */
-      cliMode() {
-        return UtilsOs.isRunningInCliMode();
-      },
+  export const msgCacheClear = () => {
+    //#region @backend
+    global[KEY.LAST_LOG] = void 0;
+    global[KEY.LAST_WARN] = void 0;
+    global[KEY.LAST_ERROR] = void 0;
+    global[KEY.LAST_INFO] = void 0;
+    //#endregion
+  };
+  export const renderError = (err: Error) => {
+    if (Helpers.getIsBrowser()) {
+      // TODO for FE
+      console.error(err);
+    } else {
+      //#region @backend
+      console.error(err);
+      // const createCallsiteRecord = require('callsite-record');
+      // // console.log(createCallsiteRecord)
+      // console.log(
+      //   createCallsiteRecord &&
+      //     createCallsiteRecord({ forError: err })?.renderSync({}),
+      // );
+      return;
+      //#endregion
+    }
+  };
+  export const throwError = (details: string) => {
+    throw new Error(details);
+  };
+  export const stopApplication = (details: string) => {
+    if (Helpers.getIsBrowser()) {
+      //#region @browser
+      document.body.innerHTML =
+        '<h1>Application has encountered an error and stopped.</h1>';
+      document.body.style.pointerEvents = 'none';
+      //#endregion
+      //#region @backend
+      setTimeout(() => {
+        process.exit(1);
+      });
+      //#endregion
+    }
+    throw new Error(details);
+  };
+  export const tryCatchError = (error: any) => {
+    Helpers.error(error, true, true);
+  };
+  export const error = (details: any, noExit = false, noTrace = false) => {
+    //#region browser mode
+    if (Helpers.getIsBrowser()) {
+      console.error(details);
+      return;
+    }
+    //#endregion
+    //#region @backend
+    // Error.stackTraceLimit = Infinity;
+    if (forceTrace) {
+      noTrace = false;
+    }
+    if (!global.globalSystemToolMode) {
+      noTrace = true;
+    }
+    details = transformData(details);
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details });
+      }
+      if (dot) {
+        process.stdout.write(chalk.red('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`error::${chalk.red(details)}`);
+          if (!noExit) {
+            process.exit(1);
+          }
+        } else {
+          if (global.globalSystemToolMode) {
+            if (noTrace) {
+              !global.muteMessages && console.log(chalk.red(details));
+            } else {
+              !global.muteMessages && console.trace(chalk.red(details));
+            }
+            if (!noExit) {
+              process.exit(1);
+            }
+          } else {
+            console.log(details); // no formatiing debuggable code
+          }
+        }
+      }
     };
-  }
-  //#endregion
-  //#endregion
-
-  //#region constructor
-  constructor() {
-    super();
+    if (global[KEY.LAST_ERROR] === details) {
+      global[KEY_COUNT.LAST_ERROR]++;
+      if (global[KEY_COUNT.LAST_ERROR] > LIMIT) {
+        display(true);
+      } else {
+        display();
+      }
+    } else {
+      global[KEY_COUNT.LAST_ERROR] = 0;
+      global[KEY.LAST_ERROR] = details;
+      display();
+    }
+    //#endregion
+  };
+  export const info = (details: string, repeatable = false) => {
     // //#region @backend
-    // process.on('SIGINT', this.cleanExit); // catch ctrl-c
-    // process.on('SIGTERM', this.cleanExit); // catch kill
+    // console.log({
+    //   shouldDiaplyInfo: details,
+    //   muteMessages: global.muteMessages,
+    //   hideInfos: global.hideInfos,
+    // });
     // //#endregion
-  }
-  //#endregion
+    if (Helpers.getIsBrowser()) {
+      console.info(details);
+      return;
+    }
+    //#region @backend
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
+      }
+      if (dot) {
+        process.stdout.write(chalk.blue('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`info::${chalk.blue(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log(chalk.blue(details));
+          } else {
+            console.log(details);
+          }
+        }
+      }
+    };
+    if (!global.muteMessages && !global.hideInfos) {
+      if (global[KEY.LAST_INFO] === details && !repeatable) {
+        global[KEY_COUNT.LAST_INFO]++;
+        if (global[KEY_COUNT.LAST_INFO] > LIMIT) {
+          display(true);
+        } else {
+          display();
+        }
+      } else {
+        global[KEY_COUNT.LAST_INFO] = 0;
+        global[KEY.LAST_INFO] = details;
+        display();
+      }
+    }
+    //#endregion
+  };
+  export const success = (details: any | string) => {
+    if (Helpers.getIsBrowser()) {
+      console.info(details);
+      return;
+    }
+    //#region @backend
+    details = transformData(details);
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
+      }
+      if (dot) {
+        process.stdout.write(chalk.green('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`success::${chalk.green(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log(chalk.green(details));
+          } else {
+            console.log(details);
+          }
+        }
+      }
+    };
+    if (!global.muteMessages && !global.hideInfos) {
+      if (global[KEY.LAST_SUCCESS] === details) {
+        global[KEY_COUNT.LAST_SUCCESS]++;
+        if (global[KEY_COUNT.LAST_SUCCESS] > LIMIT) {
+          display(true);
+        } else {
+          display();
+        }
+      } else {
+        global[KEY_COUNT.LAST_SUCCESS] = 0;
+        global[KEY.LAST_SUCCESS] = details;
+        display();
+      }
+    }
+    //#endregion
+  };
+  export const taskStarted = (
+    details: any | string,
+    isLogTask: boolean = false,
+  ) => {
+    if (Helpers.getIsBrowser()) {
+      console.info(details);
+      return;
+    }
+    //#region @backend
+    details =
+      `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}] ` +
+      transformData(details);
+    const display = (dot = false) => {
+      if (global.hideLog && isLogTask) {
+        return;
+      }
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
+      }
+      if (dot) {
+        process.stdout.write(chalk.cyan('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`taskstart::► ${chalk.cyan(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log('- ' + chalk.cyan(details));
+          } else {
+            console.log(details);
+          }
+        }
+      }
+    };
+    if (isLogTask) {
+      global[KEY_IMPORTANTCE.LAST_TASK_STARTED] = 1;
+    } else {
+      global[KEY_IMPORTANTCE.LAST_TASK_STARTED] = 0;
+    }
+    if (!global.muteMessages && !global.hideInfos) {
+      if (global[KEY.LAST_TASK_STARTED] === details) {
+        global[KEY_COUNT.LAST_TASK_STARTED]++;
+        if (global[KEY_COUNT.LAST_TASK_STARTED] > LIMIT) {
+          display(true);
+        } else {
+          display();
+        }
+      } else {
+        global[KEY_COUNT.LAST_TASK_STARTED] = 0;
+        global[KEY.LAST_TASK_STARTED] = details;
+        display();
+      }
+    }
+    //#endregion
+  };
+  export const taskDone = (details?: any | string, isLessImportant = false) => {
+    if (Helpers.getIsBrowser()) {
+      console.info(details);
+      return;
+    }
+    //#region @backend
+    if (global.hideLog && global[KEY_IMPORTANTCE.LAST_TASK_STARTED] > 0) {
+      return;
+    }
+    if (!details) {
+      const lastStatedTask = global[KEY.LAST_TASK_STARTED];
+      details = lastStatedTask;
+    }
+    details =
+      `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}] ` +
+      transformData(details);
+    const display = (dot = false) => {
+      // if(!details) {
+      //   console.warn(`Probabl you forgot set Helpers.taskStart() for Helpers.taskDone()`)
+      // }
+      details = details?.replace('...', '');
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
+      }
+      if (dot) {
+        process.stdout.write(chalk.green('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`taskdone::\u2713 ${chalk.green(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log('\u2713 ' + chalk.green(details));
+          } else {
+            console.log(details);
+          }
+        }
+      }
+    };
+    if (!global.muteMessages && !global.hideInfos) {
+      if (global[KEY.LAST_TASK_DONE] === details) {
+        global[KEY_COUNT.LAST_TASK_DONE]++;
+        if (global[KEY_COUNT.LAST_TASK_DONE] > LIMIT) {
+          display(true);
+        } else {
+          display();
+        }
+      } else {
+        global[KEY_COUNT.LAST_TASK_DONE] = 0;
+        global[KEY.LAST_TASK_DONE] = details;
+        display();
+      }
+    }
+    //#endregion
+  };
+  export const getIsVerboseMode = () => {
+    //#region @browser
+    return true; // TODO what it means in browser
+    //#endregion
+    //#region @backend
+    return forceTrace;
+    //#endregion
+  };
+  export const log = (details: any, debugLevel = 0) => {
+    if (Helpers.getIsBrowser()) {
+      console.log(details);
+      return;
+    }
+    //#region @backend
+    // console.log({
+    //   'global.hideLog': global.hideLog,
+    //   'debugLevel': debugLevel,
+    //   'global.verboseLevel': global.verboseLevel,
+    //   'global.muteMessages': global.muteMessages,
+    //   details
+    // })
+    const verboseLevel = global.verboseLevel || 0;
+    debugLevel = debugLevel || 0;
+    if (debugLevel > verboseLevel) {
+      return;
+    }
+    details = transformData(details);
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details });
+      }
+      if (dot) {
+        process.stdout.write('.');
+      } else {
+        if (useSpinner) {
+          process?.send(`log::${chalk.black(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            console.log(chalk.black(details));
+          } else {
+            console.log(details);
+          }
+        }
+      }
+    };
+    if (!global.muteMessages && !global.hideLog) {
+      if (global[KEY.LAST_LOG] === details) {
+        global[KEY_COUNT.LAST_LOG]++;
+        if (global[KEY_COUNT.LAST_LOG] > LIMIT) {
+          display(true);
+        } else {
+          display();
+        }
+      } else {
+        global[KEY_COUNT.LAST_LOG] = 0;
+        global[KEY.LAST_LOG] = details;
+        display();
+      }
+    }
+    //#endregion
+  };
+  export const logSuccess = (details: any | string) => {
+    //#region @backendFunc
+    if (global.hideLog && frameworkName === 'taon') {
+      return;
+    }
+    Helpers.success(details);
+    //#endregion
+  };
+  export const logInfo = (details: string, repeatable = false) => {
+    //#region @backendFunc
+    if (global.hideLog && frameworkName === 'taon') {
+      return;
+    }
+    Helpers.info(details, repeatable);
+    //#endregion
+  };
+  export const logError = (details: any, noExit = false, noTrace = false) => {
+    //#region @backendFunc
+    if (global.hideLog && frameworkName === 'taon') {
+      return;
+    }
+    Helpers.error(details, noExit, noTrace);
+    //#endregion
+  };
+  export const logWarn = (details: string, trace = false) => {
+    //#region @backendFunc
+    if (global.hideLog && frameworkName === 'taon') {
+      return;
+    }
+    Helpers.warn(details, trace);
+    //#endregion
+  };
+  export const warn = (details: string, trace = false) => {
+    if (Helpers.getIsBrowser()) {
+      console.warn(details);
+      return;
+    }
+    //#region @backend
+    if (forceTrace) {
+      trace = true;
+    }
+    const display = (dot = false) => {
+      if (global.tnpNonInteractive) {
+        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'warning' });
+      }
+      if (dot) {
+        process.stdout.write(chalk.yellow('.'));
+      } else {
+        if (useSpinner) {
+          process?.send(`warn::${chalk.yellow(details)}`);
+        } else {
+          if (global.globalSystemToolMode) {
+            if (trace) {
+              !global.muteMessages &&
+                !global.hideWarnings &&
+                console.trace(chalk.yellow(details));
+            } else {
+              !global.muteMessages &&
+                !global.hideWarnings &&
+                console.log(chalk.yellow(details));
+            }
+          } else {
+            if (trace) {
+              !global.muteMessages &&
+                !global.hideWarnings &&
+                console.trace(details);
+            } else {
+              !global.muteMessages &&
+                !global.hideWarnings &&
+                console.log(details);
+            }
+          }
+        }
+      }
+    };
+    if (global[KEY.LAST_WARN] === details) {
+      global[KEY_COUNT.LAST_WARN]++;
+      if (global[KEY_COUNT.LAST_WARN] > LIMIT) {
+        display(true);
+      } else {
+        display();
+      }
+    } else {
+      global[KEY_COUNT.LAST_WARN] = 0;
+      global[KEY.LAST_WARN] = details;
+      display();
+    }
+    //#endregion
+  };
 
-  //#region methods / is wsl
-  /**
-   * @deprecated use UtilsOs.isRunningInsideWsl()
-   */
-  get isWsl() {
+  const processes = [];
+  export const bigMaxBuffer = 2024 * 500;
+
+  export const getIsWsl = () => {
     return UtilsOs.isRunningInWsl();
-  }
-  //#endregion
-
-  //#region methods / is running in docker
-  /**
-   * @deprecated use UtilsOs.isRunningInDocker
-   */
-  isRunningInDocker() {
+  };
+  export const isRunningInDocker = () => {
     return UtilsOs.isRunningInDocker();
-  }
-  //#endregion
-
-  //#region methods / is running in docker
-  /**
-   * @deprecated use UtilsOs.isRunningInLinuxGraphicEnvironment
-   */
-  isRunningInLinuxGraphicsCapableEnvironment() {
+  };
+  export const isRunningInLinuxGraphicsCapableEnvironment = () => {
     return UtilsOs.isRunningInLinuxGraphicsCapableEnvironment();
-  }
-  //#endregion
-
-  //#region clear console
-  /**
-   * @deprecated use UtilsTerminal.clearConsole
-   */
-  clearConsole() {
+  };
+  export const clearConsole = () => {
     return UtilsTerminal.clearConsole();
-  }
-  //#endregion
-
-  //#region methods / media from type
-  mediaTypeFromSrc(src: string): CoreModels.MediaType {
+  };
+  export const mediaTypeFromSrc = (src: string): CoreModels.MediaType => {
     const ext = path.extname(src);
     const media = CoreModels.mimeTypes[ext];
     return _.first(media?.split('/'));
-  }
-  //#endregion
+  };
 
-  //#region methods / sleep
   /**
    * @deprecated use async Utils.wait
    *
    * Helpers.sleep(2)  => await Utils.wait(2)
    */
-  sleep(seconds = 1) {
+  export const sleep = (seconds = 1) => {
     //#region @backendFunc
     if (UtilsOs.isRunningInWindowsCmd()) {
       Helpers.run(`timeout /t ${seconds} >nul`).sync();
@@ -181,11 +647,10 @@ export class HelpersCore extends HelpersMessages {
     }
     Helpers.run(`sleep ${seconds}`).sync();
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / remove if exists
-  removeIfExists(absoluteFileOrFolderPath: string | string[]) {
+  };
+  export const removeIfExists = (
+    absoluteFileOrFolderPath: string | string[],
+  ) => {
     //#region  @backendFunc
     if (Array.isArray(absoluteFileOrFolderPath)) {
       absoluteFileOrFolderPath = crossPlatformPath(absoluteFileOrFolderPath);
@@ -205,20 +670,11 @@ export class HelpersCore extends HelpersMessages {
       }
     }
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / relative
-  /**
-   * path.relative that return cross platform path
-   */
-  relative(cwd: string, to: string) {
+  };
+  export const relative = (cwd: string, to: string) => {
     return crossPlatformPath(path.relative(cwd, to));
-  }
-  //#endregion
-
-  //#region methods / remove file if exists
-  removeFileIfExists(absoluteFilePath: string | string[]) {
+  };
+  export const removeFileIfExists = (absoluteFilePath: string | string[]) => {
     //#region @backendFunc
     if (Array.isArray(absoluteFilePath)) {
       absoluteFilePath = crossPlatformPath(absoluteFilePath);
@@ -228,16 +684,14 @@ export class HelpersCore extends HelpersMessages {
       return;
     }
     // console.log(`removeFileIfExists: ${absoluteFilePath}`)
-
     if (fse.existsSync(absoluteFilePath)) {
       fse.unlinkSync(absoluteFilePath);
     }
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / remove folder if exists
-  removeFolderIfExists(absoluteFolderPath: string | string[]) {
+  };
+  export const removeFolderIfExists = (
+    absoluteFolderPath: string | string[],
+  ) => {
     //#region @backendFunc
     if (Array.isArray(absoluteFolderPath)) {
       absoluteFolderPath = crossPlatformPath(absoluteFolderPath);
@@ -245,25 +699,22 @@ export class HelpersCore extends HelpersMessages {
     Helpers.log(`[helpers] Remove folder: ${absoluteFolderPath}`);
     if (process.platform === 'win32') {
       // rimraf.sync(absoluteFolderPath);
-      this.tryRemoveDir(absoluteFolderPath, false, true);
+      tryRemoveDir(absoluteFolderPath, false, true);
       return;
     }
-
     if (fse.existsSync(absoluteFolderPath)) {
       fse.removeSync(absoluteFolderPath);
     }
     //#endregion
-  }
-  //#endregion
+  };
 
-  //#region methods / remove empty line from string
   /**
    * leave max 1 empty line
    */
-  removeEmptyLineFromString(str: string) {
+  export const removeEmptyLineFromString = (str: string) => {
+    //#region @backendFunc
     const lines = (str || '').split('\n');
     let previousWasEmpty = false;
-
     return lines
       .filter(line => {
         if (line.trim() === '') {
@@ -282,18 +733,17 @@ export class HelpersCore extends HelpersMessages {
         }
       })
       .join('\n');
-  }
-  //#endregion
+    //#endregion
+  };
 
-  //#region methods / try remove empty dir
   /**
    * @deprecated
    */
-  tryRemoveDir(
+  export const tryRemoveDir = (
     dirpath: string,
     contentOnly = false,
     omitWarningNotExisted = false,
-  ) {
+  ) => {
     //#region @backendFunc
     if (!fse.existsSync(dirpath)) {
       if (!omitWarningNotExisted) {
@@ -304,7 +754,6 @@ export class HelpersCore extends HelpersMessages {
       return;
     }
     Helpers.log(`[taon-helpers][tryRemoveDir]: ${dirpath}`);
-
     try {
       if (contentOnly) {
         rimraf.sync(`${dirpath}/*`);
@@ -331,24 +780,20 @@ export class HelpersCore extends HelpersMessages {
       Helpers.tryRemoveDir(dirpath, contentOnly);
     }
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / remove file or folder
-
-  removeSymlinks(
+  };
+  export const removeSymlinks = (
     dirPath: string | string[],
     options?: {
       dryRun?: boolean;
     },
-  ): void {
+  ): void => {
     //#region @backendFunc
     // Helpers.taskStarted(`Remove symlinks in directory ${path.basename(crossPlatformPath(dirPath))}`);
     if (_.isArray(dirPath)) {
       dirPath = crossPlatformPath(dirPath);
     }
     options = options || {};
-    if (this.isUnexistedLink(dirPath)) {
+    if (isUnexistedLink(dirPath)) {
       if (options.dryRun) {
         Helpers.log(`[taon-core][remove symlinks] Dry run: unlink ${dirPath}`);
       } else {
@@ -357,20 +802,16 @@ export class HelpersCore extends HelpersMessages {
         } catch (error) {}
       }
     }
-
     if (!fse.existsSync(dirPath)) {
       console.warn(
         `[taon-core][remove symlinks] Directory not found: ${dirPath}`,
       );
       return;
     }
-
     const entries = fse.readdirSync(dirPath);
-
     for (const entry of entries) {
       const fullPath = crossPlatformPath([dirPath, entry]);
       let stats: Stats;
-
       try {
         stats = fse.lstatSync(fullPath);
       } catch (err) {
@@ -380,7 +821,6 @@ export class HelpersCore extends HelpersMessages {
         );
         continue;
       }
-
       if (stats.isSymbolicLink()) {
         try {
           if (options.dryRun) {
@@ -398,51 +838,17 @@ export class HelpersCore extends HelpersMessages {
         }
       } else if (stats.isDirectory()) {
         // Recursively process subdirectories
-        this.removeSymlinks(fullPath, options);
+        removeSymlinks(fullPath, options);
       }
       // Helpers.taskDone(`Remove symlinks in directory ${path.basename(crossPlatformPath(dirPath))}`);
       // Files that are not symlinks are left untouched
     }
     //#endregion
-  }
-
-  // /**
-  //  * TODO replacement for remove/rimraf.sync
-  //  * save remove file or folder
-  //  */
-  // safeRemove(
-  //   targetPath: string,
-  //   options?: {
-  //     // usePattern?: boolean;
-  //   },
-  // ): void {
-  //   targetPath = crossPlatformPath(targetPath);
-  //   try {
-  //     const stats = fse.lstatSync(targetPath);
-
-  //     if (stats.isSymbolicLink()) {
-  //       // Remove the symlink without following it
-  //       fse.unlinkSync(targetPath);
-  //     } else if (stats.isDirectory()) {
-  //       // Recursively remove directory contents
-  //       const entries = fse.readdirSync(targetPath);
-  //       for (const entry of entries) {
-  //         this.safeRemove(crossPlatformPath([targetPath, entry]), options);
-  //       }
-  //       fse.rmdirSync(targetPath);
-  //     } else {
-  //       // Remove file
-  //       fse.unlinkSync(targetPath);
-  //     }
-  //   } catch (err) {
-  //     console.error(`Error removing ${targetPath}:`, err);
-  //   }
-  // }
-
-  /**
-   * @deprecated use safeRemove
-   */
-  remove(fileOrFolderPathOrPatter: string | string[], exactFolder = false) {
+  };
+  export const remove = (
+    fileOrFolderPathOrPatter: string | string[],
+    exactFolder = false,
+  ) => {
     //#region @backendFunc
     if (Array.isArray(fileOrFolderPathOrPatter)) {
       fileOrFolderPathOrPatter = crossPlatformPath(fileOrFolderPathOrPatter);
@@ -456,25 +862,19 @@ export class HelpersCore extends HelpersMessages {
     }
     rimraf.sync(fileOrFolderPathOrPatter);
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / clean exit process
-  //#region @backend
-  cleanExit() {
-    Helpers.processes.forEach(p => {
+  };
+  export const cleanExit = () => {
+    //#region @backendFunc
+    processes.forEach(p => {
       p.kill('SIGINT');
       p.kill('SIGTERM');
       Helpers.log(`Killing child process on ${p.pid}`);
     });
     Helpers.log(`Killing parent on ${process.pid}`);
     process.exit();
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / is running in git bash
-  get isRunningInGitBash(): boolean {
+    //#endregion
+  };
+  export const getIsRunningInGitBash = () => {
     //#region @backendFunc
     // console.log('TERM', process.env.TERM);
     // console.log('MSYSTEM', process.env.MSYSTEM);
@@ -484,14 +884,12 @@ export class HelpersCore extends HelpersMessages {
       !!process.env?.MSYSTEM
     );
     //#endregion
-  }
-  //#endregion
+  };
 
-  //#region methods / check if projects is running in supported terminal
   /**
    * Check if the current shell is supported by Taon framework.
    */
-  get isSupportedTaonTerminal(): boolean {
+  export const getIsSupportedTaonTerminal = () => {
     //#region @browser
     return false;
     //#endregion
@@ -506,14 +904,12 @@ export class HelpersCore extends HelpersMessages {
     }
     return true;
     //#endregion
-  }
-  //#endregion
+  };
 
-  //#region methods / check if function is class
   /**
    * check if function is class
    */
-  isClass(funcOrClass: any): boolean {
+  export const isClass = (funcOrClass: any): boolean => {
     let isClass = false;
     if (typeof funcOrClass === 'function') {
       // Check if it has a prototype property
@@ -526,55 +922,36 @@ export class HelpersCore extends HelpersMessages {
     }
     // console.log('is class: ' + isClass, funcOrClass)
     return isClass;
-  }
-  //#endregion
+  };
 
-  //#region methods / is blob
   /**
    * check if data is nodejs/browser blob
    *
    * @param maybeBlob
-   * @returns
    */
-  public isBlob(maybeBlob): maybeBlob is Blob {
+  export const isBlob = (maybeBlob): maybeBlob is Blob => {
     // TODO is this needed hmmmm
     return maybeBlob instanceof Blob; // || toString.call(maybeBlob) === '[object Blob]';
-  }
-  //#endregion
+  };
 
-  //#region methods / is buffer
   /**
    * Check if data is nodejs buffer
    *
    * @param maybeNodejsBuffer
    * @returns
    */
-  //#region @backend
-  public isBuffer(maybeNodejsBuffer): maybeNodejsBuffer is Buffer {
+  export const isBuffer = (maybeNodejsBuffer): maybeNodejsBuffer is Buffer => {
     return Buffer.isBuffer(maybeNodejsBuffer);
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / remove slash at the end of string
-  public removeSlashAtEnd(s: string): string {
+  };
+  export const removeSlashAtEnd = (s: string): string => {
     s = s?.endsWith(`/`) ? s.slice(0, s.length - 1) : s;
     return s;
-  }
-  //#endregion
-
-  //#region methods / remove slash at the begin of string
-  public removeSlashAtBegin(s: string): string {
+  };
+  export const removeSlashAtBegin = (s: string): string => {
     s = s?.startsWith(`/`) ? s.slice(1) : s;
     return s;
-  }
-  //#endregion
-
-  //#region methods / stringify object pretty format
-  /**
-   * stringify to pretty json string
-   */
-  public stringify(inputObject: any): string {
+  };
+  export const stringify = (inputObject: any): string => {
     // if (_.isString(inputObject)) {
     //   return inputObject;
     // }
@@ -583,13 +960,14 @@ export class HelpersCore extends HelpersMessages {
     //   Helpers.error(`[tnp-helpers] trying to stringify not a object`, false, true);
     // }
     return JSON.stringify(inputObject, null, 2);
-  }
-  //#endregion
+  };
 
-  //#region methods / run sync or async
-  public async runSyncOrAsync<FUNCTION_RETURN_TYPE = any>(
+  /**
+   * @deprecated
+   */
+  export const runSyncOrAsync = async (
     fnOrOptions: RunSyncOrAsyncOptions,
-  ): Promise<FUNCTION_RETURN_TYPE> {
+  ): Promise<any> => {
     if (_.isUndefined(fnOrOptions)) {
       return void 0 as any;
     }
@@ -599,7 +977,6 @@ export class HelpersCore extends HelpersMessages {
     //   && !_.isFunction(fnOrOptions)
     //   && !_.isNil(fnOrOptions)
     //   ;
-
     // if (optionsMode) {
     const { functionFn, context, arrayOfParams } = fnOrOptions;
     promisOrValue = functionFn.apply(context, arrayOfParams);
@@ -608,19 +985,14 @@ export class HelpersCore extends HelpersMessages {
     //   promisOrValue = _.isArray(fnOrOptions) ? fnOrOptions[1][fnOrOptions[0]](...firstArg) : fnOrOptions(...firstArg);
     // }
     // let wasPromise = false;
-
     if (promisOrValue instanceof Promise) {
       // wasPromise = true;
       promisOrValue = Promise.resolve(promisOrValue);
     }
     // console.log('was promis ', wasPromise)
     return promisOrValue;
-  }
-  //#endregion
-
-  //#region methods / create symlink
-  //#region @backend
-  public createSymLink(
+  };
+  export const createSymLink = (
     existedFileOrFolder: string,
     destinationPath: string,
     options?: {
@@ -646,7 +1018,9 @@ export class HelpersCore extends HelpersMessages {
        */
       speedUpProcess?: boolean;
     },
-  ): void {
+  ): void => {
+    //#region @backendFunc
+
     //#region fix parameters
     existedFileOrFolder = crossPlatformPath(existedFileOrFolder);
     destinationPath = crossPlatformPath(destinationPath);
@@ -654,13 +1028,11 @@ export class HelpersCore extends HelpersMessages {
     // from: ${existedFileOrFolder},
     // to: ${destinationPath},
     // `)
-
     Helpers.log(
       `[tnp-code][create link] exited -> dest
     ${existedFileOrFolder} ${destinationPath}`,
       1,
     );
-
     options = options ? options : {};
     if (_.isUndefined(options.continueWhenExistedFolderDoesntExists)) {
       options.continueWhenExistedFolderDoesntExists = false;
@@ -677,11 +1049,9 @@ export class HelpersCore extends HelpersMessages {
     if (_.isUndefined(options.allowNotAbsolutePathes)) {
       options.allowNotAbsolutePathes = false;
     }
-
     if (options.dontRenameWhenSlashAtEnd) {
       destinationPath = Helpers.removeSlashAtEnd(destinationPath);
     }
-
     if (options.tryRemoveDesPath) {
       try {
         fse.unlinkSync(destinationPath);
@@ -691,20 +1061,15 @@ export class HelpersCore extends HelpersMessages {
         } catch (error) {}
       }
     }
-
     //#endregion
-
     const {
       continueWhenExistedFolderDoesntExists,
       windowsHardLink,
       speedUpProcess,
     } = options;
-
     // console.log('Create link!')
-
     let targetExisted = existedFileOrFolder;
     let linkDest = destinationPath;
-
     if (!fse.existsSync(existedFileOrFolder)) {
       if (continueWhenExistedFolderDoesntExists) {
         // just continue and create link to not existed folder
@@ -715,7 +1080,6 @@ export class HelpersCore extends HelpersMessages {
         `);
       }
     }
-
     /**
      * support for
      * pwd -> /mysource
@@ -726,13 +1090,11 @@ export class HelpersCore extends HelpersMessages {
       if (linkDest === '.' || linkDest === './') {
         linkDest = crossPlatformPath(process.cwd());
       }
-
       if (!path.isAbsolute(linkDest)) {
         linkDest = crossPlatformPath(
           path.join(crossPlatformPath(process.cwd()), linkDest),
         );
       }
-
       if (!path.isAbsolute(targetExisted)) {
         targetExisted = crossPlatformPath(
           path.join(crossPlatformPath(process.cwd()), targetExisted),
@@ -752,33 +1114,25 @@ export class HelpersCore extends HelpersMessages {
         `);
       }
     }
-
     if (linkDest.endsWith('/')) {
       linkDest = crossPlatformPath(
         path.join(linkDest, path.basename(targetExisted)),
       );
     }
-
     const parentFolderLinkDest = path.dirname(linkDest);
-
     if (Helpers.isSymlinkFileExitedOrUnexisted(parentFolderLinkDest)) {
       fse.unlinkSync(parentFolderLinkDest);
     }
-
     if (!Helpers.isFolder(parentFolderLinkDest)) {
       rimraf.sync(parentFolderLinkDest);
       Helpers.mkdirp(parentFolderLinkDest);
     }
-
     if (!speedUpProcess) {
       rimraf.sync(linkDest);
     }
-
     // console.log({ targetExisted, linkDest });
-
     if (process.platform === 'win32') {
       // const resolvedTarget = crossPlatformPath(path.resolve(targetExisted));
-
       // console.log(`resolved target from ${targetExisted} = ${resolvedTarget}, isFile: ${targetIsFile}`)
       if (Helpers.isSymlinkFileExitedOrUnexisted(targetExisted)) {
         //   Helpers.info(`FIXING TARGET FOR WINDOWS`)
@@ -793,25 +1147,20 @@ export class HelpersCore extends HelpersMessages {
             true,
           );
         }
-
         // TODO QUICK_FIX on windows you can't create link to link
       }
       // targetExisted = path.win32.normalize(targetExisted).replace(/\\$/, '');
       // linkDest = path.win32.normalize(linkDest).replace(/\\$/, '');
       const targetIsFile = Helpers.isFile(targetExisted);
-
       // const destIsLink = Helpers.isExistedSymlink(linkDest) || Helpers.isUnexistedLink(linkDest)
-
       // console.log({
       //   targetExisted,
       //   linkDest,
       //   destIsLink
       // });
-
       // if (destIsLink) {
       //   fse.unlinkSync(linkDest)
       // }
-
       if (windowsHardLink) {
         // ADMIN RIGHT REQURED??
         fse.symlinkSync(targetExisted, linkDest, 'dir');
@@ -828,45 +1177,40 @@ export class HelpersCore extends HelpersMessages {
           fse.symlinkSync(targetExisted, linkDest, 'junction');
         }
       }
-
       //#region old windows linking
       /*
-      // const winLinkCommand = `cmd  /c "mklink /D ${link} ${target}"`;
-      // const winLinkCommand = `export MSYS=winsymlinks:nativestrict && ln -s ${target} ${link}`;
-      const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${linkDest}" "${targetExisted}"`;
-      Helpers.log(`windows link: lnk ${targetExisted} ${linkDest}
+            // const winLinkCommand = `cmd  /c "mklink /D ${link} ${target}"`;
+            // const winLinkCommand = `export MSYS=winsymlinks:nativestrict && ln -s ${target} ${link}`;
+            const winLinkCommand = `mklink ${windowsHardLink ? '/D' : (targetIsFile ? '/H' : '/j')} "${linkDest}" "${targetExisted}"`;
+            Helpers.log(`windows link: lnk ${targetExisted} ${linkDest}
 
 
-      "${winLinkCommand}'
-      `);
-      try {
-        Helpers.run(winLinkCommand, { biggerBuffer: false }).sync();
-      } catch (error) {
-        Helpers.error(error, true, false);
-        Helpers.error(`
-        command: "${winLinkCommand}"
-        [tnp-helpers] windows link error
-        target: "${targetExisted}"
-        link: "${linkDest}"
-        command: "${winLinkCommand}"
-        `, true, false)
-      }
-      */
+            "${winLinkCommand}'
+            `);
+            try {
+              Helpers.run(winLinkCommand, { biggerBuffer: false }).sync();
+            } catch (error) {
+              Helpers.error(error, true, false);
+              Helpers.error(`
+              command: "${winLinkCommand}"
+              [tnp-helpers] windows link error
+              target: "${targetExisted}"
+              link: "${linkDest}"
+              command: "${winLinkCommand}"
+              `, true, false)
+            }
+            */
       //#endregion
     } else {
       fse.symlinkSync(targetExisted, linkDest);
     }
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / mkdirp
-  //#region @backend
-  public createFolder(folderPath: string | string[]): void {
+    //#endregion
+  };
+  export const createFolder = (folderPath: string | string[]): void => {
     return Helpers.mkdirp(folderPath);
-  }
-
-  public mkdirp(folderPath: string | string[]): void {
+  };
+  export const mkdirp = (folderPath: string | string[]): void => {
+    //#region @backendFunc
     if (_.isArray(folderPath)) {
       folderPath = crossPlatformPath(folderPath);
     }
@@ -888,11 +1232,9 @@ export class HelpersCore extends HelpersMessages {
       );
       folderPath = folderPath.replace(`/tmp/`, '/private/tmp/');
     }
-
     if (Helpers.isUnexistedLink(folderPath)) {
       Helpers.remove(folderPath);
     }
-
     if (fse.existsSync(folderPath)) {
       Helpers.log(
         `[taon-core][mkdirp] folder path already exists: ${folderPath}`,
@@ -910,23 +1252,19 @@ export class HelpersCore extends HelpersMessages {
       // Helpers.info(`[taon-core][mkdirp] "${folderPath}"`);
       fse.mkdirpSync(folderPath);
     }
-  }
-  //#endregion
-  //#endregion
+    //#endregion
+  };
 
-  //#region methods / is symlink that matches url
   /**
    * symlink may have existed or unexisted destiantion url
-   * @param destUrl M
    */
-  public isSymlinkThatMatchesUrl(
+  export const isSymlinkThatMatchesUrl = (
     possibleSymlink: string,
     destUrl: string,
     absoluteFileMatch = false,
-  ): boolean {
+  ): boolean => {
     //#region @backendFunc
     destUrl = crossPlatformPath(destUrl);
-
     if (Helpers.exists(possibleSymlink)) {
       if (Helpers.isExistedSymlink(possibleSymlink)) {
         let fileLink = fse.readlinkSync(possibleSymlink);
@@ -940,7 +1278,6 @@ export class HelpersCore extends HelpersMessages {
         return false;
       }
     }
-
     try {
       const linkToUnexitedLink = fse
         .lstatSync(possibleSymlink)
@@ -958,11 +1295,10 @@ export class HelpersCore extends HelpersMessages {
       return false;
     }
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / is symlink file existed or unexisted
-  public isSymlinkFileExitedOrUnexisted(filePath: string | string[]): boolean {
+  };
+  export const isSymlinkFileExitedOrUnexisted = (
+    filePath: string | string[],
+  ): boolean => {
     //#region @backendFunc
     if (_.isArray(filePath)) {
       filePath = crossPlatformPath(path.join(...filePath));
@@ -974,14 +1310,12 @@ export class HelpersCore extends HelpersMessages {
       return false;
     }
     //#endregion
-  }
-  //#endregion
+  };
 
-  //#region methods / is unexisted link
   /**
    * If symbolnk link that target file does not exits
    */
-  isUnexistedLink(filePath: string | string[]): boolean {
+  export const isUnexistedLink = (filePath: string | string[]): boolean => {
     //#region @backendFunc
     if (_.isArray(filePath)) {
       filePath = crossPlatformPath(filePath);
@@ -990,7 +1324,6 @@ export class HelpersCore extends HelpersMessages {
     if (process.platform === 'win32') {
       filePath = path.win32.normalize(filePath);
     }
-
     try {
       const linkToUnexitedLink = fse
         .lstatSync(filePath as string)
@@ -1003,25 +1336,20 @@ export class HelpersCore extends HelpersMessages {
       return false;
     }
     //#endregion
-  }
-  //#endregion
+  };
 
-  //#region methods / is exited symlink
   /**
    * @param existedLink check if source of link exists
    */
-  isExistedSymlink(filePath: string | string[]): boolean {
+  export const isExistedSymlink = (filePath: string | string[]): boolean => {
     //#region @backendFunc
     if (_.isArray(filePath)) {
       filePath = crossPlatformPath(filePath);
     }
-
     filePath = Helpers.removeSlashAtEnd(filePath);
-
     if (process.platform === 'win32') {
       filePath = path.win32.normalize(filePath);
     }
-
     try {
       const linkToUnexitedLink = fse
         .lstatSync(filePath as string)
@@ -1034,12 +1362,8 @@ export class HelpersCore extends HelpersMessages {
       return false;
     }
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / path contain link
-  //#region @backend
-  public pathContainLink(p: string) {
+  };
+  export const pathContainLink = (p: string) => {
     let previous: string;
     while (true) {
       p = crossPlatformPath(path.dirname(p));
@@ -1055,15 +1379,8 @@ export class HelpersCore extends HelpersMessages {
       }
       previous = p;
     }
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / exists
-  public exists(
-    folderOrFilePath: string | string[],
-    // , allowUnexistedLinks = false
-  ) {
+  };
+  export const exists = (folderOrFilePath: string | string[]) => {
     //#region @backendFunc
     if (_.isArray(folderOrFilePath)) {
       folderOrFilePath = crossPlatformPath(folderOrFilePath);
@@ -1086,17 +1403,15 @@ export class HelpersCore extends HelpersMessages {
       );
       return false;
     }
-
     return fse.existsSync(folderOrFilePath);
     //#endregion
-  }
-  //#endregion
+  };
 
-  //#region methods / fix command
   /**
-   * this is HACK for running procesess inside processes
+   * TODO QUICK_FIX this is HACK for running procesess inside processes
    */
-  public _fixCommand(command: string): string {
+  export const _fixCommand = (command: string): string => {
+    //#region @backendFunc
     if (
       (command.startsWith('tnp ') || command.startsWith('taon ')) && // TODO every cli projects here that uses run and need to kill process easly!
       command.search('-spinner=false') === -1 &&
@@ -1104,7 +1419,6 @@ export class HelpersCore extends HelpersMessages {
     ) {
       command = `${command} -spinner=false`;
     }
-
     if (
       global.skipCoreCheck &&
       (command.startsWith('tnp ') || command.startsWith('taon '))
@@ -1112,14 +1426,11 @@ export class HelpersCore extends HelpersMessages {
       command = `${command} --skipCoreCheck`;
     }
     return command;
-  }
-  //#endregion
-
-  //#region methods / command
-  public command(command: string) {
+    //#endregion
+  };
+  export const command = (command: string) => {
     // console.log({ command })
     command = Helpers._fixCommand(command);
-
     return {
       //#region @backend
       getherOutput(options?: {
@@ -1138,7 +1449,6 @@ export class HelpersCore extends HelpersMessages {
             cwd = process.cwd();
           }
           const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : void 0;
-
           const env = gatherColors ? { ...process.env, FORCE_COLOR: '1' } : {};
           const proc = child_process.exec(command, {
             cwd, // @ts-ignore
@@ -1146,27 +1456,22 @@ export class HelpersCore extends HelpersMessages {
             env: env as any,
           } as any);
           let gatheredData = '';
-
           proc.on('exit', code => {
             resolve(gatheredData);
           });
-
           // @ts-ignore
           proc.stdout.on('data', data => {
             gatheredData = `${gatheredData}${data?.toString() || ''}`;
           });
-
           // @ts-ignore
           proc.stdout.on('error', data => {
             gatheredData = `${gatheredData}${data?.toString() || ''}`;
           });
-
           if (!ommitStder) {
             // @ts-ignore
             proc.stderr.on('data', data => {
               gatheredData = `${gatheredData}${data?.toString() || ''}`;
             });
-
             // @ts-ignore
             proc.stderr.on('error', data => {
               gatheredData = `${gatheredData}${data?.toString() || ''}`;
@@ -1176,30 +1481,22 @@ export class HelpersCore extends HelpersMessages {
       },
       //#endregion
     };
-  }
-  //#endregion
+  };
 
-  //#region methods / wait
   /**
    * @deprecated use UtilsTerminal.wait
    */
-  public async wait(second: number): Promise<void> {
+  export const wait = async (second: number): Promise<void> => {
     await UtilsTerminal.wait(second);
-  }
-
-  public async timeout(seconds: number): Promise<void> {
-    return await Helpers.wait(seconds);
-  }
-
-  //#endregion
-
-  //#region methods / command output as string async
-
-  async commandOutputAsStringAsync(
+  };
+  export const timeout = async (seconds: number): Promise<void> => {
+    await Helpers.wait(seconds);
+  };
+  export const commandOutputAsStringAsync = async (
     command: string,
     cwd = crossPlatformPath(process.cwd()),
     options?: CommandOutputOptions,
-  ): Promise<string> {
+  ): Promise<string> => {
     //#region @backendFunc
     command = Helpers._fixCommand(command);
     const opt = (options || {}) as typeof options;
@@ -1230,16 +1527,12 @@ export class HelpersCore extends HelpersMessages {
     }
     return output;
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / command output as string
-
-  commandOutputAsString(
+  };
+  export const commandOutputAsString = (
     command: string,
     cwd = crossPlatformPath(process.cwd()),
     options?: CommandOutputOptions,
-  ): string {
+  ): string => {
     //#region @backendFunc
     command = Helpers._fixCommand(command);
     const opt = (options || {}) as typeof options;
@@ -1278,20 +1571,17 @@ export class HelpersCore extends HelpersMessages {
     }
     return output;
     // #endregion
-  }
+  };
 
-  //#endregion
-
-  //#region methods / kill process by port
   /**
    * @deprecated use UtilsProcess.killProcessOnPort
    */
-  async killProcessByPort(
+  export const killProcessByPort = async (
     portOrPortsToKill: number | number[],
     options?: {
       silent?: boolean;
     },
-  ) {
+  ) => {
     //#region @backendFunc
     const showOutoput = !options || !options.silent;
     if (!_.isArray(portOrPortsToKill)) {
@@ -1321,7 +1611,6 @@ export class HelpersCore extends HelpersMessages {
             false,
           );
       }
-
       // console.log(`Killing process on port ${port} in progress`);
       // try {
       //   if (os.platform() === 'linux') {
@@ -1337,25 +1626,20 @@ export class HelpersCore extends HelpersMessages {
       // }
     }
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / kill on port
-  async killOnPort(
+  };
+  export const killOnPort = async (
     portOrPortsToKill: number | number[],
     options?: {
       silent?: boolean;
     },
-  ) {
+  ) => {
     return await Helpers.killProcessByPort(portOrPortsToKill, options);
-  }
-  //#endregion
+  };
 
-  //#region methods / kill process
   /**
    * @deprecated use UtilsProcess.killProcess
    */
-  public killProcess(byPid: number) {
+  export const killProcess = (byPid: number) => {
     //#region @backend
     // Helpers.run(`kill -9 ${byPid}`).sync()
     //#endregion
@@ -1375,7 +1659,6 @@ export class HelpersCore extends HelpersMessages {
       }
       delete WEBSQL_PROC_MOCK_PROCESSES_PID[byPid];
     }
-
     if (WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid]) {
       const childs = WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid]
         .childProcesses as number[];
@@ -1386,19 +1669,16 @@ export class HelpersCore extends HelpersMessages {
       delete WEBSQL_PROC_MOCK_PROCESSES_PPID[byPid];
     }
     //#endregion
-  }
-  //#endregion
+  };
 
   //#region methods / run
   /**
    * @deprecated use UtilsProcess
    * or native child_process exec, spawn
    */
-  public run(command: string, options?: CoreModels.RunOptions) {
+  export const run = (command: string, options?: CoreModels.RunOptions) => {
     command = Helpers._fixCommand(command);
-
     // console.log({ command })
-
     //#region @backend
     if (!options) options = {};
     if (options.output === void 0) options.output = true;
@@ -1412,7 +1692,6 @@ export class HelpersCore extends HelpersMessages {
       /**
        * start command as synchronous nodej proces
        */
-
       sync() {
         // TODO buffer
         //#region @backendFunc
@@ -1429,7 +1708,6 @@ export class HelpersCore extends HelpersMessages {
             true,
           );
         }
-
         // @ts-ignore
         if (
           _.isNumber(options.tryAgainWhenFailAfter) &&
@@ -1440,7 +1718,6 @@ export class HelpersCore extends HelpersMessages {
           const proc = Helpers.runSyncIn(command, options);
           return proc;
           // } catch (error) {
-
           //  TODO: WAIT FUNCTION HERE
           //   return Helpers.run(command, options).sync()
           // }
@@ -1448,30 +1725,24 @@ export class HelpersCore extends HelpersMessages {
         return Helpers.runSyncIn(command, options);
         //#endregion
       },
-
       /**
        * start command as asynchronous nodej proces
        * @param detach (default: false) - if true process will be detached
        */
       async(
         detach = false,
-        //#region @browser
         mockFun?: (
           stdoutCallback: (dataForStdout: any) => any,
           stdErrcCallback: (dataForStder: any) => any,
           shouldProcesBeDead?: () => boolean,
         ) => Promise<number> | number,
-        //#endregion
       ): ChildProcess {
-        //#region websqlFunc
-        //#region mock of process
         //#region @browser
         if (mockFun) {
           const subStdoutSub = new Subject();
           const subStderSub = new Subject();
           const exitSub = new Subject();
           const subscribtions: Subscription[] = [];
-
           const procDummy = {
             stdout: {
               on(action: 'data', stdoutCallback: any) {
@@ -1507,10 +1778,8 @@ export class HelpersCore extends HelpersMessages {
             ppid: void 0 as number, // @ts-ignore
             pid: void 0 as number,
           };
-
           procDummy.pid = Math.round(Math.random() * (1000 - 100)) + 100;
           procDummy.ppid = procDummy.pid + 9999;
-
           WEBSQL_PROC_MOCK_PROCESSES_PID[procDummy.pid] = procDummy;
           if (!WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid]) {
             WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid] = {
@@ -1520,14 +1789,12 @@ export class HelpersCore extends HelpersMessages {
           WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid].childProcesses.push(
             procDummy.pid,
           );
-
           const checkIfProcessShouldBeDead = () => {
             return (
               _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PID[procDummy.pid]) ||
               _.isNil(WEBSQL_PROC_MOCK_PROCESSES_PPID[procDummy.ppid])
             );
           };
-
           const f = Helpers.runSyncOrAsync({
             functionFn: mockFun,
             arrayOfParams: [
@@ -1564,15 +1831,13 @@ export class HelpersCore extends HelpersMessages {
           return procDummy as any;
         }
         //#endregion
-        //#endregion
+
         //#region @backendFunc
         // @ts-ignore
         options.detach = detach;
         return Helpers.runAsyncIn(command, options);
         //#endregion
-        //#endregion
       },
-
       /**
        * start command as asynchronous nodej proces inside promise
        */
@@ -1596,7 +1861,6 @@ export class HelpersCore extends HelpersMessages {
         });
         //#endregion
       },
-
       unitlOutput(optionsOutput: {
         stdoutMsg: string | string[];
         stderMsg?: string | string[];
@@ -1619,13 +1883,10 @@ export class HelpersCore extends HelpersMessages {
           if (!_.isArray(stdoutMsg)) {
             reject(`[unitlOutputContains] Message not a array`);
           }
-
           const proc = Helpers.runAsyncIn(command, options);
-
           proc.on('exit', () => {
             console.info(`EXIT OF PROCESS`);
           });
-
           //#region stderr
           // @ts-ignore
           proc.stderr.on('data', message => {
@@ -1648,7 +1909,6 @@ export class HelpersCore extends HelpersMessages {
             }
           });
           //#endregion
-
           //#region stdout
           // @ts-ignore
           proc.stdout.on('data', message => {
@@ -1701,7 +1961,6 @@ export class HelpersCore extends HelpersMessages {
         });
         //#endregion
       },
-
       /**
        * @deprecated use unitlOutput
        * start command as asynchronous nodej proces inside promise
@@ -1725,7 +1984,6 @@ export class HelpersCore extends HelpersMessages {
           if (!_.isArray(stdoutMsg)) {
             reject(`[unitlOutputContains] Message not a array`);
           }
-
           const proc = Helpers.runAsyncIn(command, options);
           // @ts-ignore
           proc.stderr.on('data', message => {
@@ -1747,7 +2005,6 @@ export class HelpersCore extends HelpersMessages {
               }
             }
           });
-
           // @ts-ignore
           proc.stdout.on('data', message => {
             const data: string = message.toString().trim();
@@ -1796,19 +2053,17 @@ export class HelpersCore extends HelpersMessages {
         //#endregion
       },
     };
-  }
-  //#endregion
+  };
 
-  //#region methods / question yest no
   /**
    * @deprecated use UtilsTerminal.confirm
    */
-  async questionYesNo(
+  export const questionYesNo = async (
     message: string,
     callbackTrue?: () => any,
     callbackFalse?: () => any,
     defaultValue = true,
-  ) {
+  ) => {
     //#region @backendFunc
     return await UtilsTerminal.confirm({
       message,
@@ -1817,12 +2072,9 @@ export class HelpersCore extends HelpersMessages {
       defaultValue,
     });
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / get stdio
-  //#region @backend
-  public getStdio(options?: CoreModels.RunOptions) {
+  };
+  export const getStdio = (options?: CoreModels.RunOptions) => {
+    //#region @backendFunc
     const {
       // @ts-ignore
       output,
@@ -1846,13 +2098,13 @@ export class HelpersCore extends HelpersMessages {
     //   stdio = ['inherit', 'inherit', 'inherit'] as any;
     // }
     return resstdio;
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / run sync in
-  //#region @backend
-  public runSyncIn(command: string, options?: CoreModels.RunOptions) {
+    //#endregion
+  };
+  export const runSyncIn = (
+    command: string,
+    options?: CoreModels.RunOptions,
+  ) => {
+    //#region @backendFunc
     // @ts-ignore
     const { cwd, biggerBuffer, env } = options;
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
@@ -1863,13 +2115,13 @@ export class HelpersCore extends HelpersMessages {
       optionsDest.env = { ...process.env, ...(env || {}) };
     }
     return child_process.execSync(command, optionsDest);
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / run async in
-  //#region @backend
-  public runAsyncIn(command: string, options?: CoreModels.RunOptions) {
+    //#endregion
+  };
+  export const runAsyncIn = (
+    command: string,
+    options?: CoreModels.RunOptions,
+  ) => {
+    //#region @backendFunc
     // @ts-ignore
     const {
       output,
@@ -1882,7 +2134,6 @@ export class HelpersCore extends HelpersMessages {
     const maxBuffer = biggerBuffer ? Helpers.bigMaxBuffer : undefined;
     let stdio = Helpers.getStdio(options);
     Helpers.checkProcess(cwd, command);
-
     let proc: ChildProcess;
     if (detach) {
       //#region detached
@@ -1891,7 +2142,6 @@ export class HelpersCore extends HelpersMessages {
       Helpers.log(`cmd: "${cmd}",  args: "${argsForCmd.join(' ')}"`);
       if (process.platform === 'win32') {
         proc = spawn(cmd, argsForCmd, { cwd, detached: true });
-
         // proc = child_process.spawn(cmd, argsForCmd, {
         //   cwd,
         //   detached: true,
@@ -1936,40 +2186,31 @@ export class HelpersCore extends HelpersMessages {
       options.prefix,
       extractFromLine,
     );
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / log process
-  //#region @backend
-
-  //#region log process
-  logProc(
+    //#endregion
+  };
+  export const logProc = (
     proc: ChildProcess,
     output = true,
     stdio,
     outputLineReplace: (outputLine: string) => string,
     prefix: string,
     extractFromLine?: (string | Function)[],
-  ) {
-    Helpers.processes.push(proc);
-
+  ) => {
+    //#region @backendFunc
+    processes.push(proc);
     if (stdio) {
       // @ts-ignore
       proc.stdio = stdio;
     }
-
     if (!prefix) {
       prefix = '';
     }
-
     if (output) {
       // @ts-ignore
       proc.stdout.on('data', data => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
         // }
-
         process.stdout.write(
           Helpers.modifyLineByLine(
             data,
@@ -1979,13 +2220,11 @@ export class HelpersCore extends HelpersMessages {
           ),
         );
       });
-
       // @ts-ignore
       proc.stdout.on('error', data => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
         //   console.log('!!!COMMAND',command)
         // }
-
         console.log(
           Helpers.modifyLineByLine(
             data,
@@ -1995,7 +2234,6 @@ export class HelpersCore extends HelpersMessages {
           ),
         );
       });
-
       // @ts-ignore
       proc.stderr.on('data', data => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
@@ -2010,7 +2248,6 @@ export class HelpersCore extends HelpersMessages {
           ),
         );
       });
-
       // @ts-ignore
       proc.stderr.on('error', data => {
         // if (data?.toString().search('was unexpected at this time') !== -1) {
@@ -2026,30 +2263,26 @@ export class HelpersCore extends HelpersMessages {
         );
       });
     }
-
     return proc;
-  }
-  //#endregion
+    //#endregion
+  };
 
   /**
    * @deprecated use UtilsProcess.startAsync
    */
-  async execute(
+  export const execute = (
     command: string,
     cwd: string,
     options?: Omit<CoreModels.ExecuteOptions, 'tryAgainWhenFailAfter'>,
-  ) {
+  ) => {
     return UtilsProcess.startAsync(command, cwd, options);
-  }
-  //#endregion
-  //#endregion
+  };
 
-  //#region methods / check process
-  //#region @backend
   /**
    * @deprecated
    */
-  public checkProcess(dirPath: string, command: string) {
+  export const checkProcess = (dirPath: string, command: string) => {
+    //#region @backendFunc
     if (!fse.existsSync(dirPath)) {
       Helpers.error(`
 Path for process cwd doesn't exist: ${dirPath}
@@ -2059,29 +2292,22 @@ command: ${command}
     if (!command) {
       Helpers.error(`Bad command: ${command}`);
     }
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / modify line by line
-  //#region @backend
-  public modifyLineByLine(
+    //#endregion
+  };
+  export const modifyLineByLine = (
     data: string | Buffer | Error,
     outputLineReplace: (outputLine: string) => string,
     prefix: string,
     extractFromLine?: (string | Function)[],
-  ): string {
+  ): string => {
+    //#region @backendFunc
     const checkExtract =
       _.isArray(extractFromLine) && extractFromLine.length > 0;
     let modifyOutput = _.isFunction(outputLineReplace);
     if (modifyOutput && _.isString(data)) {
       data = data
         .split(/\r?\n/)
-        .map(line =>
-          outputLineReplace(
-            line, // .replace(chalkCharactersRegex, '')
-          ),
-        )
+        .map(line => outputLineReplace(line))
         .join('\n');
     }
     if (prefix && _.isString(data)) {
@@ -2116,28 +2342,23 @@ command: ${command}
         .join('\n');
     }
     return data as string;
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / is folder
-  //#region @backend
-  public isFolder(pathToFileOrMaybeFolder: string): boolean {
+    //#endregion
+  };
+  export const isFolder = (pathToFileOrMaybeFolder: string): boolean => {
+    //#region @backendFunc
     return !!(
       pathToFileOrMaybeFolder &&
       fse.existsSync(pathToFileOrMaybeFolder) &&
       fse.lstatSync(pathToFileOrMaybeFolder).isDirectory()
     );
-  }
-  //#endregion
-  //#endregion
+    //#endregion
+  };
 
-  //#region methods / values
   /**
    * Quick fix for object values
    * @deprecated
    */
-  public values(obj: any) {
+  export const values = (obj: any) => {
     if (_.isObject(obj) && !Array.isArray(obj)) {
       const values = [];
       for (const key in obj) {
@@ -2149,15 +2370,13 @@ command: ${command}
       return values;
     }
     return [];
-  }
-  //#endregion
+  };
 
-  //#region methods / is file
   /**
    * does not make sense
    * @deprecated
    */
-  public isFile(pathToFileOrMaybeFolder: string) {
+  export const isFile = (pathToFileOrMaybeFolder: string) => {
     //#region @backendFunc
     return (
       pathToFileOrMaybeFolder &&
@@ -2165,15 +2384,12 @@ command: ${command}
       !fse.lstatSync(pathToFileOrMaybeFolder).isDirectory()
     );
     //#endregion
-  }
-  //#endregion
-
-  //#region methods / read file
-  async tryReadFile(
+  };
+  export const tryReadFile = async (
     absoluteFilePath: string | string[], // @ts-ignore
     defaultValueWhenNotExists = void 0 as string,
     notTrim = false,
-  ): Promise<string | undefined> {
+  ): Promise<string | undefined> => {
     //#region @backendFunc
     if (process.platform === 'win32') {
       while (true) {
@@ -2200,87 +2416,80 @@ command: ${command}
       notTrim,
     );
     //#endregion
-  }
+  };
 
   /**
    * @deprecated use UtilsFilesFoldersSync.readFile
    * wrapper for fs.readFileSync
    */
-  readFile(
+  export const readFile = (
     absoluteFilePath: string | string[], // @ts-ignore
     defaultValueWhenNotExists = void 0 as string,
     notTrim = false,
-  ): string | undefined {
+  ): string | undefined => {
     return UtilsFilesFoldersSync.readFile(absoluteFilePath, {
       defaultValueWhenNotExists,
       notTrim,
     });
-  }
-  //#endregion
+  };
 
-  //#region methods / read json
   /**
    * @deprecated use UtilsJson.readJson or UtilsJson.readJson5
    */
-  public readJson(
+  export const readJson = (
     absoluteFilePath: string | string[],
     defaultValue = {},
     useJson5 = false,
-  ): any {
+  ): any => {
     return UtilsJson.readJson(absoluteFilePath, defaultValue, useJson5);
-  }
+  };
 
   /**
    * @deprecated use UtilsJson.readJsonWithComments
    */
-  public readJson5(
+  export const readJson5 = (
     absoluteFilePath: string | string[],
     defaultValue: any = {},
-  ): any {
+  ): any => {
     return UtilsJson.readJsonWithComments(absoluteFilePath, defaultValue);
-  }
+  };
 
   /**
    * @deprecated use UtilsJson.readJsonWithComments
    */
-  public readJsonC(
+  export const readJsonC = (
     absoluteFilePath: string | string[],
     defaultValue: any = {},
-  ): any {
+  ): any => {
     return UtilsJson.readJsonWithComments(absoluteFilePath, defaultValue);
-  }
+  };
 
-  //#endregion
-
-  //#region methods / parse
-  //#region @backend
   /**
    * parse json from string
    * @returns parse json object
    */
-  public parse<T = any>(jsonInstring: string, useJson5 = false): any {
+  export const parse = <T = any>(
+    jsonInstring: string,
+    useJson5 = false,
+  ): T | undefined => {
     if (!_.isString(jsonInstring)) {
       Helpers.log(jsonInstring);
       Helpers.warn(`[taon-core] Trying to parse no a string...`);
       return jsonInstring;
     }
     return (
-      useJson5 ? json5.parse(jsonInstring) : JSON.parse(jsonInstring)
+      useJson5 ? json5Parse(jsonInstring) : JSON.parse(jsonInstring)
     ) as T;
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / compilation wrapper
-  //#region @backend
-  public async compilationWrapper(
+  };
+  export const compilationWrapper = async (
     fn: () => void,
     taskName: string = 'Task',
     executionType:
       | 'Compilation of'
       | 'Code execution of'
       | 'Event:' = 'Compilation of',
-  ) {
+  ) => {
+    //#region @backendFunc
     // global?.spinner?.start();
     function currentDate() {
       return `[${dateformat(new Date(), 'HH:MM:ss')}]`;
@@ -2289,21 +2498,16 @@ command: ${command}
       Helpers.error(`${executionType} wrapper: "${fn}" is not a function.`);
       process.exit(1);
     }
-
     Helpers.log(`${currentDate()} ${executionType} "${taskName}" Started..`);
     await Helpers.runSyncOrAsync({ functionFn: fn });
     Helpers.log(`${currentDate()} ${executionType} "${taskName}" Done\u2713`);
-
     // global?.spinner?.stop();
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / replace in line
-  replaceLinesInFile(
+    //#endregion
+  };
+  export const replaceLinesInFile = (
     absoluteFilePath: string | string[],
     lineReplaceFn: (line: string) => string,
-  ) {
+  ) => {
     //#region @backend
     const file = Helpers.readFile(absoluteFilePath) || '';
     Helpers.writeFile(
@@ -2311,46 +2515,40 @@ command: ${command}
       file.split('\n').map(lineReplaceFn).join('\n'),
     );
     //#endregion
-  }
-  //#endregion
+  };
 
-  //#region methods / write file
-  //#region @backend
   /**
    * @deprecated use UtilsFilesFoldersSync.writeFile
    * wrapper for fs.writeFileSync
    */
-  writeFile(
+  export const writeFile = (
     absoluteFilePath: string | string[],
-    input:
-      | string
-      | object
-      //#region @backend
-      | Buffer,
-    //#endregion
-    options?: { overrideSameFile?: boolean; preventParentFile?: boolean },
-  ): boolean {
+    input: string | object | Buffer,
+    options?: {
+      overrideSameFile?: boolean;
+      preventParentFile?: boolean;
+    },
+  ): boolean => {
     return UtilsFilesFoldersSync.writeFile(absoluteFilePath, input, options);
-  }
-  //#endregion
-  //#endregion
+  };
 
-  //#region methods / write json
-  //#region @backend
   /**
    * wrapper for fs.writeFileSync
    */
-  writeJson(
+  export const writeJson = (
     absoluteFilePath: string | string[],
     input: object,
-    optoins?: { preventParentFile?: boolean; writeJson5?: boolean },
-  ): boolean {
+    optoins?: {
+      preventParentFile?: boolean;
+      writeJson5?: boolean;
+    },
+  ): boolean => {
+    //#region @backendFunc
     if (_.isArray(absoluteFilePath)) {
-      absoluteFilePath = path.join.apply(this, absoluteFilePath);
+      absoluteFilePath = crossPlatformPath(absoluteFilePath);
     }
     absoluteFilePath = absoluteFilePath as string;
     const { preventParentFile, writeJson5 } = optoins || {};
-
     if (preventParentFile) {
       if (
         Helpers.isFile(path.dirname(absoluteFilePath)) &&
@@ -2359,11 +2557,9 @@ command: ${command}
         fse.unlinkSync(path.dirname(absoluteFilePath));
       }
     }
-
     if (!fse.existsSync(path.dirname(absoluteFilePath))) {
       Helpers.mkdirp(path.dirname(absoluteFilePath));
     }
-
     if (writeJson5) {
       const existedContent = Helpers.readFile(absoluteFilePath) || '{}';
       try {
@@ -2381,11 +2577,10 @@ command: ${command}
           true,
         );
       }
-
       writer.write(input);
       Helpers.writeFile(
         absoluteFilePath,
-        this.removeEmptyLineFromString(
+        removeEmptyLineFromString(
           writer.toSource({
             quote: 'double',
             trailingComma: false,
@@ -2400,32 +2595,34 @@ command: ${command}
       });
     }
     return true;
-  }
-
-  writeJson5(absoluteFilePath: string | string[], input: object) {
+    //#endregion
+  };
+  export const writeJson5 = (
+    absoluteFilePath: string | string[],
+    input: object,
+  ) => {
     return Helpers.writeJson(absoluteFilePath, input, { writeJson5: true });
-  }
+  };
+  export const writeJsonC = (
+    absoluteFilePath: string | string[],
+    input: object,
+  ) => {
+    return writeJson5(absoluteFilePath, input);
+  };
 
-  writeJsonC(absoluteFilePath: string | string[], input: object) {
-    return this.writeJson5(absoluteFilePath, input);
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / folders from
-  //#region @backend
   /**
    * return absolute paths for folders inside folders
    * @returns absoulte pathes to folders from path
    */
-  public foldersFrom(
+  export const foldersFrom = (
     pathToFolder: string | string[],
     options?: {
       recursive?: boolean;
       omitRootFolders?: string[];
       omitRootFoldersThatStartWith?: string[];
     },
-  ): string[] {
+  ): string[] => {
+    //#region @backendFunc
     if (_.isArray(pathToFolder)) {
       pathToFolder = crossPlatformPath(pathToFolder) as string;
     }
@@ -2437,7 +2634,6 @@ command: ${command}
     const omitRootFoldersThatStartWith =
       options?.omitRootFoldersThatStartWith || [];
     let directories: string[] = [];
-
     // Helper function to read a directory
     const readDirectory = (folderPath: string): void => {
       try {
@@ -2474,24 +2670,20 @@ command: ${command}
         Helpers.error(`Error reading directory ${folderPath}: ${err}`);
       }
     };
-
     // Start reading from the initial folder
     readDirectory(pathToFolder);
     return directories;
-  }
+    //#endregion
+  };
 
-  //#endregion
-  //#endregion
-
-  //#region methods / links from
-  //#region @backend
   /**
    * @returns absolute pathes to links from path
    */
-  linksToFoldersFrom(
+  export const linksToFoldersFrom = (
     pathToFolder: string | string[],
     outputRealPath: boolean = false,
-  ): string[] {
+  ): string[] => {
+    //#region @backendFunc
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
@@ -2518,21 +2710,16 @@ command: ${command}
         // @ts-ignore
         .map(f => crossPlatformPath(f))
     );
-  }
-  //#endregion
-  //#endregion
+    //#endregion
+  };
 
-  //#region methods / links to folders from path
-  //#region @backend
   /**
    * @returns absolute paths for folders inside folders
    */
-  public linksToFolderFrom(
+  export const linksToFolderFrom = (
     pathToFolder: string | string[],
-    // options?: {
-    //   linksOnlyTo: 'files' | 'folders' | 'both'
-    // }
-  ): string[] {
+  ): string[] => {
+    //#region @backendFunc
     // options = (options || {}) as any;
     // if (_.isUndefined(options.linksOnlyTo)) {
     //   options.linksOnlyTo = 'both';
@@ -2555,54 +2742,50 @@ command: ${command}
         return res;
       })
       .map(f => crossPlatformPath(f));
-  }
-  //#endregion
-  //#endregion
+    //#endregion
+  };
 
   /**
    * @deprecated use UtilsFilesFoldersSync.getFilesFrom
    * return absolute paths for files inside folder or link to folder
    */
-  public getFilesFrom(
+  export const getFilesFrom = (
     folderOrLinkToFolder: string | string[],
     options?: UtilsFilesFoldersSync.UtilsFilesFoldersSyncGetFilesFromOptions,
-  ): string[] {
+  ): string[] => {
     return UtilsFilesFoldersSync.getFilesFrom(folderOrLinkToFolder, options);
-  }
+  };
 
   /**
    * @deprecated use UtilsFilesFoldersSync.getFoldersFrom
    * return absolute paths for folders inside folder or link to folder
    */
-  public getFoldersFrom(
+  export const getFoldersFrom = (
     folderOrLinkToFolder: string | string[],
     options?: UtilsFilesFoldersSync.UtilsFilesFoldersSyncGetFilesFromOptions,
-  ): string[] {
+  ): string[] => {
     return UtilsFilesFoldersSync.getFoldersFrom(folderOrLinkToFolder, options);
-  }
+  };
 
-  //#region methods / files from
-  //#region @backend
   /**
    * @deprecated use UtilsFilesFoldersSync.filesFrom
    * return absolute paths for folders inside folders
    */
-  public filesFrom(
+  export const filesFrom = (
     pathToFolder: string | string[],
     recrusive: boolean = false,
     incudeUnexistedLinks: boolean = false,
-  ): string[] {
+  ): string[] => {
+    //#region @backendFunc
     if (_.isArray(pathToFolder)) {
       pathToFolder = path.join(...pathToFolder) as string;
     }
     if (!Helpers.exists(pathToFolder)) {
       return [];
     }
-
     if (recrusive && incudeUnexistedLinks) {
       return glob.sync(`${pathToFolder}/**/*.*`);
     }
-
     if (recrusive) {
       const all = fse
         .readdirSync(pathToFolder)
@@ -2615,11 +2798,10 @@ command: ${command}
         }
         return true;
       });
-
       return [
         ...files,
         ...folders
-          .map(f => this.filesFrom(f, recrusive))
+          .map(f => filesFrom(f, recrusive))
           .reduce((a, b) => {
             return a.concat(b);
           }, []),
@@ -2631,28 +2813,20 @@ command: ${command}
       .filter(f => {
         return !fse.lstatSync(f).isDirectory();
       });
-  }
-  //#endregion
-  //#endregion
+    //#endregion
+  };
 
-  //#region methods / open folder in file explorer
-  //#region @backend
   /**
    * @deprecated use UtilsOs.openFolderInFileExplorer
    * @param folderPath
    */
-  public openFolderInFileExplorer(folderPath: string): void {
+  export const openFolderInFileExplorer = (folderPath: string): void => {
     UtilsOs.openFolderInFileExplorer(folderPath);
-  }
-  //#endregion
-  //#endregion
-
-  //#region methods / hide node warnings
-  hideNodeWarnings() {
+  };
+  export const hideNodeWarnings = () => {
     //#region @backend
     const process = require('process');
     process.removeAllListeners('warning');
     //#endregion
-  }
-  //#endregion
+  };
 }

@@ -1277,7 +1277,7 @@ in location: ${cwd}
       child.unref();
       return child;
     } else {
-      Helpers.throw(`Unsupported platform: ${platform}`);
+      Helpers.throwError(`Unsupported platform: ${platform}`);
     }
     //#endregion
   };
