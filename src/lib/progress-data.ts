@@ -1,5 +1,6 @@
 import { _ } from './core-imports';
 import { CoreModels } from './core-models';
+import { Helpers } from './helpers';
 
 //#region @backend
 declare const global: any;
