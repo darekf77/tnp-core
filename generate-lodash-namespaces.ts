@@ -47,14 +47,14 @@ const exports = [...names].filter(n => !blacklist.has(n)).sort();
 const imports = exports.map(n => `  ${n} as _${n}`).join(',\n');
 
 const namespaceBody = exports
-  .map(n => `  export const ${n} = _${n};`)
+  .map(n => `  export const ${n} = _${n} as typeof lodash.${n};`)
   .join('\n');
 
 const output =
   `
 // AUTO-GENERATED FILE — DO NOT EDIT
 // Source: lodash-es/lodash.js
-
+import type * as lodash from 'lodash';
 import {
 ${imports}
 } from 'lodash-es';
