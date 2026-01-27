@@ -1,7 +1,12 @@
 // let forceTrace = false;
+/**
+ * use only in backend mode
+ */
 export function requireDefault<T>(id: string): T {
+  //#region @backendFunc
   const m = require(id);
   return m?.default ?? m;
+  //#endregion
 }
 
 //#region @backend
