@@ -1,4 +1,4 @@
-let forceTrace = false;
+// let forceTrace = false;
 //#region @backend
 import * as fseBase from 'fs-extra';
 import * as osBase from 'os';
@@ -57,12 +57,6 @@ import type * as mkdirpBaseType from 'mkdirp';
 import type * as ncpBaseType from 'copy-paste';
 import type * as psBaseType from 'ps-node';
 import { Helpers } from './index';
-
-//#region constants
-//#region @backend
-forceTrace = global.hideLog === false;
-//#endregion
-//#endregion
 
 //#region set up browser mocks
 
@@ -299,9 +293,11 @@ const crossPlatformPath = (
   if (isExtendedLengthPath) {
     console.warn(`[taon-core][crossPlatformPath]: Path starts with \\\\,
     this is not supported in crossPlatformPath`);
-    if (forceTrace) {
+    //#region @backend
+    if (global.hideLog === false) {
       console.trace(`path: "${pathStringOrPathParts}"`);
     }
+    //#endregion
   }
 
   if (hasNonAscii) {

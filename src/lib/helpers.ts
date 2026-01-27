@@ -35,9 +35,7 @@ import { frameworkName, PROGRESS_DATA, Utils, UtilsOs } from './index';
 
 //#region constants
 declare const global: any;
-//#region @backend
-const forceTrace = !global.hideLog;
-//#endregion
+
 const WEBSQL_PROC_MOCK_PROCESSES_PID = {};
 const WEBSQL_PROC_MOCK_PROCESSES_PPID = {};
 
@@ -211,7 +209,7 @@ export namespace Helpers {
     //#endregion
     //#region @backend
     // Error.stackTraceLimit = Infinity;
-    if (forceTrace) {
+    if (global.hideLog === false) {
       noTrace = false;
     }
     if (!global.globalSystemToolMode) {
@@ -461,7 +459,7 @@ export namespace Helpers {
     return true; // TODO what it means in browser
     //#endregion
     //#region @backend
-    return forceTrace;
+    return !global.hideLog;
     //#endregion
   };
   export const log = (details: any, debugLevel = 0) => {
@@ -555,7 +553,7 @@ export namespace Helpers {
       return;
     }
     //#region @backend
-    if (forceTrace) {
+    if (global.hideLog === false) {
       trace = true;
     }
     const display = (dot = false) => {
@@ -1167,7 +1165,7 @@ export namespace Helpers {
       } else {
         if (targetIsFile) {
           const winLinkCommand = `mklink ${windowsHardLink ? '/D' : targetIsFile ? '/H' : '/j'} "${linkDest}" "${targetExisted}"`;
-          const showSymlinkOutputOnWindows = forceTrace;
+          const showSymlinkOutputOnWindows = global.hideLog === false;
           Helpers.run(winLinkCommand, {
             biggerBuffer: false,
             output: showSymlinkOutputOnWindows,
