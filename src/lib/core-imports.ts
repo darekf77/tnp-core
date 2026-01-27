@@ -1,4 +1,9 @@
 // let forceTrace = false;
+export function requireDefault<T>(id: string): T {
+  const m = require(id);
+  return m?.default ?? m;
+}
+
 //#region @backend
 import * as fseBase from 'fs-extra';
 import * as osBase from 'os';
