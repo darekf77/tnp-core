@@ -25,6 +25,7 @@
     "is-root",
     "is-admin",
     "dateformat",
+    "date-fns",
     "cheerio",
     "fast-glob",
     "js-yaml",

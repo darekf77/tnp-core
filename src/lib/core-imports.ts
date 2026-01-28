@@ -44,7 +44,21 @@ import { path as pathMock } from './node-path-mock';
 import { _ } from './lodash.namespace';
 export { _ } from './lodash.namespace';
 import * as q from 'q';
-import * as dateformat from 'dateformat';
+import { format } from 'date-fns';
+let dateformat: typeof import('dateformat') = ((
+  date: Date | number,
+  mask: string,
+): string => {
+  return format(
+    typeof date === 'number' ? new Date(date) : date,
+    mask
+      .replace(/mm/g, 'MM') // month
+      .replace(/MM/g, 'mm'), // minutes
+  );
+}) as any;
+//#region @backend
+dateformat = requireDefault('dateformat');
+//#endregion
 import { Chalk } from 'chalk';
 import * as json5 from 'json5';
 import type jQueryType from 'jquery';
