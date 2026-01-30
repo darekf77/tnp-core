@@ -4,7 +4,6 @@ import type { ChildProcess } from 'child_process';
 
 import { Dirent, Stats } from 'fs-extra'; // @backend
 import * as json5Write from 'json10-writer/src'; // @backend
-import { parse as json5Parse } from 'json5';
 import { Subject, Subscription } from 'rxjs'; // @browser
 
 import { encoding } from './constants';
@@ -13,7 +12,6 @@ import {
   os,
   rimraf,
   child_process,
-  json5,
   chalk,
   dateformat,
   spawn,
@@ -21,6 +19,7 @@ import {
   glob,
   fkill,
 } from './core-imports'; // @backend
+import { json5 } from './core-imports';
 import { _, path, crossPlatformPath } from './core-imports';
 import { CoreModels } from './core-models';
 import {
@@ -2476,7 +2475,7 @@ command: ${command}
       return jsonInstring;
     }
     return (
-      useJson5 ? json5Parse(jsonInstring) : JSON.parse(jsonInstring)
+      useJson5 ? json5.parse(jsonInstring) : JSON.parse(jsonInstring)
     ) as T;
   };
   export const compilationWrapper = async (
