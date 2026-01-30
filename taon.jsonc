@@ -30,6 +30,7 @@
     "fast-glob",
     "js-yaml",
     "cfonts",
+    "jscodeshift",
   ],
 
   "additionalNpmNames": ["taon-core"],
@@ -45,7 +46,7 @@
 
   "isCoreProject": false,
 
-  "isomorphicDependenciesForNpmLib": ["json10-writer"],
+  "isomorphicDependenciesForNpmLib": [],
 
   "resources": ["README.md"],
 

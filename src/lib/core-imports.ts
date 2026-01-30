@@ -1,12 +1,21 @@
 // let forceTrace = false;
+// QUICK_FIX for esm bundling 
+const REQUIRE_MAP = {
+  jscodeshift: () => require('jscodeshift'),
+  dateformat: () => require('dateformat'),
+  ['body-parser']: () => require('body-parser'),
+  ['cookie-parser']: () => require('cookie-parser'),
+  ['cors']: () => require('cors'),
+  ['express']: () => require('express'),
+  ['method-override']: () => require('method-override'),
+  ['express-session']: () => require('express-session'),
+};
 /**
  * use only in backend mode
  */
-export function requireDefault<T>(id: string): T {
-  //#region @backendFunc
-  const m = require(id);
+export function requireDefault<T>(id: keyof typeof REQUIRE_MAP): T {
+  const m = REQUIRE_MAP[id]();
   return m?.default ?? m;
-  //#endregion
 }
 
 //#region @backend
