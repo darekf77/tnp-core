@@ -3,7 +3,11 @@
   "compilerOptions": {
     "rootDir": "./tmp-source-dist-prod",
     "outDir": "dist-prod",
-    "noEmit": true
+    "noEmit": true,
+    "skipLibCheck": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
   "include": [
     "tmp-source-dist-prod/**/*"
