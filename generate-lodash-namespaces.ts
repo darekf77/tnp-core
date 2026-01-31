@@ -44,20 +44,19 @@ const exports = [...names].filter(n => !blacklist.has(n)).sort();
 
 // --- generate code ---
 
-const imports = exports.map(n => `  ${n} as _${n}`).join(',\n');
+const imports = exports.map(n => `import  * as _${n} from 'lodash/${n}';`).join('\n');
 
 const namespaceBody = exports
-  .map(n => `  export const ${n} = _${n} as typeof lodash.${n};`)
+  .map(n => `  export const ${n} = ((_${n} as any)?.default ?? _${n}) as typeof lodash.${n};`)
   .join('\n');
 
 const output =
-  `
+  `// @ts-nocheck
 // AUTO-GENERATED FILE — DO NOT EDIT
 // Source: lodash-es/lodash.js
 import type * as lodash from 'lodash';
-import {
 ${imports}
-} from 'lodash-es';
+
 
 export namespace _ {
 ${namespaceBody}
