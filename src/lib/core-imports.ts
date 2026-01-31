@@ -1,5 +1,5 @@
 // let forceTrace = false;
-// QUICK_FIX for esm bundling 
+// QUICK_FIX for esm bundling
 const REQUIRE_MAP = {
   jscodeshift: () => require('jscodeshift'),
   dateformat: () => require('dateformat'),
@@ -17,7 +17,7 @@ export function requireDefault<T>(id: keyof typeof REQUIRE_MAP): T {
   const m = REQUIRE_MAP[id]();
   return m?.default ?? m;
 }
-
+export { load } from './json10-writer';
 //#region @backend
 import * as fseBase from 'fs-extra';
 import * as osBase from 'os';
