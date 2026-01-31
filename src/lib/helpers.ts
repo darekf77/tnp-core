@@ -3,7 +3,6 @@ import { Blob } from 'buffer'; // @backend
 import type { ChildProcess } from 'child_process';
 
 import { Dirent, Stats } from 'fs-extra'; // @backend
-import * as json5Write from 'json10-writer/src'; // @backend
 import { Subject, Subscription } from 'rxjs'; // @browser
 
 import { encoding } from './constants';
@@ -22,6 +21,7 @@ import {
 import { json5 } from './core-imports';
 import { _, path, crossPlatformPath } from './core-imports';
 import { CoreModels } from './core-models';
+import { load } from './json10-writer/index'; // @backend
 import {
   UtilsJson,
   UtilsProcess,
@@ -2560,7 +2560,7 @@ command: ${command}
     if (writeJson5) {
       const existedContent = Helpers.readFile(absoluteFilePath) || '{}';
       try {
-        var writer = json5Write.load(existedContent);
+        var writer = load(existedContent);
       } catch (error) {
         if (error instanceof Error) {
           console.error(error?.message);
