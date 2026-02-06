@@ -1,6 +1,7 @@
 // let forceTrace = false;
 // QUICK_FIX for esm bundling
 const REQUIRE_MAP = {
+  //#region @backend
   jscodeshift: () => require('jscodeshift'),
   dateformat: () => require('dateformat'),
   ['body-parser']: () => require('body-parser'),
@@ -9,13 +10,17 @@ const REQUIRE_MAP = {
   ['express']: () => require('express'),
   ['method-override']: () => require('method-override'),
   ['express-session']: () => require('express-session'),
+  //#endregion
 };
 /**
  * use only in backend mode
  */
 export function requireDefault<T>(id: keyof typeof REQUIRE_MAP): T {
-  const m = REQUIRE_MAP[id]();
+  //#region @backendFunc
+  const fn = REQUIRE_MAP[id];
+  const m =  fn ? fn(): void 0;
   return m?.default ?? m;
+  //#endregion
 }
 export { load } from './json10-writer';
 //#region @backend
