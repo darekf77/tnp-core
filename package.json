@@ -1,6 +1,6 @@
 {
   "name": "tnp-core",
-  "version": "21.0.82",
+  "version": "21.0.83",
   "scripts": {
     "mkdocs": "python3 -m mkdocs",
     "taon init": "taon init",
@@ -282,6 +282,7 @@
     "jest-marbles": "latest",
     "jest-preset-angular": "~16.0.0",
     "jimp": "~0.22.12",
+    "jquery": "~3.7.1",
     "jscodeshift": "^0.6.3",
     "jsdom": "27.2.0",
     "json-stringify-safe": "^5.0.1",
