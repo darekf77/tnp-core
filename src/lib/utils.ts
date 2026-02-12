@@ -641,11 +641,13 @@ export namespace Utils {
 
     //#region binay utils / get blob from url
     export async function getBlobFrom(url: string): Promise<Blob> {
-      return (await axios({
-        url,
-        method: 'get',
-        responseType: 'blob',
-      })).data;
+      return (
+        await axios({
+          url,
+          method: 'get',
+          responseType: 'blob',
+        })
+      ).data;
     }
     //#endregion
   }
@@ -3862,11 +3864,14 @@ export namespace UtilsOs {
   //#endregion
 
   //#region utils os / open folder in vscode
-  export const openFolderInVSCode = (folderPath: string): void => {
+  export const openFolderInVSCode = (
+    folderPath: string,
+    editor = UtilsOs.detectEditor(),
+  ): void => {
     //#region @backendFunc
     Helpers.taskStarted(`Opening folder in VSCode: "${folderPath}"`);
     try {
-      Helpers.run(`${UtilsOs.detectEditor()} .`, {
+      Helpers.run(`${editor} .`, {
         cwd: folderPath,
         silence: true,
         output: false,
@@ -4051,7 +4056,7 @@ export namespace UtilsOs {
     //#endregion
   };
 
-  export const detectEditor = (): Editor => {
+  export const detectEditor = (): Editor | UnknownEditor => {
     //#region @backendFunc
 
     const env = process.env;
@@ -4105,7 +4110,7 @@ export namespace UtilsOs {
   };
 
   export const getEditorSettingsJsonPath = (
-    editor: Editor,
+    editor: Editor | UnknownEditor,
     platform: NodeJS.Platform = process.platform,
     env: NodeJS.ProcessEnv = process.env,
   ): string | undefined => {

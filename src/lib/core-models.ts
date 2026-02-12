@@ -173,6 +173,9 @@ export namespace CoreModels {
   export type UIFramework = 'bootstrap' | 'material' | 'ionic';
   //#endregion
 
+  export type GitConnection = 'https' | 'ssh';
+  export const GitConnectionArr = ['https', 'ssh'] as GitConnection[];
+
   //#region framework version
   export type FrameworkVersion =
     | 'v1'
