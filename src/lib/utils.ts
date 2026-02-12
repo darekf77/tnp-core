@@ -3178,6 +3178,13 @@ ${sourceData}
   //#endregion
 
   //#region utils files folders sync / move
+  /**
+   * @deprecated use .copy and then .remove on
+   * source folder..
+   *
+   * This method is messing with parcel watcher
+   * (moved files are not detected)
+   */
   export const move = (
     from: string,
     to: string,
@@ -3863,28 +3870,6 @@ export namespace UtilsOs {
   };
   //#endregion
 
-  //#region utils os / open folder in vscode
-  export const openFolderInVSCode = (
-    folderPath: string,
-    editor = UtilsOs.detectEditor(),
-  ): void => {
-    //#region @backendFunc
-    Helpers.taskStarted(`Opening folder in VSCode: "${folderPath}"`);
-    try {
-      Helpers.run(`${editor} .`, {
-        cwd: folderPath,
-        silence: true,
-        output: false,
-      }).sync();
-      Helpers.taskDone(`Done opening folder in VSCode: "${folderPath}"`);
-    } catch (error) {
-      Helpers.warn(`Not able to open in VSCode: "${folderPath}"`, false);
-    }
-
-    //#endregion
-  };
-  //#endregion
-
   //#region utils os / open folder in file explorer
   export const openFolderInFileExplorer = (folderPath: string): void => {
     //#region @backendFunc
@@ -3995,8 +3980,6 @@ export namespace UtilsOs {
     | 'idea'
     | 'idea64';
 
-  export type UnknownEditor = 'unknown-editor--please-install-vscode';
-
   export type EditorProcess = `${Editor}` | 'code-oss'; // group alias
 
   export const EditorArr: Editor[] = [
@@ -4056,9 +4039,11 @@ export namespace UtilsOs {
     //#endregion
   };
 
-  export const detectEditor = (): Editor | UnknownEditor => {
+  export const detectEditor = (options?: {
+    fallbackCheckCommandExists?: boolean;
+  }): Editor | undefined => {
     //#region @backendFunc
-
+    options = options || {};
     const env = process.env;
 
     // --- Eclipse Theia (strong signals) ---
@@ -4098,19 +4083,20 @@ export namespace UtilsOs {
     if (bin.includes('idea')) return 'idea';
     if (bin.includes('code')) return 'code';
 
-    // --- CLI availability fallback ---
-    if (commandExistsSync('cursor')) return 'cursor';
-    if (commandExistsSync('codium')) return 'codium';
-    if (commandExistsSync('code')) return 'code';
-    if (commandExistsSync('idea64')) return 'idea64';
-    if (commandExistsSync('idea')) return 'idea';
+    if (options.fallbackCheckCommandExists) {
+      // --- CLI availability fallback ---
+      if (commandExistsSync('code')) return 'code';
+      if (commandExistsSync('codium')) return 'codium';
+      if (commandExistsSync('cursor')) return 'cursor';
+      if (commandExistsSync('idea')) return 'idea';
+      if (commandExistsSync('idea64')) return 'idea64';
+    }
 
-    return 'unknown-editor--please-install-vscode' as any;
     //#endregion
   };
 
   export const getEditorSettingsJsonPath = (
-    editor: Editor | UnknownEditor,
+    editor: Editor,
     platform: NodeJS.Platform = process.platform,
     env: NodeJS.ProcessEnv = process.env,
   ): string | undefined => {
