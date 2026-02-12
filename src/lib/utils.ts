@@ -3762,6 +3762,7 @@ export namespace UtilsOs {
     return false;
     //#endregion
     //#region @backendFunc
+    // @ts-ignore
     return typeof global['it'] === 'function';
     //#endregion
   };
