@@ -2,6 +2,7 @@
 import { Blob } from 'buffer'; // @backend
 import type { ChildProcess } from 'child_process';
 
+import * as FormData from 'form-data'; // @backend
 import { Dirent, Stats } from 'fs-extra'; // @backend
 import { Subject, Subscription } from 'rxjs'; // @browser
 
@@ -929,6 +930,11 @@ export namespace Helpers {
   export const isBlob = (maybeBlob): maybeBlob is Blob => {
     // TODO is this needed hmmmm
     return maybeBlob instanceof Blob; // || toString.call(maybeBlob) === '[object Blob]';
+  };
+
+  export const isFormDataClass = (maybeFormDataClass): maybeFormDataClass is FormData => {
+    // TODO is this needed hmmmm
+    return maybeFormDataClass === FormData;
   };
 
   /**
