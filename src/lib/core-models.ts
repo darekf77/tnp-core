@@ -222,6 +222,11 @@ export namespace CoreModels {
     | CutableFileExt;
   //#endregion
 
+  /**
+   * known http code
+   */
+  export type HttpCode = 200 | 400 | 401 | 404 | 500;
+
   //#region http method
   export type HttpMethod =
     | 'get'
@@ -231,6 +236,16 @@ export namespace CoreModels {
     | 'patch'
     | 'head'
     | 'jsonp';
+
+  export const HttpMethodArr: HttpMethod[] = [
+    'get',
+    'post',
+    'put',
+    'delete',
+    'patch',
+    'head',
+    'jsonp',
+  ];
   //#endregion
 
   //#region http status code
