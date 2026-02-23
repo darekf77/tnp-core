@@ -461,7 +461,11 @@ export namespace Helpers {
     return !global.hideLog;
     //#endregion
   };
-  export const log = (details: any, debugLevel = 0) => {
+  export const log = (
+    details: any,
+    debugLevel = 0,
+    skipVisibleConditionChecking = false,
+  ) => {
     if (Helpers.getIsBrowser()) {
       console.log(details);
       return;
@@ -474,11 +478,14 @@ export namespace Helpers {
     //   'global.muteMessages': global.muteMessages,
     //   details
     // })
-    const verboseLevel = global.verboseLevel || 0;
-    debugLevel = debugLevel || 0;
-    if (debugLevel > verboseLevel) {
-      return;
+    if (!skipVisibleConditionChecking) {
+      const verboseLevel = global.verboseLevel || 0;
+      debugLevel = debugLevel || 0;
+      if (debugLevel > verboseLevel) {
+        return;
+      }
     }
+
     details = transformData(details);
     const display = (dot = false) => {
       if (global.tnpNonInteractive) {
@@ -498,7 +505,10 @@ export namespace Helpers {
         }
       }
     };
-    if (!global.muteMessages && !global.hideLog) {
+    if (
+      skipVisibleConditionChecking ||
+      (!global.muteMessages && !global.hideLog)
+    ) {
       if (global[KEY.LAST_LOG] === details) {
         global[KEY_COUNT.LAST_LOG]++;
         if (global[KEY_COUNT.LAST_LOG] > LIMIT) {
