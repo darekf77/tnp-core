@@ -7338,7 +7338,7 @@ export namespace UtilsCliClassMethod {
   //   };
   // };
 
-  export const staticClassNameProperty = CoreModels.ClassNameStaticProperty;
+
 
   export const decoratorMethod = (methodName: string): MethodDecorator => {
     return (target, propertyKey, descriptor) => {

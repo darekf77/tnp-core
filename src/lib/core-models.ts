@@ -612,9 +612,14 @@ export namespace CoreModels {
   export const tagForTaskName = '@updateValueWithPortNumForTaskName';
 
   /**
-   * @deprecated TODO I should remove it from here and from taon-typeorm somehow
+   * This is for storiginal class function (needed for typeorm/taon)
    */
   export const OrignalClassKey = '$$originalClass$$';
+
+  /**
+   * This is for storing class name inside special static property
+   */
+  export const ClassNameStaticProperty = '$$className$$';
 
   export const localhostIp127 = '127.0.0.1';
   export const localhostDomain = 'localhost';
@@ -622,7 +627,7 @@ export namespace CoreModels {
   export const SPECIAL_WORKER_READY_MESSAGE = '$$$ WORKER_READY $$$';
   export const SPECIAL_APP_READY_MESSAGE = '$$$ APP_READY $$$';
 
-  export const ClassNameStaticProperty = '$$className$$';
+
 
   export const TaonHttpErrorCustomProp = '$$taonError$$';
 
