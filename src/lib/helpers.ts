@@ -471,13 +471,6 @@ export namespace Helpers {
       return;
     }
     //#region @backend
-    // console.log({
-    //   'global.hideLog': global.hideLog,
-    //   'debugLevel': debugLevel,
-    //   'global.verboseLevel': global.verboseLevel,
-    //   'global.muteMessages': global.muteMessages,
-    //   details
-    // })
     if (!skipVisibleConditionChecking) {
       const verboseLevel = global.verboseLevel || 0;
       debugLevel = debugLevel || 0;
@@ -505,10 +498,13 @@ export namespace Helpers {
         }
       }
     };
-    if (
-      skipVisibleConditionChecking ||
-      (!global.muteMessages && !global.hideLog)
-    ) {
+
+    let allowedToDisplay = !global.muteMessages && !global.hideLog;
+    if (skipVisibleConditionChecking) {
+      allowedToDisplay = true;
+    }
+
+    if (allowedToDisplay) {
       if (global[KEY.LAST_LOG] === details) {
         global[KEY_COUNT.LAST_LOG]++;
         if (global[KEY_COUNT.LAST_LOG] > LIMIT) {
