@@ -1984,6 +1984,11 @@ export namespace UtilsExecProc {
         stdio = ['inherit', 'ignore', 'inherit'];
       }
 
+      Helpers.logInfo(`Executing
+        command: [${this.command} ${this.args.join(' ')}]
+        insid: ${this.execProcOptions.cwd}
+        `)
+
       this.child = spawn(this.command, this.args, {
         stdio,
         env: this.env,
@@ -2141,7 +2146,7 @@ export namespace UtilsExecProc {
     options = options || {};
     options.cwd = crossPlatformPath(options.cwd || process.cwd());
     const [cmd, ...args] = command.split(' ');
-    return new ExecProcResult(cmd, args);
+    return new ExecProcResult(cmd, args, options);
   };
   //#endregion
 
