@@ -52,7 +52,7 @@ export class GlobalTaskManagerClass {
 
     task.finishedAt = Date.now();
 
-    Helpers.logInfo(`
+    Helpers.info(`
 
       [${dateformat(new Date(task.finishedAt))}]
       Process done: ${name}
