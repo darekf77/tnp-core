@@ -448,3 +448,9 @@ export const notAllowedProjectNames = [
 ];
 
 export const encoding = 'utf8';
+
+/**
+ * If building from parent -> output proper name of parent project in errors
+ * output when building multiple projects
+ */
+export const taonActionFromParent = 'taon-action-from-parent';
