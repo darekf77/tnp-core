@@ -4,6 +4,14 @@ export interface TaonStripeCloudflareWorkerData {
   productId: string;
 }
 
+export interface TaonYoutubePlaylistVideo {
+  videoId: string;
+  title: string;
+  url: string;
+  thumbnail: string;
+  order: number;
+}
+
 export enum TaonStripeCloudflareKey {
   stripeSessionId = 'stripeSessionId',
   clientEmail = 'clientEmail',
@@ -15,7 +23,42 @@ export class TaonStripeCloudflareWorker {
 
   static HOOK_GET = '/check-access';
 
+   static HOOK_YOUTUBE_PLAYLIST_VIDEOS = '/youtube-playlist-videos';
+
   constructor(public readonly url: string) {}
+
+  async getVideosIdsByPlaylistId(playlistId: string): Promise<string[]> {
+    const params = new URLSearchParams({
+      playlistId,
+    });
+
+    const resp = await fetch(
+      `${this.url + TaonStripeCloudflareWorker.HOOK_YOUTUBE_PLAYLIST_VIDEOS}?${params}`,
+    );
+
+    if (!resp.ok) {
+      throw new Error(`Youtube playlist worker error ${resp.status}`);
+    }
+
+    const body: TaonYoutubePlaylistVideo[] = await resp.json();
+    return body.map((v) => v.videoId);
+  }
+
+  async getVideosByPlaylistId(playlistId: string): Promise<TaonYoutubePlaylistVideo[]> {
+    const params = new URLSearchParams({
+      playlistId,
+    });
+
+    const resp = await fetch(
+      `${this.url + TaonStripeCloudflareWorker.HOOK_YOUTUBE_PLAYLIST_VIDEOS}?${params}`,
+    );
+
+    if (!resp.ok) {
+      throw new Error(`Youtube playlist worker error ${resp.status}`);
+    }
+
+    return await resp.json();
+  }
 
   async sendAsStripe(data: TaonStripeCloudflareWorkerData): Promise<void> {
     const resp = await fetch(this.url + TaonStripeCloudflareWorker.HOOK_POST, {
