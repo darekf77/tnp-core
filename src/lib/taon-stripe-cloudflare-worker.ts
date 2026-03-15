@@ -25,6 +25,8 @@ export class TaonStripeCloudflareWorker {
 
    static HOOK_YOUTUBE_PLAYLIST_VIDEOS = '/youtube-playlist-videos';
 
+  static HOOK_CREATE_STRIPE_SESSION = '/create-checkout-session';
+
   constructor(public readonly url: string) {}
 
   async getVideosIdsByPlaylistId(playlistId: string): Promise<string[]> {
