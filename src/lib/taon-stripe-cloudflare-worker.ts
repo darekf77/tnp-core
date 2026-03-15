@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 export interface TaonStripeCloudflareWorkerData {
   stripeSessionId: string;
   clientEmail: string;
@@ -23,7 +25,7 @@ export class TaonStripeCloudflareWorker {
 
   static HOOK_GET = '/check-access';
 
-   static HOOK_YOUTUBE_PLAYLIST_VIDEOS = '/youtube-playlist-videos';
+  static HOOK_YOUTUBE_PLAYLIST_VIDEOS = '/youtube-playlist-videos';
 
   static HOOK_CREATE_STRIPE_SESSION = '/create-checkout-session';
 
@@ -43,10 +45,12 @@ export class TaonStripeCloudflareWorker {
     }
 
     const body: TaonYoutubePlaylistVideo[] = await resp.json();
-    return body.map((v) => v.videoId);
+    return body.map(v => v.videoId);
   }
 
-  async getVideosByPlaylistId(playlistId: string): Promise<TaonYoutubePlaylistVideo[]> {
+  async getVideosByPlaylistId(
+    playlistId: string,
+  ): Promise<TaonYoutubePlaylistVideo[]> {
     const params = new URLSearchParams({
       playlistId,
     });
@@ -60,6 +64,44 @@ export class TaonStripeCloudflareWorker {
     }
 
     return await resp.json();
+  }
+
+  getVideosByPlaylistIdObs(
+    playlistId: string,
+  ): Observable<TaonYoutubePlaylistVideo[]> {
+    return new Observable(observer => {
+      const controller = new AbortController();
+
+      const params = new URLSearchParams({
+        playlistId,
+      });
+
+      fetch(
+        `${this.url + TaonStripeCloudflareWorker.HOOK_YOUTUBE_PLAYLIST_VIDEOS}?${params}`,
+        { signal: controller.signal },
+      )
+        .then(resp => {
+          if (!resp.ok) {
+            throw new Error(`Youtube playlist worker error ${resp.status}`);
+          }
+          return resp.json();
+        })
+        .then(data => {
+          observer.next(data);
+          observer.complete();
+        })
+        .catch(err => {
+          // ignore abort error
+          if (err.name !== 'AbortError') {
+            observer.error(err);
+          }
+        });
+
+      // cancellation logic
+      return () => {
+        controller.abort();
+      };
+    });
   }
 
   async sendAsStripe(data: TaonStripeCloudflareWorkerData): Promise<void> {
