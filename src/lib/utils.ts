@@ -2143,6 +2143,7 @@ export namespace UtilsExecProc {
     command: string,
     options?: ExecProcOptions,
   ): ExecProcResult => {
+    command = command.trim();
     options = options || {};
     options.cwd = crossPlatformPath(options.cwd || process.cwd());
     const [cmd, ...args] = command.split(' ');
