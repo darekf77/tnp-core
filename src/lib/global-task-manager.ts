@@ -1,7 +1,7 @@
 import { dateformat } from './core-imports';
 import { GlobalSpinner } from './global-spinner';
 import { Helpers } from './helpers';
-import notifier from 'node-notifier'; // @backend
+import * as notifier from 'node-notifier'; // @backend
 
 export interface TaskStats {
   name: string;
@@ -46,7 +46,7 @@ export class GlobalTaskManagerClass {
     task.successActions += bytes;
   }
 
-  stop(name: string): void {
+  stop(name: string, doneCallback?: any): void {
     GlobalSpinner.stop();
     const task = this.tasks.get(name);
     if (!task) return;
@@ -61,12 +61,19 @@ export class GlobalTaskManagerClass {
 
       `);
 
-    //#region @backend
-    notifier.notify({
-      title: `[TAON][TAKS] ${name}`,
-      message: `Success actions: ${task.successActions}`,
-    });
-    //#endregion
+    if (task.successActions < 2) {
+      doneCallback && doneCallback();
+    } else {
+      //#region @backend
+      notifier.notify(
+        {
+          title: `[TAON][TAKS] ${name}`,
+          message: `Success actions: ${task.successActions}`,
+        },
+        doneCallback,
+      );
+      //#endregion
+    }
   }
 
   get(name: string): TaskStats {
