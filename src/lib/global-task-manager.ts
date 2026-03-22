@@ -1,6 +1,7 @@
 import { dateformat } from './core-imports';
 import { GlobalSpinner } from './global-spinner';
 import { Helpers } from './helpers';
+import notifier from 'node-notifier'; // @backend
 
 export interface TaskStats {
   name: string;
@@ -59,6 +60,13 @@ export class GlobalTaskManagerClass {
       Success actions: ${task.successActions}
 
       `);
+
+    //#region @backend
+    notifier.notify({
+      title: `[TAON][TAKS] ${name}`,
+      message: `Success actions: ${task.successActions}`,
+    });
+    //#endregion
   }
 
   get(name: string): TaskStats {
