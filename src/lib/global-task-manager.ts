@@ -1,7 +1,9 @@
-import { dateformat } from './core-imports';
+import * as notifier from 'node-notifier'; // @backend
+
+import { crossPlatformPath, dateformat, fse } from './core-imports';
 import { GlobalSpinner } from './global-spinner';
 import { Helpers } from './helpers';
-import * as notifier from 'node-notifier'; // @backend
+import { UtilsOs } from './utils';
 
 export interface TaskStats {
   name: string;
@@ -46,7 +48,7 @@ export class GlobalTaskManagerClass {
     task.successActions += bytes;
   }
 
-  stop(name: string, doneCallback?: any): void {
+  stop(name: string, doneCallback?: () => any): void {
     GlobalSpinner.stop();
     const task = this.tasks.get(name);
     if (!task) return;
@@ -65,10 +67,16 @@ export class GlobalTaskManagerClass {
       doneCallback && doneCallback();
     } else {
       //#region @backend
+      const iconPath = crossPlatformPath([
+        UtilsOs.getRealHomeDir(),
+        '.taon/taon-containers/logo.png',
+      ]);
       notifier.notify(
         {
-          title: `[TAON][TAKS] ${name}`,
+          title: `[TAON][TASK] ${name}`,
           message: `Success actions: ${task.successActions}`,
+          icon: fse.existsSync(iconPath) ? iconPath : void 0,
+          timeout: 4000,
         },
         doneCallback,
       );
