@@ -829,7 +829,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-  //#region utils terminal /  preview long list with 'less' (git log like)
+  //#region utils terminal / preview long list with 'less' (git log like)
   /**
    * Displays a long list in the console using a pager like `less`.
    * Returns a Promise that resolves when the user exits the pager.
@@ -886,7 +886,7 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-  //#region utils terminal /  draw big text
+  //#region utils terminal / draw big text
   export const drawBigText = async (
     text: string,
     options?: {
@@ -1036,5 +1036,12 @@ export namespace UtilsTerminal {
     // TODO terminal UI menu to select bash or powershell
     //#endregion
   };
+  //#endregion
+
+  //#region utils terminal / draw line
+  export const drawLine = (col = 0) => {
+    UtilsOs.drawLine(col);
+  };
+
   //#endregion
 }

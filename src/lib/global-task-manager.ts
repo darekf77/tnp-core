@@ -1,5 +1,3 @@
-import * as notifier from 'node-notifier'; // @backend
-
 import { crossPlatformPath, dateformat, fse } from './core-imports';
 import { GlobalSpinner } from './global-spinner';
 import { Helpers } from './helpers';
@@ -71,15 +69,12 @@ export class GlobalTaskManagerClass {
         UtilsOs.getRealHomeDir(),
         '.taon/taon-containers/logo.png',
       ]);
-      notifier.notify(
-        {
-          title: `[TAON][TASK] ${name}`,
-          message: `Success actions: ${task.successActions}`,
-          icon: fse.existsSync(iconPath) ? iconPath : void 0,
-          timeout: 4000,
-        },
-        doneCallback,
-      );
+      UtilsOs.sendNotification({
+        title: `[TAON][TASK] ${name}`,
+        body: `Success actions: ${task.successActions}`,
+        iconPath: fse.existsSync(iconPath) ? iconPath : void 0,
+        timeoutMs: 4000,
+      });
       //#endregion
     }
   }

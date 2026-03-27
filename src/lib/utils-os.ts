@@ -3,12 +3,16 @@ import 'reflect-metadata';
 import * as net from 'net';
 import { promisify } from 'util';
 
+import * as notifier from 'node-notifier'; // @backend
+import type NotificationCenter from 'node-notifier/notifiers/notificationcenter';
+
 import { path, _, crossPlatformPath, os, win32Path } from './core-imports';
 import { child_process } from './core-imports';
 import { fse } from './core-imports';
+import { frameworkName } from './framework-name';
+import { Helpers } from './helpers';
 import { UtilsProcess } from './utils-process';
-
-import { frameworkName, Helpers } from './index';
+import { UtilsTerminal } from './utils-terminal';
 //#endregion
 
 export namespace UtilsOs {
@@ -949,4 +953,125 @@ export namespace UtilsOs {
     //#endregion
   };
   //#endregion
+
+  //#region utils terminal / draw line
+  export const drawLine = (col = 0) => {
+    //#region @browser
+    const heightBrowserConsole = 20;
+
+    const line = Array.from({ length: heightBrowserConsole })
+      .map(() => '|')
+      .join('\n');
+
+    console.log(line);
+    //#endregion
+    //#region @backend
+    const height = process.stdout.rows || 20;
+
+    let output = '';
+    for (let i = 0; i < height; i++) {
+      output += `\x1b[${i + 1};${col + 1}H|`;
+    }
+
+    process.stdout.write(output);
+    //#endregion
+  };
+
+  //#endregion
+
+  export const sendNotification = async (opt: {
+    title: string;
+    body: string;
+    subtitle?: string;
+    appName?: string;
+    iconPath?: string;
+    timeoutMs?: number;
+    doneCallback?: () => any;
+  }) => {
+    const platform = os.platform();
+    const defaultTimeoutMs = 3000;
+
+    opt = _.cloneDeep(opt);
+
+    const consoleNotification = `
+
+> NOTIFICATION
+${opt.appName ?? 'App'} / ${opt.title}
+${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
+
+`;
+
+    //#region @browser
+    UtilsOs.drawLine();
+    console.log(consoleNotification);
+    UtilsOs.drawLine();
+    //#endregion
+
+    //#region @backend
+    const hasGui = UtilsOs.isRunningInOsWithGraphicsCapableEnvironment();
+
+    // 👉 fallback when NO GUI
+    if (!hasGui) {
+      UtilsOs.drawLine();
+      console.log(consoleNotification);
+      UtilsOs.drawLine();
+      return;
+    }
+
+    try {
+      // 👉 Windows / macOS
+      if (platform === 'win32' || platform === 'darwin') {
+        await new Promise<void>(resolve => {
+          const cfg = {
+            title: opt.title,
+            message: opt.body ?? '',
+            subtitle: opt.subtitle,
+            sound: false,
+            wait: false,
+            timeout: opt.timeoutMs,
+          } as NotificationCenter.Notification;
+          if (opt.iconPath && fse.existsSync(opt.iconPath)) {
+            cfg.icon = opt.iconPath;
+          }
+          notifier.notify(cfg, () => {
+            opt.doneCallback?.();
+            resolve();
+          });
+        });
+        return;
+      }
+
+      // 👉 Linux (DBus - no external deps like notify-send)
+      const dbus = require('dbus-next');
+      const bus = dbus.sessionBus();
+
+      const obj = await bus.getProxyObject(
+        'org.freedesktop.Notifications',
+        '/org/freedesktop/Notifications',
+      );
+
+      const iface: any = obj.getInterface('org.freedesktop.Notifications');
+
+      await iface.Notify(
+        opt.appName ?? 'Taon',
+        0,
+        opt.iconPath ?? '',
+        opt.title,
+        opt.body ?? '',
+        [],
+        {},
+        opt.timeoutMs ?? defaultTimeoutMs,
+      );
+
+      opt.doneCallback?.();
+    } catch (e) {
+      console.log('notification error', e);
+
+      // 👉 safe fallback
+      UtilsOs.drawLine();
+      console.log(consoleNotification);
+      UtilsOs.drawLine();
+    }
+    //#endregion
+  };
 }
