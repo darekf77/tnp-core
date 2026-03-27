@@ -1052,24 +1052,25 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
 
       const iface: any = obj.getInterface('org.freedesktop.Notifications');
 
-      const id = await iface.Notify(
-        opt.appName ?? 'Taon',
-        0,
-        opt.iconPath ?? '',
-        opt.title,
-        opt.body ?? '',
-        [],
-        {},
-        opt.timeoutMs ?? defaultTimeoutMs,
-      );
+      return await new Promise<void>(async (resolve, reject) => {
+        const id = await iface.Notify(
+          opt.appName ?? 'Taon',
+          0,
+          opt.iconPath ?? '',
+          opt.title,
+          opt.body ?? '',
+          [],
+          {},
+          opt.timeoutMs ?? defaultTimeoutMs,
+        );
 
-      iface.on('NotificationClosed', (closedId: number) => {
-        if (closedId === id) {
-          opt.doneCallback?.();
-        }
+        iface.on('NotificationClosed', (closedId: number) => {
+          if (closedId === id) {
+            opt.doneCallback?.();
+            resolve();
+          }
+        });
       });
-
-      opt.doneCallback?.();
     } catch (e) {
       console.log('notification error', e);
 
