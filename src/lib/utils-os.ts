@@ -1052,7 +1052,7 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
 
       const iface: any = obj.getInterface('org.freedesktop.Notifications');
 
-      await iface.Notify(
+      const id = await iface.Notify(
         opt.appName ?? 'Taon',
         0,
         opt.iconPath ?? '',
@@ -1062,6 +1062,12 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
         {},
         opt.timeoutMs ?? defaultTimeoutMs,
       );
+
+      iface.on('NotificationClosed', (closedId: number) => {
+        if (closedId === id) {
+          opt.doneCallback?.();
+        }
+      });
 
       opt.doneCallback?.();
     } catch (e) {
