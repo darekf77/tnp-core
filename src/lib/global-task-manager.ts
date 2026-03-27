@@ -74,6 +74,7 @@ export class GlobalTaskManagerClass {
         body: `Success actions: ${task.successActions}`,
         iconPath: fse.existsSync(iconPath) ? iconPath : void 0,
         timeoutMs: 4000,
+        doneCallback,
       });
       //#endregion
     }
