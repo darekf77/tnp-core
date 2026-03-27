@@ -22,12 +22,10 @@ import { json5 } from './core-imports';
 import { _, path, crossPlatformPath } from './core-imports';
 import { CoreModels } from './core-models';
 import { load } from './json10-writer/index'; // @backend
-import {
-  UtilsJson,
-  UtilsProcess,
-  UtilsFilesFoldersSync,
-  UtilsTerminal,
-} from './utils';
+import { UtilsJson } from './utils';
+import { UtilsFilesFoldersSync } from './utils-files-folders';
+import { UtilsProcess } from './utils-process';
+import { UtilsTerminal } from './utils-terminal';
 
 import { frameworkName, PROGRESS_DATA, Utils, UtilsOs } from './index';
 //#endregion

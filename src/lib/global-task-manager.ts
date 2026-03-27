@@ -3,7 +3,7 @@ import * as notifier from 'node-notifier'; // @backend
 import { crossPlatformPath, dateformat, fse } from './core-imports';
 import { GlobalSpinner } from './global-spinner';
 import { Helpers } from './helpers';
-import { UtilsOs } from './utils';
+import { UtilsOs } from './utils-os';
 
 export interface TaskStats {
   name: string;
