@@ -229,7 +229,7 @@ var MainContext = Taon.createContext(() => ({
 <summary>@backend</summary>
 
 ```ts
-  console.log(`Hello in NodeJs backend! os=${os.platform()}`);
+  console.log(`Hello in NodeJs basdackend! os=${os.platform()}`);
 ```
 
 </details>

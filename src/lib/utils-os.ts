@@ -735,7 +735,12 @@ export namespace UtilsOs {
   //#endregion
 
   //#region utils os / is [...]
-  export const isNodeVersionOk = UtilsProcess.isNodeVersionOk;
+  // console.log('kurwa')
+  export const isNodeVersionOk = (options?: {
+    required?: string;
+    log?: boolean;
+    throwErrorIfNotOk?: boolean;
+  }): boolean => UtilsProcess.isNodeVersionOk(options);
   export const isElectron = isRunningInElectron();
   export const isBrowser = isRunningInBrowser();
   export const isNode = isRunningInNode();
@@ -979,6 +984,57 @@ export namespace UtilsOs {
 
   //#endregion
 
+  //#region utils os / get inotify watch count (linux)
+  export async function getInotifyWatchCount(): Promise<number> {
+    //#region @backendFunc
+    if (process.platform !== 'linux') {
+      return -1; // not supported
+    }
+
+    let count = 0;
+
+    const procDir = '/proc';
+
+    try {
+      const pids = await fse.promises.readdir(procDir);
+
+      for (const pid of pids) {
+        // only numeric dirs
+        if (!/^\d+$/.test(pid)) continue;
+
+        const fdinfoDir = path.join(procDir, pid, 'fdinfo');
+
+        let fds: string[];
+        try {
+          fds = await fse.promises.readdir(fdinfoDir);
+        } catch {
+          continue; // process may have exited
+        }
+
+        for (const fd of fds) {
+          const fdPath = path.join(fdinfoDir, fd);
+
+          try {
+            const content = await fse.promises.readFile(fdPath, 'utf8');
+
+            if (content.includes('inotify')) {
+              count++;
+            }
+          } catch {
+            // ignore permission errors / race conditions
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[taon] failed to read /proc', err);
+    }
+
+    return count;
+    //#endregion
+  }
+  //#endregion
+
+  //#region send notification
   export const sendNotification = async (opt: {
     title: string;
     body: string;
@@ -1081,4 +1137,5 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
     }
     //#endregion
   };
+  //#endregion
 }

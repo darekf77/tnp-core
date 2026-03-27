@@ -38,11 +38,12 @@ export namespace UtilsTerminal {
   //#endregion
 
   //#region utils terminal / wait
-  export const wait = Utils.wait;
+  export const wait = (second: number): Promise<void> => Utils.wait(second);
   //#endregion
 
   //#region utils terminal / wait milliseconds
-  export const waitMilliseconds = Utils.waitMilliseconds;
+  export const waitMilliseconds = (milliseconds: number): Promise<void> =>
+    Utils.waitMilliseconds(milliseconds);
   //#endregion
 
   //#region utils terminal / is verbose mode

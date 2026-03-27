@@ -1,6 +1,8 @@
 import type { ChildProcess } from 'child_process';
 
-import { LibTypeEnum, LibTypeNames } from './constants';
+import { Observable } from 'rxjs';
+
+import { LibTypeNames } from './constants';
 
 export namespace CoreModels {
   //#region package
@@ -348,6 +350,7 @@ export namespace CoreModels {
     };
     prefix?: string;
     detach?: boolean;
+    rebuildOnChange?: Observable<{}>;
     /**
      * Try command again after fail after n miliseconds
      */
@@ -626,8 +629,6 @@ export namespace CoreModels {
 
   export const SPECIAL_WORKER_READY_MESSAGE = '$$$ WORKER_READY $$$';
   export const SPECIAL_APP_READY_MESSAGE = '$$$ APP_READY $$$';
-
-
 
   export const TaonHttpErrorCustomProp = '$$taonError$$';
 

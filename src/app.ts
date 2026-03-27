@@ -179,7 +179,7 @@ var MainContext = Taon.createContext(() => ({
 async function start(): Promise<void> {
   await MainContext.initialize();
   //#region @backend
-  console.log(`Hello in NodeJs backend! os=${os.platform()}`);
+  console.log(`Hello in NodeJs basdackend! os=${os.platform()}`);
   //#endregion
 
   if (UtilsOs.isBrowser) {

@@ -3,14 +3,16 @@ import 'reflect-metadata';
 import { ChildProcess } from 'child_process';
 import { promisify } from 'util';
 
+import { debounceTime, EMPTY, from, startWith, switchMap, tap } from 'rxjs';
+
 import { encoding } from './constants';
-import { _, crossPlatformPath, os } from './core-imports';
+import { _, crossPlatformPath, fse, os, path } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { CoreModels } from './core-models';
+import { Helpers } from './helpers';
+import { Utils } from './utils';
 import { UtilsExecProc } from './utils-exec-proc';
 import { UtilsOs } from './utils-os';
-
-import { Helpers } from './index';
 
 //#endregion
 
@@ -94,6 +96,7 @@ export namespace UtilsProcess {
       onChildProcessChange,
       outputBuffer,
       outputBufferMaxSize,
+      rebuildOnChange,
     } = options || {};
 
     outputBufferMaxSize = outputBufferMaxSize || 1000;
@@ -106,12 +109,7 @@ export namespace UtilsProcess {
     } = resolvePromiseMsgCallback || {};
 
     let childProcess: ChildProcess;
-    // let {
-    //   stderMsgForPromiseResolve,
-    //   stdoutMsgForPromiseResolve
-    // } = resolvePromiseMsg || {};
 
-    // processes.push(proc);
     if (!resolvePromiseMsg) {
       resolvePromiseMsg = {};
     }
@@ -130,13 +128,8 @@ export namespace UtilsProcess {
 
     //#endregion
 
-    const handlProc = (proc: ChildProcess) => {
+    const handlProc = (proc: ChildProcess, skipExitProcessOnError = false) => {
       return new Promise((resolve, reject) => {
-        // console.log(
-        //   `[execute] Process started...`,
-        //   (resolvePromiseMsg.stdout as string[]).map(c => `"${c}"`).join(','),
-        // );
-
         //#region handle stdout data
         proc.stdout.on('data', rawData => {
           let data = rawData?.toString() || '';
@@ -195,8 +188,10 @@ export namespace UtilsProcess {
                   stdoutResolvePromiseMsgCallback();
                 if (!isResolved) {
                   isResolved = true;
-                  reject();
-                  proc.kill('SIGINT');
+                  if (!skipExitProcessOnError) {
+                    reject();
+                    proc.kill('SIGINT');
+                  }
                 }
                 break;
               }
@@ -206,6 +201,7 @@ export namespace UtilsProcess {
         //#endregion
 
         //#region handle exit process
+
         proc.on('exit', async code => {
           // console.log(`Command exit code: ${code}`)
           if (hideOutput.acceptAllExitCodeAsSuccess) {
@@ -214,25 +210,28 @@ export namespace UtilsProcess {
             resolve(void 0);
           } else {
             if (code !== 0) {
-              if (_.isFunction(exitOnErrorCallback)) {
-                try {
-                  await exitOnErrorCallback(code as any);
-                  // await this.runSyncOrAsync({
-                  //   functionFn: exitOnErrorCallback,
-                  //   arrayOfParams: [code],
-                  // });
+              if (!skipExitProcessOnError) {
+                if (_.isFunction(exitOnErrorCallback)) {
+                  try {
+                    await exitOnErrorCallback(code as any);
+                    // await this.runSyncOrAsync({
+                    //   functionFn: exitOnErrorCallback,
+                    //   arrayOfParams: [code],
+                    // });
+                    reject(`Command failed with code=${code}`);
+                  } catch (error) {
+                    reject(error);
+                  }
+                } else {
                   reject(`Command failed with code=${code}`);
-                } catch (error) {
-                  reject(error);
                 }
-              } else {
-                reject(`Command failed with code=${code}`);
               }
             } else {
               resolve(void 0);
             }
           }
         });
+
         //#endregion
 
         //#region handle stdout error
@@ -297,8 +296,10 @@ export namespace UtilsProcess {
                   stderResolvePromiseMsgCallback();
                 if (!isResolved) {
                   isResolved = true;
-                  reject();
-                  proc.kill('SIGINT');
+                  if (!skipExitProcessOnError) {
+                    reject();
+                    proc.kill('SIGINT');
+                  }
                 }
                 break;
               }
@@ -324,7 +325,6 @@ export namespace UtilsProcess {
             }
           }
 
-          // @ts-ignore
           if (!hideOutput.stderr) {
             process.stderr.write(JSON.stringify(data));
           }
@@ -334,38 +334,111 @@ export namespace UtilsProcess {
       });
     };
 
-    while (true) {
-      const maxBuffer = options?.biggerBuffer ? Helpers.bigMaxBuffer : void 0;
-      let env = { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'development' };
-      if (options.env) {
-        env = { ...env, ...options.env };
-      }
-      childProcess = child_process.exec(command, { cwd, env, maxBuffer });
-      onChildProcessChange && onChildProcessChange(childProcess);
-      try {
-        await handlProc(childProcess);
-        break;
-      } catch (error) {
-        Helpers.error(
-          `Command failed:
+    const maxBuffer = options?.biggerBuffer ? Helpers.bigMaxBuffer : void 0;
+    let env = { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'development' };
+    if (options.env) {
+      env = { ...env, ...options.env };
+    }
+
+    //#region console process
+    const consoleProcess = async () => {
+      while (true) {
+        childProcess = child_process.exec(command, { cwd, env, maxBuffer });
+        onChildProcessChange && onChildProcessChange(childProcess);
+        try {
+          await handlProc(childProcess);
+          break;
+        } catch (error) {
+          Helpers.error(
+            `Command failed:
 
 ${command}
 
 in location: ${cwd}
 
         `,
-          true,
-          true,
-        );
-        if (askToTryAgainOnError) {
-          if (!(await Helpers.questionYesNo(`Try again this command ?`))) {
+            true,
+            true,
+          );
+          if (askToTryAgainOnError) {
+            if (!(await Helpers.questionYesNo(`Try again this command ?`))) {
+              throw error;
+            }
+          } else {
             throw error;
           }
-        } else {
-          throw error;
         }
       }
+    };
+    //#endregion
+
+    // import { debounceTime, switchMap, tap } from 'rxjs/operators';
+    // import { from } from 'rxjs';
+
+    if (rebuildOnChange) {
+      askToTryAgainOnError = false;
+      command = command.replace('--watch', '').replace('-w', '');
+      Helpers.log(`Executing command: ${command}
+
+        in kill/watch mode...`);
+      // let isRestarting = false;
+
+      const killCurrent = async () => {
+        if (childProcess?.pid) {
+          const child = childProcess;
+          childProcess = undefined;
+          try {
+            process.kill(-child.pid, 'SIGKILL');
+          } catch {}
+        }
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        let isFirstRun = true;
+        rebuildOnChange
+          .pipe(
+            startWith(null),
+            debounceTime(3000),
+
+            tap(() => {
+              // optional log
+              Helpers.logInfo(`Rebuild triggered...`);
+              Helpers.log(command);
+            }),
+
+            switchMap(() => {
+              return from(
+                (async () => {
+                  if (isFirstRun) {
+                    isFirstRun = false;
+                  } else {
+                    await killCurrent();
+                  }
+                  childProcess = child_process.exec(command, {
+                    cwd,
+                    env,
+                    maxBuffer,
+                  });
+                  onChildProcessChange && onChildProcessChange(childProcess);
+                  await handlProc(childProcess, true);
+                  stdoutResolvePromiseMsgCallback?.();
+                  stderResolvePromiseMsgCallback?.();
+                  if (childProcess) {
+                    Helpers.log(`Next step.. ${command}`);
+                    resolve();
+                  } else {
+                    Helpers.log(`Skipping after kill.. ${command}`);
+                  }
+                })(),
+              );
+            }),
+          )
+          .subscribe();
+      });
+    } else {
+      await consoleProcess();
     }
+
     //#endregion
   };
   //#endregion
