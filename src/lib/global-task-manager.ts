@@ -61,23 +61,23 @@ export class GlobalTaskManagerClass {
 
       `);
 
-    if (task.successActions < 2) {
-      doneCallback && doneCallback();
-    } else {
-      //#region @backend
-      const iconPath = crossPlatformPath([
-        UtilsOs.getRealHomeDir(),
-        '.taon/taon-containers/logo.png',
-      ]);
-      UtilsOs.sendNotification({
-        title: `[TAON][TASK] ${name}`,
-        body: `Success actions: ${task.successActions}`,
-        iconPath: fse.existsSync(iconPath) ? iconPath : void 0,
-        timeoutMs: 4000,
-        doneCallback,
-      });
-      //#endregion
-    }
+    // if (task.successActions < 2) {
+    //   doneCallback && doneCallback();
+    // } else {
+    //#region @backend
+    const iconPath = crossPlatformPath([
+      UtilsOs.getRealHomeDir(),
+      '.taon/taon-containers/logo.png',
+    ]);
+    UtilsOs.sendNotification({
+      title: `[TAON][TASK] ${name}`,
+      body: `Success actions: ${task.successActions}`,
+      iconPath: fse.existsSync(iconPath) ? iconPath : void 0,
+      timeoutMs: 4000,
+      doneCallback,
+    });
+    //#endregion
+    // }
   }
 
   get(name: string): TaskStats {
