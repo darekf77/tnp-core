@@ -1034,7 +1034,7 @@ export namespace UtilsOs {
   }
   //#endregion
 
-  //#region send notification
+  //#region utils os / send notification
   export const sendNotification = async (opt: {
     title: string;
     body: string;
@@ -1044,6 +1044,7 @@ export namespace UtilsOs {
     timeoutMs?: number;
     doneCallback?: () => any;
   }) => {
+    //#region prepare  variables
     const platform = os.platform();
     const defaultTimeoutMs = 3000;
 
@@ -1056,6 +1057,7 @@ ${opt.appName ?? 'App'} / ${opt.title}
 ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
 
 `;
+    //#endregion
 
     //#region @browser
     UtilsOs.drawLine();
@@ -1076,7 +1078,7 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
 
     try {
       // 👉 Windows / macOS
-      if (platform === 'win32' || platform === 'darwin') {
+      if (platform === 'win32') {
         await new Promise<void>(resolve => {
           const cfg = {
             title: opt.title,
@@ -1093,6 +1095,39 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
             opt.doneCallback?.();
             resolve();
           });
+        });
+        return;
+      }
+      if (platform === 'darwin') {
+        await new Promise<void>(resolve => {
+          let resolved = false;
+
+          const finish = () => {
+            if (!resolved) {
+              resolved = true;
+              opt.doneCallback?.();
+              resolve();
+            }
+          };
+
+          setTimeout(finish, (opt.timeoutMs ?? defaultTimeoutMs) + 1000);
+          const cfg = {
+            title: opt.title,
+            message: opt.body ?? '',
+            subtitle: opt.subtitle,
+            sound: false,
+            wait: false,
+            timeout: opt.timeoutMs,
+          } as NotificationCenter.Notification;
+          if (opt.iconPath && fse.existsSync(opt.iconPath)) {
+            cfg.icon = opt.iconPath;
+          }
+
+          notifier.notify(cfg, () => {
+            finish();
+          });
+
+          // fallback timeout (guaranteed resolve)
         });
         return;
       }
