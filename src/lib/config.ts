@@ -61,6 +61,17 @@ if (
   );
 }
 
+if (
+  frameworkName === 'tnp' &&
+  /tnp\/\.(tnp|taon)\/npm-lib-and-cli-tool\/local\/[a-zA-Z0-9_-]+$/.test(
+    dirnameForTnp,
+  )
+) {
+  const match = dirnameForTnp.match(
+    /tnp\/\.(tnp|taon)\/npm-lib-and-cli-tool\/local\/[a-zA-Z0-9_-]+$/,
+  )[0];
+  dirnameForTnp = dirnameForTnp.replace(match, 'tnp');
+}
 //#endregion
 //#endregion
 
