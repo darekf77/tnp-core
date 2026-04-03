@@ -712,11 +712,11 @@ export namespace UtilsMessages {
       throw `${executionType} wrapper: "${fn}" is not a function.`;
     }
 
-    Helpers.taskStarted(
+    Helpers.logInfo(
       `${currentDate()} ${executionType}\n "${taskName}" Started..`,
     );
     await fn();
-    Helpers.taskDone(`${currentDate()} ${executionType}\n "${taskName}" Done`);
+    Helpers.logInfo(`${currentDate()} ${executionType}\n "${taskName}" Done`);
     // global?.spinner?.stop();
     //#endregion
   };

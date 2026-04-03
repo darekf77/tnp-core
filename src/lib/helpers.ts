@@ -2482,29 +2482,7 @@ command: ${command}
       useJson5 ? json5.parse(jsonInstring) : JSON.parse(jsonInstring)
     ) as T;
   };
-  export const compilationWrapper = async (
-    fn: () => void,
-    taskName: string = 'Task',
-    executionType:
-      | 'Compilation of'
-      | 'Code execution of'
-      | 'Event:' = 'Compilation of',
-  ) => {
-    //#region @backendFunc
-    // global?.spinner?.start();
-    function currentDate() {
-      return `[${dateformat(new Date(), 'HH:MM:ss')}]`;
-    }
-    if (!fn || !_.isFunction(fn)) {
-      Helpers.error(`${executionType} wrapper: "${fn}" is not a function.`);
-      process.exit(1);
-    }
-    Helpers.log(`${currentDate()} ${executionType} "${taskName}" Started..`);
-    await Helpers.runSyncOrAsync({ functionFn: fn });
-    Helpers.log(`${currentDate()} ${executionType} "${taskName}" Done\u2713`);
-    // global?.spinner?.stop();
-    //#endregion
-  };
+
   export const replaceLinesInFile = (
     absoluteFilePath: string | string[],
     lineReplaceFn: (line: string) => string,
