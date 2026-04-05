@@ -434,10 +434,17 @@ export const notAllowedNames = [
   'websql',
   'compiled',
   'docs',
+  '.vscode',
   'environments',
   'env',
   'projects',
   'plugins',
+  'databases',
+  'routes',
+  'local_release',
+  'solutions',
+  'experiments',
+  '__assets',
   '_',
 ];
 
