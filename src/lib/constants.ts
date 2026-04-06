@@ -413,6 +413,8 @@ export const baseTaonDevProjectsNames = [
 export const notAllowedNames = [
   'copyto',
   'copy',
+  'share',
+  'shared',
   'melt',
   'push',
   'pul',
