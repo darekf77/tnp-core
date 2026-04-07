@@ -3,7 +3,6 @@ import 'reflect-metadata';
 import * as net from 'net';
 import { promisify } from 'util';
 
-import * as notifier from 'node-notifier'; // @backend
 import type NotificationCenter from 'node-notifier/notifiers/notificationcenter';
 
 import { path, _, crossPlatformPath, os, win32Path } from './core-imports';
@@ -1066,6 +1065,7 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
     //#endregion
 
     //#region @backend
+    const notifier = require('node-notifier');
     const hasGui = UtilsOs.isRunningInOsWithGraphicsCapableEnvironment();
 
     // 👉 fallback when NO GUI
