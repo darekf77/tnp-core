@@ -13,6 +13,7 @@ export * from './utils-os';
 export * from './utils-process';
 export * from './utils-process-logger';
 export * from './utils-terminal';
+export * from './lowdb'; // @backend
 
 export * from './core-cli';
 export * from './required-global-npm-packages';
