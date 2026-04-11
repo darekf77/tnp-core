@@ -5,6 +5,7 @@ import { promisify } from 'util';
 
 import type NotificationCenter from 'node-notifier/notifiers/notificationcenter';
 
+import { dockerTemplates, dotTaonFolder, taonContainers } from './constants';
 import { path, _, crossPlatformPath, os, win32Path } from './core-imports';
 import { child_process } from './core-imports';
 import { fse } from './core-imports';
@@ -1174,3 +1175,22 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
   };
   //#endregion
 }
+
+
+let taonRepoPathUserInUserDir: string = '';
+
+//#region @backend
+taonRepoPathUserInUserDir = crossPlatformPath([
+  UtilsOs.getRealHomeDir(),
+  dotTaonFolder,
+  taonContainers,
+]);
+//#endregion
+
+const taonBasePathToGlobalDockerTemplates: string = crossPlatformPath([
+  UtilsOs.getRealHomeDir(),
+  dotTaonFolder,
+  dockerTemplates,
+]);
+
+export { taonRepoPathUserInUserDir, taonBasePathToGlobalDockerTemplates };

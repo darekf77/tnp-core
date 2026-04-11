@@ -1,3 +1,5 @@
+import type * as ora from 'ora';
+
 import type { CoreModels } from './core-models';
 
 export const taonContainers = 'taon-containers';
@@ -463,3 +465,14 @@ export const encoding = 'utf8';
  * output when building multiple projects
  */
 export const taonActionFromParent = 'taon-action-from-parent';
+
+export const globalSpinner = {
+  get instance(): Pick<
+    ora.Ora,
+    'start' | 'text' | 'succeed' | 'stop' | 'fail'
+  > {
+    //#region @backendFunc
+    return global.spinner;
+    //#endregion
+  },
+};

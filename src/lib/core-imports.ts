@@ -18,7 +18,7 @@ const REQUIRE_MAP = {
 export function requireDefault<T>(id: keyof typeof REQUIRE_MAP): T {
   //#region @backendFunc
   const fn = REQUIRE_MAP[id];
-  const m =  fn ? fn(): void 0;
+  const m = fn ? fn() : void 0;
   return m?.default ?? m;
   //#endregion
 }
