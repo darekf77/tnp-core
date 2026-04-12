@@ -17,6 +17,7 @@ export namespace UtilsExecProc {
   //#region utils exec process / exec proc options and class
   interface ExecProcOptions {
     cwd?: string;
+    shell?: boolean | string;
     /**
      * default true
      * true -> good for long outputs
@@ -40,6 +41,7 @@ export namespace UtilsExecProc {
 
   //#region utils exec process / exec proc wait until done or throw
   interface ExecProcWaitUntilDoneOrThrow {
+    shell?: boolean | string;
     /**
      * default [0]
      */
@@ -126,18 +128,18 @@ export namespace UtilsExecProc {
     //#endregion
 
     //#region get output
-    public async getOutput(
-      shell?: any,
-    ): Promise<{ stdout: string; stderr: string }> {
+    public async getOutput(options?: {
+      shell?: boolean | string;
+    }): Promise<{ stdout: string; stderr: string }> {
       //#region @backendFunc
-
+      options = options || ({} as any);
       let stdio: any = 'pipe';
 
       this.child = spawn(this.command, this.args, {
         stdio,
         env: this.env,
         maxBuffer: this.maxBuffer,
-        shell,
+        shell: options.shell ? options.shell : this.execProcOptions.shell,
         cwd: this.execProcOptions.cwd,
       });
 
@@ -178,8 +180,10 @@ export namespace UtilsExecProc {
     //#endregion
 
     //#region get stdout without showing or throw
-    public async getStdoutWithoutShowingOrThrow(): Promise<string> {
-      const { stdout } = await this.getOutput();
+    public async getStdoutWithoutShowingOrThrow(options?: {
+      shell?: boolean | string;
+    }): Promise<string> {
+      const { stdout } = await this.getOutput(options);
       return stdout;
     }
     //#endregion
@@ -211,6 +215,7 @@ export namespace UtilsExecProc {
         stdio,
         env: this.env,
         maxBuffer: this.maxBuffer,
+        shell: options.shell ? options.shell : this.execProcOptions.shell,
         cwd: this.execProcOptions.cwd,
       });
 
@@ -387,7 +392,7 @@ export namespace UtilsExecProc {
       return;
     }
     command = `sudo ${command}`;
-    const res = await spawnAsync(command);
+    const res = await spawnAsync(command, options);
     await res.waitUntilDoneOrThrow();
     //#endregion
   };
@@ -400,12 +405,14 @@ export namespace UtilsExecProc {
   export const executeUntilEndOrThrow = async ({
     command,
     cwd,
+    shell,
   }: {
     command: string;
     cwd: string;
+    shell?: boolean;
   }): Promise<void> => {
     //#region @backendFunc
-    const child = spawnAsync(command, { cwd });
+    const child = spawnAsync(command, { cwd, shell });
     await child.waitUntilDoneOrThrow();
     //#endregion
   };
@@ -415,12 +422,14 @@ export namespace UtilsExecProc {
   export const getStdoutWithoutShowingOrThrow = async ({
     command,
     cwd,
+    shell,
   }: {
     command: string;
     cwd: string;
+    shell?: boolean;
   }): Promise<string> => {
     //#region @backendFunc
-    const child = spawnAsync(command, { cwd });
+    const child = spawnAsync(command, { cwd, shell });
     return await child.getStdoutWithoutShowingOrThrow();
     //#endregion
   };

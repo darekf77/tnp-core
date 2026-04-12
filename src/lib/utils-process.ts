@@ -1145,7 +1145,7 @@ in location: ${cwd}
     try {
       const { stdout } = await UtilsExecProc.spawnAsync(checkCmd, {
         showOutput: false,
-      }).getOutput(shell);
+      }).getOutput({ shell });
       const firstLine = stdout.trim().split(/\r?\n/)[0].trim();
       return firstLine ? crossPlatformPath(firstLine) : null;
     } catch (e) {

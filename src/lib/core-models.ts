@@ -53,6 +53,11 @@ export namespace CoreModels {
   export const InstalationTypeArr = ['-g', '--save', '--save-dev'];
   //#endregion
 
+  export interface NpmPublishOptions {
+    registry?: string;
+    skipQuestionsToUser?: boolean;
+  }
+
   export type ReleaseVersionType = 'major' | 'minor' | 'patch';
 
   export enum ReleaseVersionTypeEnum {
