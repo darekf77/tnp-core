@@ -1174,8 +1174,65 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
     //#endregion
   };
   //#endregion
-}
 
+  //#region utils os / safe exit program clean up fn
+  export function safeExitProgramCleanUp(cleanFn: () => Promise<void> | void) {
+    //#region @backendFunc
+    let isCleaning = false;
+
+    const runCleanup = async (reason: string, exitCode = 0) => {
+      if (isCleaning) return;
+      isCleaning = true;
+
+      try {
+        console.log(`[safeExit] Cleaning up due to: ${reason}`);
+        await cleanFn();
+        console.log('[safeExit] Cleanup done');
+      } catch (err) {
+        console.error('[safeExit] Cleanup error:', err);
+        exitCode = 1;
+      } finally {
+        process.exit(exitCode);
+      }
+    };
+
+    //#region signals (graceful shutdown)
+    process.once('SIGINT', () => runCleanup('SIGINT', 0));
+    process.once('SIGTERM', () => runCleanup('SIGTERM', 0));
+
+    // Windows specific (Ctrl+Break)
+    if (process.platform === 'win32') {
+      process.once('SIGBREAK', () => runCleanup('SIGBREAK', 0));
+    }
+    //#endregion
+
+    //#region errors (crash handling)
+    process.once('uncaughtException', err => {
+      console.error('[safeExit] uncaughtException:', err);
+      runCleanup('uncaughtException', 1);
+    });
+
+    process.once('unhandledRejection', reason => {
+      console.error('[safeExit] unhandledRejection:', reason);
+      runCleanup('unhandledRejection', 1);
+    });
+    //#endregion
+
+    //#region optional: last sync fallback
+    process.once('exit', () => {
+      if (!isCleaning) {
+        try {
+          // only sync-safe things here
+          cleanFn();
+        } catch {}
+      }
+    });
+    //#endregion
+
+    //#endregion
+  }
+  //#endregion
+}
 
 let taonRepoPathUserInUserDir: string = '';
 
