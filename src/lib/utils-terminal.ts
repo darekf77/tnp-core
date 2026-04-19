@@ -1045,4 +1045,121 @@ export namespace UtilsTerminal {
   };
 
   //#endregion
+
+  export async function fetchAndDisplay<DataModel = any>(opt: {
+    fetchFn: () => Promise<DataModel[]>;
+    title: string;
+    refreshEveryMs?: number;
+    requestTimeoutMs?: number;
+    onTimeout?: () => void;
+  }): Promise<void> {
+    //#region @backendFunc
+    const readline = require('readline');
+    const refreshEveryMs = opt.refreshEveryMs ?? 2000;
+    const requestTimeoutMs = opt.requestTimeoutMs ?? 2000;
+
+    let stopped = false;
+    let cleanedUp = false;
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    const cleanup = () => {
+      if (cleanedUp) {
+        return;
+      }
+      cleanedUp = true;
+      stopped = true;
+      rl.removeAllListeners();
+      rl.close();
+    };
+
+    const wait = (ms: number) =>
+      new Promise<void>(resolve => {
+        setTimeout(resolve, ms);
+      });
+
+    const withTimeout = async <T>(
+      promise: Promise<T>,
+      timeoutMs: number,
+    ): Promise<T> => {
+      return new Promise<T>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error(`Request timeout after ${timeoutMs} ms`));
+        }, timeoutMs);
+
+        promise
+          .then(result => {
+            clearTimeout(timeout);
+            resolve(result);
+          })
+          .catch(error => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+      });
+    };
+
+    const clearConsole = () => {
+      process.stdout.write('\x1Bc');
+    };
+
+    console.log(`--- ${opt.title} ---`);
+    console.log('Press Enter to stop...');
+
+    await new Promise<void>(resolve => {
+      rl.once('line', () => {
+        cleanup();
+        resolve();
+      });
+
+      const loop = async () => {
+        while (!stopped) {
+          let models: DataModel[] | null = null;
+          let errorMessage: string | null = null;
+
+          try {
+            models = await withTimeout(opt.fetchFn(), requestTimeoutMs);
+          } catch (error) {
+            models = null;
+            errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+
+            if (errorMessage.includes('timeout')) {
+              opt.onTimeout?.();
+            }
+          }
+
+          if (stopped) {
+            break;
+          }
+
+          clearConsole();
+          console.log(`--- ${opt.title} ---`);
+          console.log('Press Enter to stop...\n');
+
+          if (models === null) {
+            console.log(`Error getting data: ${errorMessage}\n`);
+          } else if (models.length === 0) {
+            console.log('No data\n');
+          } else {
+            console.table(models);
+          }
+
+          let elapsed = 0;
+          while (!stopped && elapsed < refreshEveryMs) {
+            await wait(100);
+            elapsed += 100;
+          }
+        }
+
+        cleanup();
+      };
+
+      void loop();
+    });
+    //#endregion
+  }
 }
