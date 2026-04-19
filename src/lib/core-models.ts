@@ -349,8 +349,12 @@ export namespace CoreModels {
       stderr?: string | string[];
     };
     resolvePromiseMsgCallback?: {
-      stdout?: () => any;
-      stderr?: () => any;
+      stdout?: () => void | Promise<void>;
+      stderr?: () => void | Promise<void>;
+      /**
+       * any std resovle or process exiting (it will await this before exit)
+       */
+      anyStd?: () => void | Promise<void>;
       exitCode?: (exitCode: number) => any;
     };
     prefix?: string;

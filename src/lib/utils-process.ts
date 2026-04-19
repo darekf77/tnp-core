@@ -106,6 +106,7 @@ export namespace UtilsProcess {
       stderr: stderResolvePromiseMsgCallback,
       stdout: stdoutResolvePromiseMsgCallback,
       exitCode: exitCodeResolvePromiseMsgCallback,
+      anyStd: anyStdResolvePromiseMsgCallback,
     } = resolvePromiseMsgCallback || {};
 
     let childProcess: ChildProcess;
@@ -165,6 +166,8 @@ export namespace UtilsProcess {
                 // Helpers.info(`[unitlOutputContains] AAA...`);
                 stdoutResolvePromiseMsgCallback &&
                   stdoutResolvePromiseMsgCallback();
+                anyStdResolvePromiseMsgCallback &&
+                  anyStdResolvePromiseMsgCallback();
                 if (!isResolved) {
                   isResolved = true;
                   resolve(void 0);
@@ -186,6 +189,8 @@ export namespace UtilsProcess {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
                 stdoutResolvePromiseMsgCallback &&
                   stdoutResolvePromiseMsgCallback();
+                anyStdResolvePromiseMsgCallback &&
+                  anyStdResolvePromiseMsgCallback();
                 if (!isResolved) {
                   isResolved = true;
                   if (!skipExitProcessOnError) {
@@ -204,6 +209,9 @@ export namespace UtilsProcess {
 
         proc.on('exit', async code => {
           // console.log(`Command exit code: ${code}`)
+          (await anyStdResolvePromiseMsgCallback) &&
+            anyStdResolvePromiseMsgCallback();
+
           if (hideOutput.acceptAllExitCodeAsSuccess) {
             exitCodeResolvePromiseMsgCallback &&
               exitCodeResolvePromiseMsgCallback(code);
@@ -294,6 +302,9 @@ export namespace UtilsProcess {
                 // Helpers.info(`[unitlOutputContains] Rejected move to next step...`);
                 stderResolvePromiseMsgCallback &&
                   stderResolvePromiseMsgCallback();
+
+                anyStdResolvePromiseMsgCallback &&
+                  anyStdResolvePromiseMsgCallback();
                 if (!isResolved) {
                   isResolved = true;
                   if (!skipExitProcessOnError) {
@@ -421,8 +432,13 @@ in location: ${cwd}
                   });
                   onChildProcessChange && onChildProcessChange(childProcess);
                   await handlProc(childProcess, true);
-                  stdoutResolvePromiseMsgCallback?.();
-                  stderResolvePromiseMsgCallback?.();
+                  stdoutResolvePromiseMsgCallback &&
+                    stdoutResolvePromiseMsgCallback();
+                  stderResolvePromiseMsgCallback &&
+                    stderResolvePromiseMsgCallback();
+                  anyStdResolvePromiseMsgCallback &&
+                    anyStdResolvePromiseMsgCallback();
+
                   if (childProcess) {
                     Helpers.log(`Next step.. ${command}`);
                     resolve();
