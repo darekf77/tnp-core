@@ -53,6 +53,7 @@ export namespace CoreModels {
   export const InstalationTypeArr = ['-g', '--save', '--save-dev'];
   //#endregion
 
+  //#region npm models
   export interface NpmPublishOptions {
     registry?: string;
     skipQuestionsToUser?: boolean;
@@ -75,6 +76,7 @@ export namespace CoreModels {
     'rc',
     'lts',
   ];
+  //#endregion
 
   //#region progress data type
   export type PROGRESS_DATA_TYPE = 'info' | 'error' | 'warning' | 'event';
@@ -180,8 +182,10 @@ export namespace CoreModels {
   export type UIFramework = 'bootstrap' | 'material' | 'ionic';
   //#endregion
 
+  //#region git connection models
   export type GitConnection = 'https' | 'ssh';
   export const GitConnectionArr = ['https', 'ssh'] as GitConnection[];
+  //#endregion
 
   //#region framework version
   export type FrameworkVersion =
@@ -229,10 +233,13 @@ export namespace CoreModels {
     | CutableFileExt;
   //#endregion
 
+  //#region http status codes
   /**
+   * @deprecated
    * known http code
    */
   export type HttpCode = 200 | 400 | 401 | 404 | 500;
+  //#endregion
 
   //#region http method
   export type HttpMethod =
@@ -605,6 +612,15 @@ export namespace CoreModels {
   }
   //#endregion
 
+  //#region build type
+  /**
+   * 3 base build types for taon
+   */
+  export type BuildType = 'browser' | 'websql' | 'backend';
+  export const BuildTypeArr: BuildType[] = ['browser', 'websql', 'backend'];
+  //#endregion
+
+  //#region cfont style
   export type CfontStyle =
     | 'block'
     | 'slick'
@@ -620,7 +636,9 @@ export namespace CoreModels {
     | 'huge';
 
   export type CfontAlign = 'left' | 'center' | 'right' | 'block';
+  //#endregion
 
+  //#region constants
   export const tagForTaskName = '@updateValueWithPortNumForTaskName';
 
   /**
@@ -650,4 +668,5 @@ export namespace CoreModels {
    * Absolute path to project parent;
    */
   export const parentLocation = 'parent-location';
+  //#endregion
 }
