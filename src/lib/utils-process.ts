@@ -408,13 +408,11 @@ in location: ${cwd}
         let isFirstRun = true;
         rebuildOnChange
           .pipe(
-            startWith(null),
             debounceTime(3000),
 
             tap(() => {
-              // optional log
               Helpers.logInfo(`Rebuild triggered...`);
-              Helpers.log(command);
+
             }),
 
             switchMap(() => {
@@ -425,6 +423,9 @@ in location: ${cwd}
                   } else {
                     await killCurrent();
                   }
+
+                  Helpers.logInfo(`Rebuilding command:  ${command}`);
+
                   childProcess = child_process.exec(command, {
                     cwd,
                     env,
@@ -440,16 +441,18 @@ in location: ${cwd}
                     anyStdResolvePromiseMsgCallback();
 
                   if (childProcess) {
-                    Helpers.log(`Next step.. ${command}`);
+                    Helpers.logInfo(`Next step.. ${command}`);
                     resolve();
                   } else {
-                    Helpers.log(`Skipping after kill.. ${command}`);
+                    Helpers.logInfo(`Skipping after kill.. ${command}`);
                   }
                 })(),
               );
             }),
           )
-          .subscribe();
+          .subscribe(()=> {
+            // TODO @LAST fix when multiple subscribers
+          });
       });
     } else {
       await consoleProcess();
