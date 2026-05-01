@@ -71,7 +71,7 @@ export namespace UtilsTerminal {
     },
   ): Promise<void> => {
     //#region @backendFunc
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve, reject) => {
       options = options || {};
       const stdin = process.stdin;
 
@@ -82,7 +82,12 @@ export namespace UtilsTerminal {
       }
       let stoping = false;
 
-      const onKeyPress = async () => {
+      const onKeyPress = async data => {
+        if (data.length === 1 && data[0] === 3) {
+          reject(new Error('Interrupted (Ctrl+C)'));
+          return;
+        }
+
         if (!options?.triggerActionEveryKeypress) {
           if (stoping) {
             return;
