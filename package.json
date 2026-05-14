@@ -1,6 +1,6 @@
 {
   "name": "tnp-core",
-  "version": "21.0.125",
+  "version": "21.0.126",
   "scripts": {
     "mkdocs": "python3 -m mkdocs",
     "taon init": "taon init",
@@ -453,5 +453,9 @@
     "@parcel/watcher-linux-x64-glibc": "2.5.1",
     "@parcel/watcher-win32-x64-msvc": "2.5.1"
   },
-  "bin": {}
+  "bin": {
+    "tnp-core": "bin/tnp-core",
+    "tnp-core-debug": "bin/tnp-core-debug",
+    "tnp-core-debug-brk": "bin/tnp-core-debug-brk"
+  }
 }

@@ -366,7 +366,7 @@ export namespace CoreModels {
     };
     prefix?: string;
     detach?: boolean;
-    rebuildOnChange?: Observable<{}>;
+    rebuildOnChange?: Observable<any>;
     /**
      * Try command again after fail after n miliseconds
      */
@@ -612,12 +612,58 @@ export namespace CoreModels {
   }
   //#endregion
 
+  export type BuildWatcherType =
+    | 'browser-watcher'
+    | 'websql-watcher'
+    | 'backend-watcher';
+
+  export type BuildWatcherErrorType = `${BuildWatcherType}-error`;
+
+  export const BuildWatcherTypeArr = [
+    'browser-watcher',
+    'websql-watcher',
+    'backend-watcher',
+  ] as BuildWatcherType[];
+
+  export const buildTypeToWatcherFn = (
+    buildType: BuildType,
+  ): BuildWatcherType | undefined => {
+    if (
+      (
+        ['backend-cjs', 'backend-esm', 'backend-js-maps'] as BuildType[]
+      ).includes(buildType)
+    ) {
+      return 'backend-watcher';
+    }
+    if (buildType === 'browser') {
+      return 'browser-watcher';
+    }
+    if (buildType === 'websql') {
+      return 'websql-watcher';
+    }
+  };
+
   //#region build type
   /**
    * 3 base build types for taon
    */
-  export type BuildType = 'browser' | 'websql' | 'backend';
-  export const BuildTypeArr: BuildType[] = ['browser', 'websql', 'backend'];
+  export type BuildType =
+    // | 'isomorphic' not needed for now - code change enought
+    | 'browser'
+    | 'websql'
+    | 'backend-js-maps'
+    | 'backend-esm'
+    | 'backend-cjs'
+    // | 'copy-manager'; not needed for now - debounce enought
+  export const BuildTypeArr: BuildType[] = [
+    // 'isomorphic',
+    'backend-cjs',
+    'backend-esm',
+    'backend-js-maps',
+    'browser',
+    'websql',
+    // 'copy-manager',
+  ];
   //#endregion
 
   //#region cfont style

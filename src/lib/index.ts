@@ -13,6 +13,8 @@ export * from './utils-os';
 export * from './utils-process';
 export * from './utils-process-logger';
 export * from './utils-terminal';
+export * from './utils-wait-notifier';
+export * from './utils-projects';
 export * from './lowdb'; // @backend
 
 export * from './core-cli';
@@ -23,3 +25,4 @@ export * from './global-task-manager';
 export * from './config';
 export * from './constants';
 export * from './taon-stripe-cloudflare-worker';
+export * from './start-cli'; // @backend

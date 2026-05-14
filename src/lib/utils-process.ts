@@ -6,7 +6,7 @@ import { promisify } from 'util';
 import { debounceTime, EMPTY, from, startWith, switchMap, tap } from 'rxjs';
 
 import { encoding } from './constants';
-import { _, crossPlatformPath, fse, os, path } from './core-imports';
+import { _, chalk, crossPlatformPath, fse, os, path } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { CoreModels } from './core-models';
 import { Helpers } from './helpers';
@@ -69,7 +69,7 @@ export namespace UtilsProcess {
   }
   //#endregion
 
-  //#region utils process  / TODO start async
+  //#region utils process  / start async
   /**
    * TODO IMPLEMENT
    * start async node process
@@ -129,6 +129,7 @@ export namespace UtilsProcess {
 
     //#endregion
 
+    //#region handle process
     const handlProc = (proc: ChildProcess, skipExitProcessOnError = false) => {
       return new Promise((resolve, reject) => {
         //#region handle stdout data
@@ -193,8 +194,8 @@ export namespace UtilsProcess {
                   anyStdResolvePromiseMsgCallback();
                 if (!isResolved) {
                   isResolved = true;
+                  reject();
                   if (!skipExitProcessOnError) {
-                    reject();
                     proc.kill('SIGINT');
                   }
                 }
@@ -218,7 +219,9 @@ export namespace UtilsProcess {
             resolve(void 0);
           } else {
             if (code !== 0) {
-              if (!skipExitProcessOnError) {
+              if (skipExitProcessOnError) {
+                reject(`Command failed with code=${code}`);
+              } else {
                 if (_.isFunction(exitOnErrorCallback)) {
                   try {
                     await exitOnErrorCallback(code as any);
@@ -307,8 +310,8 @@ export namespace UtilsProcess {
                   anyStdResolvePromiseMsgCallback();
                 if (!isResolved) {
                   isResolved = true;
+                  reject();
                   if (!skipExitProcessOnError) {
-                    reject();
                     proc.kill('SIGINT');
                   }
                 }
@@ -344,15 +347,18 @@ export namespace UtilsProcess {
         //#endregion
       });
     };
+    //#endregion
 
+    //#region prepare env
     const maxBuffer = options?.biggerBuffer ? Helpers.bigMaxBuffer : void 0;
     let env = { ...process.env, FORCE_COLOR: '1', NODE_ENV: 'development' };
     if (options.env) {
       env = { ...env, ...options.env };
     }
+    //#endregion
 
     //#region console process
-    const consoleProcess = async () => {
+    const terminalProcess = async () => {
       while (true) {
         childProcess = child_process.exec(command, { cwd, env, maxBuffer });
         onChildProcessChange && onChildProcessChange(childProcess);
@@ -383,76 +389,118 @@ in location: ${cwd}
     };
     //#endregion
 
-    // import { debounceTime, switchMap, tap } from 'rxjs/operators';
-    // import { from } from 'rxjs';
+    // console.log('rebuild on change', rebuildOnChange);
 
-    if (rebuildOnChange) {
+    if (!_.isNil(rebuildOnChange)) {
       askToTryAgainOnError = false;
       command = command.replace('--watch', '').replace('-w', '');
       Helpers.log(`Executing command: ${command}
 
         in kill/watch mode...`);
-      // let isRestarting = false;
 
+      //#region kill current
       const killCurrent = async () => {
         if (childProcess?.pid) {
+          // Helpers.logInfo('Killing current');
           const child = childProcess;
           childProcess = undefined;
           try {
             process.kill(-child.pid, 'SIGKILL');
-          } catch {}
+          } catch (er) {
+            // console.log('error during killing child proc');
+            // console.error(er)
+          }
+        } else {
+          // Helpers.logInfo('Not killing current');
         }
       };
+      //#endregion
 
       await new Promise<void>((resolve, reject) => {
         let isFirstRun = true;
-        rebuildOnChange
-          .pipe(
-            startWith(null),
-            debounceTime(3000),
+        let firstNormalBuildDone = false;
+        let newChangesDuringBuild = false;
+        let isBuilding = false;
 
-            tap(() => {
-              // optional log
-              Helpers.logInfo(`Rebuild triggered...`);
-              Helpers.log(command);
-            }),
+        const rebuildNormal = async () => {
+          isBuilding = true;
+          let wasNewChangeDuringBuild = false;
 
-            switchMap(() => {
-              return from(
-                (async () => {
-                  if (isFirstRun) {
-                    isFirstRun = false;
-                  } else {
-                    await killCurrent();
-                  }
-                  childProcess = child_process.exec(command, {
-                    cwd,
-                    env,
-                    maxBuffer,
-                  });
-                  onChildProcessChange && onChildProcessChange(childProcess);
-                  await handlProc(childProcess, true);
-                  stdoutResolvePromiseMsgCallback &&
-                    stdoutResolvePromiseMsgCallback();
-                  stderResolvePromiseMsgCallback &&
-                    stderResolvePromiseMsgCallback();
-                  anyStdResolvePromiseMsgCallback &&
-                    anyStdResolvePromiseMsgCallback();
+          while (true) {
+            let wasFirstRun = isFirstRun;
+            if (isFirstRun) {
+              isFirstRun = false;
+            } else {
+              await killCurrent();
+            }
 
-                  if (childProcess) {
-                    Helpers.log(`Next step.. ${command}`);
-                    resolve();
-                  } else {
-                    Helpers.log(`Skipping after kill.. ${command}`);
-                  }
-                })(),
+            Helpers.logInfo(
+              `Rebuilding ${wasFirstRun ? '(first time)' : '(again)'}` +
+                ` ${wasNewChangeDuringBuild ? '(new changes)' : '(normal)'}` +
+                ` command:  ${command.slice(0, 50)}`,
+            );
+
+            childProcess = child_process.exec(command, {
+              cwd,
+              env,
+              maxBuffer,
+            });
+            onChildProcessChange && onChildProcessChange(childProcess);
+
+            const buildDone = () => {
+              stdoutResolvePromiseMsgCallback &&
+                stdoutResolvePromiseMsgCallback();
+              stderResolvePromiseMsgCallback &&
+                stderResolvePromiseMsgCallback();
+              anyStdResolvePromiseMsgCallback &&
+                anyStdResolvePromiseMsgCallback();
+              Helpers.logInfo(
+                chalk.green(`Next step.. ${command.slice(0, 50)}(...)`),
               );
-            }),
-          )
-          .subscribe();
+              if (!firstNormalBuildDone) {
+                firstNormalBuildDone = true;
+              }
+              resolve();
+            };
+
+            try {
+              await handlProc(childProcess, true);
+              buildDone();
+            } catch (error) {
+              console.error(chalk.bold(`Error during ${command}`));
+            }
+
+            if (newChangesDuringBuild) {
+              newChangesDuringBuild = false;
+              wasNewChangeDuringBuild = true;
+              continue;
+            }
+            isBuilding = false;
+            break;
+          }
+        };
+
+        const rebuildDebounce = _.debounce(async () => {
+          await rebuildNormal();
+        }, 2000);
+        rebuildOnChange.subscribe(() => {
+          // console.log(`Subscriber evnet! ${command}`);
+          if (isBuilding) {
+            newChangesDuringBuild = true;
+          }
+          if (isFirstRun) {
+            // console.log('Trigger normal rebuild');
+            rebuildNormal();
+          } else {
+            if (!newChangesDuringBuild && firstNormalBuildDone) {
+              // console.log('Trigger debounce rebuild');
+              rebuildDebounce();
+            }
+          }
+        });
       });
     } else {
-      await consoleProcess();
+      await terminalProcess();
     }
 
     //#endregion
