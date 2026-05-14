@@ -1044,9 +1044,16 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
-  //#region utils terminal / draw line
-  export const drawLine = (col = 0) => {
-    UtilsOs.drawLine(col);
+  //#region utils terminal / draw vertical line
+  export const drawVerticalLine = (col = 0) => {
+    UtilsOs.drawVerticalLine(col);
+  };
+
+  //#endregion
+
+   //#region utils terminal / draw horiontal line
+  export const drawHorizontalLine = (col = 0) => {
+    UtilsOs.drawHorizontalLine(col);
   };
 
   //#endregion

@@ -959,8 +959,24 @@ export namespace UtilsOs {
   };
   //#endregion
 
-  //#region utils terminal / draw line
-  export const drawLine = (col = 0) => {
+   //#region utils terminal / draw horizontal line
+  export const drawHorizontalLine = (row = 0) => {
+    //#region @browser
+    const widthBrowserConsole = row || 80;
+
+    console.log('-'.repeat(widthBrowserConsole));
+    //#endregion
+
+    //#region @backend
+    const width = row || process.stdout.columns || 80;
+
+    console.log('-'.repeat(width));
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils terminal / draw vertical line
+  export const drawVerticalLine = (col = 0) => {
     //#region @browser
     const heightBrowserConsole = 20;
 
@@ -1060,9 +1076,9 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
     //#endregion
 
     //#region @browser
-    UtilsOs.drawLine();
+    UtilsOs.drawVerticalLine();
     console.log(consoleNotification);
-    UtilsOs.drawLine();
+    UtilsOs.drawVerticalLine();
     //#endregion
 
     //#region @backend
@@ -1071,9 +1087,9 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
 
     // 👉 fallback when NO GUI
     if (!hasGui) {
-      UtilsOs.drawLine();
+      UtilsOs.drawVerticalLine();
       console.log(consoleNotification);
-      UtilsOs.drawLine();
+      UtilsOs.drawVerticalLine();
       return;
     }
 
@@ -1167,9 +1183,9 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
       console.log('notification error', e);
 
       // 👉 safe fallback
-      UtilsOs.drawLine();
+      UtilsOs.drawVerticalLine();
       console.log(consoleNotification);
-      UtilsOs.drawLine();
+      UtilsOs.drawVerticalLine();
     }
     //#endregion
   };
