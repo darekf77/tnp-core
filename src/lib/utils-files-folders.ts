@@ -165,6 +165,7 @@ export namespace UtilsFilesFoldersSync {
         `[taon-core] Trying to write file content into directory:
         ${absoluteFilePath}
         `,
+        false,
       );
       return false;
     }
@@ -419,6 +420,38 @@ export namespace UtilsFilesFoldersSync {
 
   //#endregion
 
+  export const copyFolder = (
+    sourceDir: string | string[],
+    destinationDir: string | string[],
+    options?: {
+      filter?: CopyOptionsSync['filter'];
+      copySymlinksAsFiles?: boolean;
+    },
+  ): void => {
+    //#region @backendFunc
+    options = options || {};
+    if (_.isArray(sourceDir)) {
+      sourceDir = crossPlatformPath(sourceDir);
+    }
+    if (_.isArray(destinationDir)) {
+      destinationDir = crossPlatformPath(destinationDir);
+    }
+
+    if (options.copySymlinksAsFiles) {
+      options['dereference'] = true;
+    }
+
+    if (!fse.existsSync(sourceDir)) {
+      Helpers.warn(
+        `[taon-helper][copyFolder] Source dir doesnt exist: ${sourceDir} for destination: ${destinationDir}`,
+      );
+      return;
+    }
+
+    fse.copySync(sourceDir, destinationDir, options);
+    //#endregion
+  };
+
   //#region utils files folders sync / copy
   export const copy = (
     sourceDir: string | string[],
@@ -618,7 +651,12 @@ export namespace UtilsFilesFoldersSync {
               const exitOnError = global['tnpNonInteractive'];
               Helpers.log(error);
               if (!options!.dontAskOnError) {
-                console.trace(`[taon-helper] Not able to copy folder`);
+                console.trace(`[taon-helper] Not able to copy folder
+
+source: ${sourceDir}
+dest: ${destinationDir}
+
+                  `);
                 Helpers.error(
                   `[taon-helper] Not able to copy folder:
                 from: ${crossPlatformPath(sourceDir)}
