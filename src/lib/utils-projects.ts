@@ -57,6 +57,284 @@ export namespace UtilsProjects {
   //#endregion
 
   //#region fields & getters / sort group of projects
+  /**
+   * Sorts Taon projects using their dependency graph.
+   *
+   * This function has 3 main modes:
+   *
+   * ============================================================================
+   * 1. STANDARD MODE
+   * ============================================================================
+   *
+   * Sort all projects in normal dependency build order.
+   *
+   * Meaning:
+   *
+   *   If:
+   *
+   *     app  depends on ui
+   *     ui   depends on core
+   *     core depends on nothing
+   *
+   *   Then build order is:
+   *
+   *     core -> ui -> app
+   *
+   * Example:
+   *
+   *   Projects:
+   *
+   *     not-related
+   *     core
+   *     ui   -> core
+   *     app  -> ui
+   *
+   *   Result:
+   *
+   *     [
+   *       'not-related',
+   *       'core',
+   *       'ui',
+   *       'app',
+   *     ]
+   *
+   * Graph:
+   *
+   *     core
+   *       |
+   *       v
+   *      ui
+   *       |
+   *       v
+   *      app
+   *
+   *   Build direction:
+   *
+   *     core ---> ui ---> app
+   *
+   * Usage:
+   *
+   *   sortGroupOfProject({
+   *     projects,
+   *     resoveDepsArray: p => p.dependencies,
+   *     projNameToCompare: p => p.name,
+   *   });
+   *
+   *
+   * ============================================================================
+   * 2. onlyDepsForProject MODE
+   * ============================================================================
+   *
+   * Returns selected project plus its dependency chain.
+   *
+   * This answers the question:
+   *
+   *   "What does this project need before it can be built?"
+   *
+   * Example:
+   *
+   *   app depends on ui
+   *   ui  depends on core
+   *
+   *   onlyDepsForProject: 'app'
+   *
+   * Result:
+   *
+   *   [
+   *     'app',
+   *     'ui',
+   *     'core',
+   *   ]
+   *
+   * Graph:
+   *
+   *      app
+   *       |
+   *       v
+   *      ui
+   *       |
+   *       v
+   *     core
+   *
+   * Read as:
+   *
+   *   app needs ui
+   *   ui needs core
+   *
+   * This mode walks backwards through dependencies.
+   *
+   * Possible usage:
+   *
+   *   - debugging project dependency chain
+   *   - checking what project depends on directly/indirectly
+   *   - maybe useful before creating a build plan
+   *
+   * NOTE:
+   *
+   *   This mode may not be needed for Taon watch rebuilds.
+   *   For leader builds, `onlyAffectedByProject` is usually more useful.
+   *
+   * Usage:
+   *
+   *   sortGroupOfProject({
+   *     projects,
+   *     resoveDepsArray: p => p.dependencies,
+   *     projNameToCompare: p => p.name,
+   *     onlyDepsForProject: 'app',
+   *   });
+   *
+   *
+   * ============================================================================
+   * 3. onlyAffectedByProject MODE
+   * ============================================================================
+   *
+   * Returns selected project plus all projects that are affected by it.
+   *
+   * This answers the question:
+   *
+   *   "Project X changed. What active projects must be rebuilt?"
+   *
+   * Example:
+   *
+   *   app depends on ui
+   *   ui  depends on core
+   *
+   *   onlyAffectedByProject: 'core'
+   *
+   * Result:
+   *
+   *   [
+   *     'core',
+   *     'ui',
+   *     'app',
+   *   ]
+   *
+   * Graph:
+   *
+   *     core
+   *       |
+   *       v
+   *      ui
+   *       |
+   *       v
+   *      app
+   *
+   * Read as:
+   *
+   *   core changed
+   *   therefore ui is affected
+   *   therefore app is affected
+   *
+   * This mode walks forward through dependents.
+   *
+   * This is the most important mode for Taon lightweight watch.
+   *
+   * Leader build flow:
+   *
+   *   1. User changes file in project X.
+   *   2. Current build session is canceled.
+   *   3. Worker calculates projects affected by X.
+   *   4. Worker returns ordered build plan.
+   *   5. Last changed project becomes build leader.
+   *   6. Build leader executes projects one by one.
+   *
+   * Example:
+   *
+   *   Changed project:
+   *
+   *     core
+   *
+   *   Active projects:
+   *
+   *     core
+   *     ui
+   *     app
+   *     not-related
+   *
+   *   Dependency graph:
+   *
+   *     core ---> ui ---> app
+   *
+   *     not-related
+   *
+   *   onlyAffectedByProject: 'core'
+   *
+   *   Build plan:
+   *
+   *     [
+   *       'core',
+   *       'ui',
+   *       'app',
+   *     ]
+   *
+   *   not-related is skipped because it does not depend on core.
+   *
+   * Usage:
+   *
+   *   sortGroupOfProject({
+   *     projects,
+   *     resoveDepsArray: p => p.dependencies,
+   *     projNameToCompare: p => p.name,
+   *     onlyAffectedByProject: 'core',
+   *   });
+   *
+   *
+   * ============================================================================
+   * Extra behavior
+   * ============================================================================
+   *
+   * Circular dependencies:
+   *
+   *   The function detects cycles.
+   *
+   *   Example:
+   *
+   *     a -> b -> c -> a
+   *
+   *   This throws:
+   *
+   *     Circular dependency detected involving project: <project>
+   *
+   *
+   * Duplicate project names:
+   *
+   *   Dependencies are resolved by logical project/package name:
+   *
+   *     projNameToCompare(project)
+   *
+   *   But project identity can be resolved by unique key:
+   *
+   *     projUniqueKeyToCompare(project)
+   *
+   *   This is useful when multiple active projects have the same package name
+   *   but different location, port, or runtime context.
+   *
+   *
+   * Override order:
+   *
+   *   overridePackagesOrder can be used for special/hacky cases where some
+   *   projects must be moved manually inside the sorted result.
+   *
+   *
+   * Mental model:
+   *
+   *   Standard mode:
+   *
+   *     dependencies first
+   *
+   *   onlyDepsForProject:
+   *
+   *     "what do I need?"
+   *
+   *   onlyAffectedByProject:
+   *
+   *     "who needs me?"
+   *
+   *
+   * Best Taon watcher usage:
+   *
+   *   Use `onlyAffectedByProject` for leader build plans.
+   */
   export const sortGroupOfProject = <T extends OrderAbleProject>(options: {
     /**
      * Projects that needs to be sorted by dependencies
