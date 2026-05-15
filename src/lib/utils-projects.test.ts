@@ -4,6 +4,8 @@ import { UtilsProjects } from './utils-projects';
 import { isObject } from 'lodash-es';
 
 describe('Utils Projects.sortGroupOfProject', () => {
+
+  //#region example data
   class Proj implements UtilsProjects.OrderAbleProject {
     static from(obj: Partial<Proj>) {
       const proj = new Proj();
@@ -44,6 +46,7 @@ describe('Utils Projects.sortGroupOfProject', () => {
       dependencies: ['ui'],
     }),
   ];
+  //#endregion
 
   //#region should sort projects in proper dependency order
   it('should sort', () => {
@@ -193,7 +196,7 @@ describe('Utils Projects.sortGroupOfProject', () => {
   });
   //#endregion
 
-  //#region shold sort ng talkback
+  //#region shold sort ng talkback case
 
   it('shold sort ng talkback', () => {
     class ProjectBuildNotificaiton extends TaonBaseClass {
@@ -286,4 +289,59 @@ describe('Utils Projects.sortGroupOfProject', () => {
 
     expect(sortedReplayRecord).toEqual(['record-replay-req-res-scenario']);
   });
+
+  //#endregion
+
+  //#region should sort projects affected by multiple project
+  it('should sort projects affected by multiple projects', () => {
+    const projects: Proj[] = [
+      Proj.from({ name: 'core', location: '/core', port: 1, dependencies: [] }),
+      Proj.from({
+        name: 'ui',
+        location: '/ui',
+        port: 2,
+        dependencies: ['core'],
+      }),
+      Proj.from({
+        name: 'api',
+        location: '/api',
+        port: 3,
+        dependencies: ['core'],
+      }),
+      Proj.from({
+        name: 'app',
+        location: '/app',
+        port: 4,
+        dependencies: ['ui', 'api'],
+      }),
+      Proj.from({
+        name: 'utils',
+        location: '/utils',
+        port: 5,
+        dependencies: [],
+      }),
+      Proj.from({
+        name: 'admin',
+        location: '/admin',
+        port: 6,
+        dependencies: ['utils'],
+      }),
+      Proj.from({
+        name: 'not-related',
+        location: '/x',
+        port: 7,
+        dependencies: [],
+      }),
+    ];
+
+    const sorted = UtilsProjects.sortGroupOfProject<Proj>({
+      projects,
+      resoveDepsArray: proj => proj.dependencies || [],
+      projNameToCompare: proj => proj.name,
+      onlyAffectedByProject: ['core', 'utils'],
+    }).map(c => c.name);
+
+    expect(sorted).toEqual(['core', 'ui', 'api', 'app', 'utils', 'admin']);
+  });
+  //#endregion
 });

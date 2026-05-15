@@ -376,7 +376,7 @@ export namespace UtilsProjects {
      * result:
      * ['core', 'ui', 'app']
      */
-    onlyAffectedByProject?: string;
+    onlyAffectedByProject?: string | string[];
   }): T[] => {
     let {
       projects,
@@ -432,6 +432,10 @@ export namespace UtilsProjects {
     };
 
     if (options.onlyAffectedByProject) {
+      const rootNames = Array.isArray(options.onlyAffectedByProject)
+        ? options.onlyAffectedByProject
+        : [options.onlyAffectedByProject];
+
       const affectedNames = new Set<string>();
 
       const collectAffected = (projectName: string) => {
@@ -451,7 +455,10 @@ export namespace UtilsProjects {
         });
       };
 
-      collectAffected(options.onlyAffectedByProject);
+      rootNames
+        .map(name => name?.trim())
+        .filter(Boolean)
+        .forEach(projectName => collectAffected(projectName));
 
       const affectedProjects = projects.filter(project =>
         affectedNames.has(projNameToCompare(project)),
