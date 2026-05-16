@@ -15,6 +15,7 @@ export * from './utils-process-logger';
 export * from './utils-terminal';
 export * from './utils-wait-notifier';
 export * from './utils-projects';
+export * from './utils-start-async';
 export * from './lowdb'; // @backend
 
 export * from './core-cli';

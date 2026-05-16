@@ -8,6 +8,7 @@ import { chokidar, crossPlatformPath } from './core-imports';
 import { Utils } from './utils';
 import { UtilsProcess } from './utils-process';
 import { UtilsTerminal } from './utils-terminal';
+import { startAsync } from './utils-start-async';
 
 // class $Version extends BaseCommandLineFeature<{}> {
 //   public _() {
@@ -73,11 +74,11 @@ export async function startCli(
     //   // rebuildOnChange.next({});
     // });
 
-    UtilsProcess.startAsync('tnp-core show hello1', process.cwd(), {
+    startAsync('tnp-core show hello1', process.cwd(), {
       rebuildOnChange,
     });
 
-    UtilsProcess.startAsync('tnp-core show hello2', process.cwd(), {
+    startAsync('tnp-core show hello2', process.cwd(), {
       rebuildOnChange,
     });
 

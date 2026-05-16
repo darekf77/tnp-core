@@ -340,72 +340,11 @@ export namespace CoreModels {
   }
   //#endregion
 
-  //#region execute options process
-  /**
-   * @deprecated
-   */
-  export interface ExecuteOptions {
-    /** Extract string from line */
-    extractFromLine?: (string | Function)[];
-    /**
-     * Modify output line by line
-     */
-    outputLineReplace?: (outputLine: string) => string;
-    resolvePromiseMsg?: {
-      stdout?: string | string[];
-      stderr?: string | string[];
-    };
-    resolvePromiseMsgCallback?: {
-      stdout?: () => void | Promise<void>;
-      stderr?: () => void | Promise<void>;
-      /**
-       * any std resovle or process exiting (it will await this before exit)
-       */
-      anyStd?: () => void | Promise<void>;
-      exitCode?: (exitCode: number) => any;
-    };
-    prefix?: string;
-    detach?: boolean;
-    rebuildOnChange?: Observable<any>;
-    /**
-     * Try command again after fail after n miliseconds
-     */
-    tryAgainWhenFailAfter?: number;
-    /**
-     *  TODO @LAST implement this
-     *
-     * Output from processe with this key
-     * will not be displayed twice when
-     * 2 processes are running at the same time
-     */
-    similarProcessKey?: string;
-
-    /**
-     * Use big buffer for big webpack logs
-     */
-    biggerBuffer?: boolean;
-    env?: any;
-    askToTryAgainOnError?: boolean;
-    onChildProcessChange?: (childProcess: ChildProcess) => void;
-    exitOnErrorCallback?: (code: number) => void;
-    /**
-     * From displaying in console
-     */
-    hideOutput?: {
-      stdout?: boolean;
-      stderr?: boolean;
-      acceptAllExitCodeAsSuccess?: boolean;
-    };
-    outputBuffer?: string[];
-    outputBufferMaxSize?: number;
-  }
-  //#endregion
-
   //#region run options process
   /**
    * @deprecated
    */
-  export interface RunOptions extends ExecuteOptions {
+  export interface RunOptions {
     showCommand?: boolean;
 
     /**
@@ -418,6 +357,12 @@ export namespace CoreModels {
 
     // detached?: boolean;
     cwd?: string;
+    biggerBuffer?: boolean;
+    tryAgainWhenFailAfter?: boolean;
+    env?: any;
+    detach?: boolean;
+    outputLineReplace?: (outputLineStderOrStdout: string) => string;
+    extractFromLine?: (string | Function)[];
   }
   //#endregion
 
@@ -649,12 +594,8 @@ export namespace CoreModels {
    */
   export type BuildType =
     // | 'isomorphic' not needed for now - code change enought
-    | 'browser'
-    | 'websql'
-    | 'backend-js-maps'
-    | 'backend-esm'
-    | 'backend-cjs'
-    // | 'copy-manager'; not needed for now - debounce enought
+    'browser' | 'websql' | 'backend-js-maps' | 'backend-esm' | 'backend-cjs';
+  // | 'copy-manager'; not needed for now - debounce enought
   export const BuildTypeArr: BuildType[] = [
     // 'isomorphic',
     'backend-cjs',

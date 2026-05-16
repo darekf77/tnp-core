@@ -26,7 +26,7 @@ import { UtilsJson } from './utils';
 import { UtilsFilesFoldersSync } from './utils-files-folders';
 import { UtilsProcess } from './utils-process';
 import { UtilsTerminal } from './utils-terminal';
-
+import { ProcessStartOptions, startAsync } from './utils-start-async';
 import { frameworkName, PROGRESS_DATA, Utils, UtilsOs } from './index';
 //#endregion
 
@@ -369,7 +369,7 @@ export namespace Helpers {
           process?.send(`taskstart::► ${chalk.cyan(details)}`);
         } else {
           if (global.globalSystemToolMode) {
-            console.log('- ' + chalk.cyan(details));
+            console.log('► ' + chalk.cyan(details));
           } else {
             console.log(details);
           }
@@ -397,6 +397,14 @@ export namespace Helpers {
     }
     //#endregion
   };
+
+  export const logTaskStarted = (details: any | string) => {
+    if (global.hideLog && frameworkName === 'taon') {
+      return;
+    }
+    Helpers.taskStarted(details);
+  };
+
   export const taskDone = (details?: any | string, isLessImportant = false) => {
     if (Helpers.getIsBrowser()) {
       console.info(details);
@@ -451,6 +459,14 @@ export namespace Helpers {
     }
     //#endregion
   };
+
+  export const logTaskDone = (details: any | string) => {
+    if (global.hideLog && frameworkName === 'taon') {
+      return;
+    }
+    Helpers.taskDone(details);
+  };
+
   export const getIsVerboseMode = () => {
     //#region @browser
     return true; // TODO what it means in browser
@@ -2274,9 +2290,9 @@ export namespace Helpers {
   export const execute = (
     command: string,
     cwd: string,
-    options?: Omit<CoreModels.ExecuteOptions, 'tryAgainWhenFailAfter'>,
+    options?: ProcessStartOptions,
   ) => {
-    return UtilsProcess.startAsync(command, cwd, options);
+    return startAsync(command, cwd, options);
   };
 
   /**
