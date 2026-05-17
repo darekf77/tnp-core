@@ -46,23 +46,14 @@ const BLOB_SUPPORTED_IN_SQLJS = false;
 export namespace Utils {
   //#region wait
   export const wait = (second: number): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(void 0);
-      }, second * 1000);
-    });
+    return UtilsTime.wait(second);
   };
   //#endregion
 
   //#region wait miliseconds
   export const waitMilliseconds = (milliseconds: number): Promise<void> => {
     // Helpers.taskStarted(`Waiting ${milliseconds} milliseconds...`);
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Helpers.taskDone(`Done waiting ${milliseconds} milliseconds`);
-        resolve(void 0);
-      }, milliseconds);
-    });
+    return UtilsTime.waitMilliseconds(milliseconds);
   };
   //#endregion
 
@@ -676,6 +667,114 @@ export namespace Utils {
   //#endregion
 }
 //#endregion
+
+export namespace UtilsTime {
+  //#region wait
+  export const wait = (second: number): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(void 0);
+      }, second * 1000);
+    });
+  };
+  //#endregion
+
+  //#region wait miliseconds
+  export const waitMilliseconds = (milliseconds: number): Promise<void> => {
+    // Helpers.taskStarted(`Waiting ${milliseconds} milliseconds...`);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Helpers.taskDone(`Done waiting ${milliseconds} milliseconds`);
+        resolve(void 0);
+      }, milliseconds);
+    });
+  };
+  //#endregion
+
+  export interface MeasureOptions {
+    hideLogs?: boolean;
+  }
+
+  export interface ExecutionTimeResult {
+    readonly milliseconds: number;
+    readonly seconds: number;
+    readonly minutes: number;
+    readonly human: string;
+  }
+
+  function createResult(
+    description: string,
+    durationMs: number,
+    options?: MeasureOptions,
+  ): ExecutionTimeResult {
+    const seconds = durationMs / 1000;
+    const minutes = seconds / 60;
+
+    const human =
+      durationMs < 1000
+        ? `${durationMs.toFixed(2)}ms`
+        : seconds < 60
+          ? `${seconds.toFixed(2)}s`
+          : `${minutes.toFixed(2)}min`;
+
+    if (!options?.hideLogs) {
+      Helpers.taskDone(
+        `Execution time for "${chalk.bold(description)}": ${chalk.bold(human)}`,
+      );
+    }
+
+    return {
+      milliseconds: durationMs,
+      seconds,
+      minutes,
+      human,
+    };
+  }
+
+  export const mesureExecutionTime = async <T>(
+    description: string,
+    functionToExecute: () => Promise<T>,
+    options?: MeasureOptions,
+  ): Promise<ExecutionTimeResult> => {
+    if (!options?.hideLogs) {
+      Helpers.taskStarted(
+        `Starting ${chalk.bold(description)} (measuring time)`,
+      );
+    }
+
+    const start = process.hrtime.bigint();
+
+    await functionToExecute();
+
+    const end = process.hrtime.bigint();
+
+    const durationMs = Number(end - start) / 1_000_000;
+
+    return createResult(description, durationMs, options);
+  };
+
+  export const mesureExecutionTimeSync = <T>(
+    description: string,
+    functionToExecute: () => T,
+    options?: MeasureOptions,
+  ): ExecutionTimeResult => {
+    if (!options?.hideLogs) {
+      Helpers.taskStarted(
+        `Starting ${chalk.bold(description)} (measuring time)`,
+      );
+    }
+
+    const start = process.hrtime.bigint();
+
+    functionToExecute();
+
+    const end = process.hrtime.bigint();
+
+    const durationMs = Number(end - start) / 1_000_000;
+
+    return createResult(description, durationMs, options);
+  };
+}
 
 //#region utils string regex
 export namespace UtilsStringRegex {
@@ -1661,6 +1760,35 @@ export namespace UtilsDotFile {
 //#endregion
 
 //#region utils cli
+
+export namespace UtilsCli {
+  /**
+   * Taon CLI specyfic mehtod for mesuring script execution time:
+   * from beginning of script to this moment.
+   */
+  export const getTimeFromThisCLIScriptStart = (): {
+    ms: string;
+    sec: string;
+    min: string;
+  } => {
+    //#region @backendFunc
+    if (!global.currentTaonScriptStartDateTime) {
+      throw 'CLI did not mark start point.';
+    }
+    const start = global.currentTaonScriptStartDateTime;
+    const end = process.hrtime.bigint();
+    const ms = Number(end - start) / 1_000_000;
+    const sec = ms / 1000;
+    const min = sec / 60;
+    return {
+      min: min.toFixed(2),
+      sec: sec.toFixed(2),
+      ms: ms.toFixed(3),
+    };
+    //#endregion
+  };
+}
+
 /**
  * Easy way to connect CLI commands to cli class methods.
  *
