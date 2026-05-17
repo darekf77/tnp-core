@@ -1,13 +1,19 @@
 //#region utils process  / start async
 
+import { ChildProcess } from 'child_process';
+
 import { Observable } from 'rxjs';
+
+import { chalk, child_process } from './core-imports';
 import { CoreModels } from './core-models';
 import { Helpers } from './helpers';
-import { ChildProcess } from 'child_process';
 import { _ } from './lodash.namespace';
-import { chalk, child_process } from './core-imports';
 
 export interface ProcessStartOptions {
+  /**
+   * unique name for the process
+   */
+  uniqueName?: string;
   /**
    * by default is process.cwd();
    */
@@ -105,6 +111,7 @@ export const startAsync = async (
     outputBufferMaxSize,
     askToTryAgainOnError,
     rebuildOnChange,
+    uniqueName,
   } = options || {};
 
   outputBufferMaxSize = outputBufferMaxSize || 1000;
@@ -397,7 +404,7 @@ in location: ${cwd}
             } catch (error) {}
 
             Helpers.logInfo(
-              chalk.green(`Next step.. ${command}(...)`),
+              chalk.green(`Next step.. ${chalk.bold(uniqueName || command)}`),
             );
 
             resolve();
@@ -408,7 +415,7 @@ in location: ${cwd}
             await handlProc(childProcess, true);
             await buildDone();
           } catch (error) {
-            console.error(chalk.bold(`Error during ${command}`));
+            console.error(chalk.bold(`Error during ${chalk.bold(uniqueName || command)}`));
           }
 
           firstNormalBuildDone = true;
