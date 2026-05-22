@@ -475,6 +475,11 @@ export namespace Helpers {
     return !global.hideLog;
     //#endregion
   };
+
+  export const getIsVerboseModeOrTnp = () => {
+    return getIsVerboseMode() || frameworkName === 'tnp';
+  };
+
   export const log = (
     details: any,
     debugLevel = 0,

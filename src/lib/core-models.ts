@@ -655,5 +655,8 @@ export namespace CoreModels {
    * Absolute path to project parent;
    */
   export const parentLocation = 'parent-location';
+
+  export const hasExitCleaningFunction = 'has-exit-cleaning-function-for'
+
   //#endregion
 }
