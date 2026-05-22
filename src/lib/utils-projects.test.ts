@@ -1,7 +1,7 @@
+import { isObject } from 'lodash-es';
 import { TaonBaseClass } from 'taon/src';
 
 import { UtilsProjects } from './utils-projects';
-import { isObject } from 'lodash-es';
 
 describe('Utils Projects.sortGroupOfProject', () => {
 
@@ -14,8 +14,11 @@ describe('Utils Projects.sortGroupOfProject', () => {
     }
 
     name: string;
+
     location: string;
+
     port: number;
+
     dependencies: string[];
   }
 

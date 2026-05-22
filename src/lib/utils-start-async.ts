@@ -382,7 +382,7 @@ in location: ${cwd}
           Helpers.logInfo(
             `Rebuilding ${wasFirstRun ? '(first time)' : '(again)'}` +
               ` ${wasNewChangeDuringBuild ? '(new changes)' : '(normal)'}` +
-              ` command:  ${command.slice(0, 50)}`,
+              ` command:  ${uniqueName || command}`,
           );
 
           childProcess = child_process.exec(command, {
@@ -415,7 +415,11 @@ in location: ${cwd}
             await handlProc(childProcess, true);
             await buildDone();
           } catch (error) {
-            console.error(chalk.bold(`Error during ${chalk.bold(uniqueName || command)}`));
+            console.error(
+              chalk.bold(
+                `Error during ` + `${chalk.bold(uniqueName || command)}`,
+              ),
+            );
           }
 
           firstNormalBuildDone = true;
