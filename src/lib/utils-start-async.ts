@@ -66,10 +66,7 @@ export interface ProcessStartOptions {
    */
   biggerBuffer?: boolean;
   rebuildOnChange?: Observable<any>;
-  hideOutput?: {
-    stdout?: boolean;
-    stderr?: boolean;
-  };
+
   /**
    * todo implement
    */
@@ -96,7 +93,8 @@ export const startAsync = async (
 
   //#region preapre options
   let {
-    hideOutput,
+    hideOutput_stdout,
+    hideOutput_stderr,
     resolvePromiseMsgCallback_anystd,
     resolvePromiseMsgCallback_stderr,
     resolvePromiseMsgCallback_stdout,
@@ -120,7 +118,7 @@ export const startAsync = async (
 
   let childProcess: ChildProcess;
 
-  hideOutput = hideOutput || {};
+
 
   if (_.isString(resolvePromiseMsg_stdout)) {
     resolvePromiseMsg_stdout = [resolvePromiseMsg_stdout];
@@ -152,7 +150,7 @@ export const startAsync = async (
           }
         }
 
-        if (!hideOutput.stdout) {
+        if (!hideOutput_stdout) {
           process.stdout.write(data);
         }
 
@@ -209,7 +207,7 @@ export const startAsync = async (
           }
         }
 
-        if (!hideOutput.stdout) {
+        if (!hideOutput_stdout) {
           process.stdout.write(JSON.stringify(data));
         }
       });
@@ -232,7 +230,7 @@ export const startAsync = async (
           }
         }
 
-        if (!hideOutput.stderr) {
+        if (!hideOutput_stderr) {
           process.stderr.write(data);
         }
 
@@ -276,7 +274,7 @@ export const startAsync = async (
           }
         }
 
-        if (!hideOutput.stderr) {
+        if (!hideOutput_stderr) {
           process.stderr.write(JSON.stringify(data));
         }
         // console.log(data);

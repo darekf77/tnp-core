@@ -9,6 +9,7 @@ import { Utils } from './utils';
 import { UtilsProcess } from './utils-process';
 import { UtilsTerminal } from './utils-terminal';
 import { startAsync } from './utils-start-async';
+import { UtilsOs } from './utils-os';
 
 // class $Version extends BaseCommandLineFeature<{}> {
 //   public _() {
@@ -31,10 +32,23 @@ export async function startCli(
   // console.log('STARTING CLI');
   const [firstParam, secondParam, thirdParam] = argsv.slice(2);
 
+  if (firstParam === 'exitfun') {
+    console.log('Testing exitfun');
+    UtilsOs.safeExitProgramCleanUp(() => {
+      console.log('exiting1');
+    });
+
+    UtilsOs.safeExitProgramCleanUp(() => {
+      console.log('exiting12');
+    });
+
+    process.exit(0);
+  }
+
   if (firstParam === 'line') {
-    console.log('asd')
+    console.log('asd');
     UtilsTerminal.drawHorizontalLine();
-    console.log('heelleelle')
+    console.log('heelleelle');
     UtilsTerminal.drawHorizontalLine();
     process.exit(0);
   }
@@ -56,7 +70,7 @@ export async function startCli(
     }
   } else {
     const rebuildOnChange = new Subject<void>();
-    console.log('starting...')
+    console.log('starting...');
     // console.log('waiting for user to press anything');
 
     // chokidar
