@@ -51,8 +51,9 @@ export interface ProcessStartOptions {
 
   /**
    * Prefix messages output from child_process
+   * (if true - it will take unique name)
    */
-  prefix?: string;
+  prefix?: string | boolean;
 
   /**
    * Try command again after fail after n milliseconds
@@ -116,9 +117,11 @@ export const startAsync = async (
 
   command = Helpers._fixCommand(command);
 
+  prefix = (
+    _.isBoolean(prefix) && prefix ? uniqueName || command.slice(0, 20) : prefix
+  ) as string;
+
   let childProcess: ChildProcess;
-
-
 
   if (_.isString(resolvePromiseMsg_stdout)) {
     resolvePromiseMsg_stdout = [resolvePromiseMsg_stdout];
