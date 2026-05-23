@@ -383,7 +383,7 @@ in location: ${cwd}
           Helpers.logInfo(
             `Rebuilding ${wasFirstRun ? '(first time)' : '(again)'}` +
               ` ${wasNewChangeDuringBuild ? '(new changes)' : '(normal)'}` +
-              ` command:  ${uniqueName || command}`,
+              ` :${chalk.bold(uniqueName || command)}`,
           );
 
           childProcess = child_process.exec(command, {
