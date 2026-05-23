@@ -44,7 +44,6 @@
 /**/websql
 /browser
 /BUILD-INFO.md
-/BUILD-STATUS.md
 /chrome-profiler-events*.json
 /connect.lock
 /coverage

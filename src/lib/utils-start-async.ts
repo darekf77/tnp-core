@@ -118,7 +118,9 @@ export const startAsync = async (
   command = Helpers._fixCommand(command);
 
   prefix = (
-    _.isBoolean(prefix) && prefix ? chalk.bold.gray(`[${uniqueName || command.slice(0, 20)}]`) : prefix
+    _.isBoolean(prefix) && prefix
+      ? chalk.bold.gray(`[${uniqueName || command.slice(0, 20)}]`)
+      : prefix
   ) as string;
 
   let childProcess: ChildProcess;
@@ -339,7 +341,7 @@ in location: ${cwd}
 
   if (!_.isNil(rebuildOnChange)) {
     askToTryAgainOnError = false;
-    command = command.replace('--watch', '').replace('-w', '');
+    // command = command.replace('--watch', '').replace('-w', '');
     Helpers.log(`Executing command: ${command}
 
         in kill/watch mode...`);
@@ -405,7 +407,9 @@ in location: ${cwd}
             } catch (error) {}
 
             Helpers.logInfo(
-              chalk.green(`Done ${chalk.bold(uniqueName || command)}. Next step..`),
+              chalk.green(
+                `Done ${chalk.bold(uniqueName || command)}. Next step..`,
+              ),
             );
 
             resolve();
@@ -418,7 +422,10 @@ in location: ${cwd}
           } catch (error) {
             console.error(
               chalk.bold(
-                `Error during ` + `${chalk.bold(uniqueName || command)}`,
+                `Error during ${chalk.bold(uniqueName)}
+  Command with error: ${command}
+
+                `,
               ),
             );
           }
