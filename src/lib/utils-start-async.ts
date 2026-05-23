@@ -118,7 +118,7 @@ export const startAsync = async (
   command = Helpers._fixCommand(command);
 
   prefix = (
-    _.isBoolean(prefix) && prefix ? uniqueName || command.slice(0, 20) : prefix
+    _.isBoolean(prefix) && prefix ? chalk.bold.gray(`[${uniqueName || command.slice(0, 20)}]`) : prefix
   ) as string;
 
   let childProcess: ChildProcess;
@@ -405,7 +405,7 @@ in location: ${cwd}
             } catch (error) {}
 
             Helpers.logInfo(
-              chalk.green(`Next step.. ${chalk.bold(uniqueName || command)}`),
+              chalk.green(`Done ${chalk.bold(uniqueName || command)}. Next step..`),
             );
 
             resolve();
