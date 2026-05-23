@@ -9,7 +9,9 @@ import { dockerTemplates, dotTaonFolder, taonContainers } from './constants';
 import { path, _, crossPlatformPath, os, win32Path } from './core-imports';
 import { child_process } from './core-imports';
 import { fse } from './core-imports';
+import { CoreModels } from './core-models';
 import { frameworkName } from './framework-name';
+import { GlobalStorage } from './global-storage';
 import { Helpers } from './helpers';
 import { UtilsProcess } from './utils-process';
 import { UtilsTerminal } from './utils-terminal';
@@ -959,7 +961,7 @@ export namespace UtilsOs {
   };
   //#endregion
 
-   //#region utils terminal / draw horizontal line
+  //#region utils terminal / draw horizontal line
   export const drawHorizontalLine = (row = 0) => {
     //#region @browser
     const widthBrowserConsole = row || 80;
@@ -1192,12 +1194,24 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
   //#endregion
 
   //#region utils os / safe exit program clean up fn
+  let isCleaning = false;
   export function safeExitProgramCleanUp(cleanFn: () => Promise<void> | void) {
     //#region @backendFunc
-    let isCleaning = false;
+    if (isCleaning) {
+      return;
+    }
+
+    if (GlobalStorage.get(CoreModels.hasExitCleaningFunction)) {
+      Helpers.info(`Skipping safe exiting fn.. already added`);
+      return;
+    }
+
+    GlobalStorage.set(CoreModels.hasExitCleaningFunction, true);
 
     const runCleanup = async (reason: string, exitCode = 0) => {
-      if (isCleaning) return;
+      if (isCleaning) {
+        return;
+      }
       isCleaning = true;
 
       try {
@@ -1231,17 +1245,6 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
     process.once('unhandledRejection', reason => {
       console.error('[safeExit] unhandledRejection:', reason);
       runCleanup('unhandledRejection', 1);
-    });
-    //#endregion
-
-    //#region optional: last sync fallback
-    process.once('exit', () => {
-      if (!isCleaning) {
-        try {
-          // only sync-safe things here
-          cleanFn();
-        } catch {}
-      }
     });
     //#endregion
 
