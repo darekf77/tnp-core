@@ -22,7 +22,7 @@ import { json5 } from './core-imports';
 import { _, path, crossPlatformPath } from './core-imports';
 import { CoreModels } from './core-models';
 import { load } from './json10-writer/index'; // @backend
-import { UtilsJson } from './utils';
+import { UtilsJson, UtilsTime } from './utils';
 import { UtilsFilesFoldersSync } from './utils-files-folders';
 import { UtilsProcess } from './utils-process';
 import { UtilsTerminal } from './utils-terminal';
@@ -343,6 +343,43 @@ export namespace Helpers {
     }
     //#endregion
   };
+
+  export class ActionInstance {
+    private readonly startedAt = Date.now();
+
+    private isDone = false;
+
+    constructor(private readonly actionName: string) {
+      Helpers.taskStarted(`Starting "${this.actionName}"`);
+    }
+
+    done(options?: { showExecutionTime?: boolean }): void {
+      if (this.isDone) {
+        return;
+      }
+
+      options = options || {};
+      options.showExecutionTime = _.isBoolean(options.showExecutionTime)
+        ? options.showExecutionTime
+        : true;
+      this.isDone = true;
+
+      const executionTimeMs = Date.now() - this.startedAt;
+
+      let suffix = '';
+
+      if (options?.showExecutionTime) {
+        suffix = ` (action took ${UtilsTime.formatDuration(executionTimeMs)})`;
+      }
+
+      Helpers.taskDone(`Done "${this.actionName}" ${suffix}`);
+    }
+  }
+
+  export const actionStarted = (actionName: string): ActionInstance => {
+    return new ActionInstance(actionName);
+  };
+
   export const taskStarted = (
     details: any | string,
     isLogTask: boolean = false,

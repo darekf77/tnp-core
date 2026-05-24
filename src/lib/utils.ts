@@ -669,6 +669,43 @@ export namespace Utils {
 //#endregion
 
 export namespace UtilsTime {
+
+   export const formatDuration = (milliseconds: number): string => {
+    const absMs = Math.abs(milliseconds);
+
+    const ms = absMs % 1000;
+    const totalSeconds = Math.floor(absMs / 1000);
+
+    const seconds = totalSeconds % 60;
+    const totalMinutes = Math.floor(totalSeconds / 60);
+
+    const minutes = totalMinutes % 60;
+    const hours = Math.floor(totalMinutes / 60);
+
+    const parts: string[] = [];
+
+    if (hours > 0) {
+      parts.push(`${hours}h`);
+    }
+
+    if (minutes > 0) {
+      parts.push(`${minutes}min`);
+    }
+
+    if (seconds > 0) {
+      parts.push(`${seconds}s`);
+    }
+
+    // show ms:
+    // - always when < 1s
+    // - otherwise only if there is remainder
+    if (ms > 0 || parts.length === 0) {
+      parts.push(`${ms}ms`);
+    }
+
+    return parts.join(', ');
+  };
+
   //#region wait
   export const wait = (second: number): Promise<void> => {
     return new Promise((resolve, reject) => {
