@@ -339,7 +339,8 @@ in location: ${cwd}
 
   // console.log('rebuild on change', rebuildOnChange);
 
-  if (!_.isNil(rebuildOnChange)) {
+  if (_.isObject(rebuildOnChange) && !_.isNil(rebuildOnChange)) {
+    // is observable
     askToTryAgainOnError = false;
     // command = command.replace('--watch', '').replace('-w', '');
     Helpers.log(`Executing command: ${command}
