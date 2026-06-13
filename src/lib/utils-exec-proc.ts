@@ -130,6 +130,7 @@ export namespace UtilsExecProc {
     //#region get output
     public async getOutput(options?: {
       shell?: boolean | string;
+      skipThrowingError?: boolean;
     }): Promise<{ stdout: string; stderr: string }> {
       //#region @backendFunc
       options = options || ({} as any);
@@ -165,12 +166,23 @@ export namespace UtilsExecProc {
             config.frameworkName === 'tnp' && console.error(err);
             reject(err);
           });
-          this.child.once('exit', () => {
+          this.child.once('exit', exitCode => {
+            Helpers.logInfo(`Process exited with code=${exitCode}`);
             setTimeout(() => {
-              resolve({
-                stdout: this.stdoutFromCommand,
-                stderr: this.stderrFromCommand,
-              });
+              if (exitCode === 0 || options.skipThrowingError) {
+                resolve({
+                  stdout: this.stdoutFromCommand,
+                  stderr: this.stderrFromCommand,
+                });
+              } else {
+                process.stdout.write(this.stdoutFromCommand);
+                process.stderr.write(this.stderrFromCommand);
+                reject(
+                  new Error(`
+Execution failed. Command:
+${chalk.bold(`${this.command} ${this.args.join(' ')}`)}`),
+                );
+              }
             }, 100); // ensure all data events are processed
           });
         },
