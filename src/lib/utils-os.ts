@@ -1254,20 +1254,25 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
   //#endregion
 }
 
-let taonRepoPathUserInUserDir: string = '';
-
-//#region @backend
-taonRepoPathUserInUserDir = crossPlatformPath([
-  UtilsOs.getRealHomeDir(),
-  dotTaonFolder,
-  taonContainers,
-]);
+export const taonRepoPathUserInUserDirFn = () => {
+  //#region @backendFunc
+  return crossPlatformPath([
+    UtilsOs.getRealHomeDir(),
+    dotTaonFolder,
+    taonContainers,
+  ]);
+  //#endregion
+  return '';
+};
 //#endregion
 
-const taonBasePathToGlobalDockerTemplates: string = crossPlatformPath([
-  UtilsOs.getRealHomeDir(),
-  dotTaonFolder,
-  dockerTemplates,
-]);
-
-export { taonRepoPathUserInUserDir, taonBasePathToGlobalDockerTemplates };
+export const taonBasePathToGlobalDockerTemplatesFn = () => {
+  //#region @backendFunc
+  return crossPlatformPath([
+    UtilsOs.getRealHomeDir(),
+    dotTaonFolder,
+    dockerTemplates,
+  ]);
+  //#endregion
+  return '';
+};
