@@ -4,6 +4,7 @@ import {
   fileName,
   filesNotAllowedToClean,
   folderName,
+  isCloudflareWorker,
   tempFoldersName,
 } from './constants';
 import {
@@ -13,6 +14,7 @@ import {
   child_process,
   crossPlatformPath,
 } from './core-imports'; // @backend
+
 import { CoreModels } from './core-models';
 import { frameworkName } from './framework-name';
 //#endregion
@@ -22,6 +24,11 @@ declare const global: any;
 if (global && !global['ENV']) {
   global['ENV'] = {};
 }
+if (isCloudflareWorker) {
+  globalThis.__dirname = '/'; // TODO QUICK_FIX
+  var __dirname = '/'; // TODO QUICK_FIX
+}
+
 //#endregion
 
 //#region resolve tnp location

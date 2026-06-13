@@ -1152,7 +1152,8 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
       }
 
       // 👉 Linux (DBus - no external deps like notify-send)
-      const dbus = require('dbus-next');
+      const dbBusPkgName = 'dbus-next';
+      const dbus = require(dbBusPkgName);
       const bus = dbus.sessionBus();
 
       const obj = await bus.getProxyObject(

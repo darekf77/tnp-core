@@ -1,5 +1,8 @@
 import type * as ora from 'ora';
 
+// @ts-ignore
+export const isCloudflareWorker = typeof WebSocketPair !== 'undefined';
+
 import type { CoreModels } from './core-models';
 
 export const taonContainers = 'taon-containers';
