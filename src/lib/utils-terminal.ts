@@ -761,14 +761,10 @@ export namespace UtilsTerminal {
     const errMsg = error instanceof Error ? error.message : String(error);
     frameworkName === 'tnp' && Helpers.error(errMsg, true, true);
 
-    if (
-      !(await UtilsTerminal.confirm({
-        message: 'An error occurred. Do you want to try again?',
-      }))
-    ) {
-      return false;
-    }
-    return true;
+    const tryAgain = await UtilsTerminal.confirm({
+      message: 'An error occurred. Do you want to try again?',
+    });
+    return tryAgain;
     //#endregion
   };
   //#endregion
@@ -1051,7 +1047,7 @@ export namespace UtilsTerminal {
 
   //#endregion
 
-   //#region utils terminal / draw horiontal line
+  //#region utils terminal / draw horiontal line
   export const drawHorizontalLine = (col = 0) => {
     UtilsOs.drawHorizontalLine(col);
   };
