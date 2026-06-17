@@ -24,9 +24,12 @@ declare const global: any;
 if (global && !global['ENV']) {
   global['ENV'] = {};
 }
+let DIRNAME_ROOT: string;
 if (isCloudflareWorker) {
   globalThis.__dirname = '/'; // TODO QUICK_FIX
-  var __dirname = '/'; // TODO QUICK_FIX
+  DIRNAME_ROOT = '/'; // TODO QUICK_FIX
+} else {
+  DIRNAME_ROOT = __dirname;
 }
 
 //#endregion
@@ -35,7 +38,7 @@ if (isCloudflareWorker) {
 // @LAST RESOLVE TNP LOCATION !!! for each context and RELEASE TNP-CORE
 let dirnameForTnp: string;
 //#region @backend
-dirnameForTnp = crossPlatformPath(path.resolve(__dirname, '..'));
+dirnameForTnp = crossPlatformPath(path.resolve(DIRNAME_ROOT, '..'));
 
 if (process.platform === 'win32' && dirnameForTnp.endsWith('dist')) {
   // TODO QUICK_FIX for windows
