@@ -5,7 +5,12 @@ import { promisify } from 'util';
 
 import type NotificationCenter from 'node-notifier/notifiers/notificationcenter';
 
-import { dockerTemplates, dotTaonFolder, taonContainers } from './constants';
+import {
+dockerTemplates,
+dotTaonFolder,
+taonContainers,
+  tnpPackageName,
+} from './constants';
 import { path, _, crossPlatformPath, os, win32Path } from './core-imports';
 import { child_process } from './core-imports';
 import { fse } from './core-imports';
@@ -150,72 +155,73 @@ export namespace UtilsOs {
   };
   //#endregion
 
-  //#region utils os / is running in windows / powershell / cmd
-  const getProcessTree = (): Record<
-    number,
-    { pid: number; ppid: number; name: string }
-  > => {
+  //#region utils os / is running in windows / powershell / cmd / gitbash
+  export   const isRunningInWindowsPowerShell = (): boolean => {
     //#region @backendFunc
-    const tree: Record<number, { pid: number; ppid: number; name: string }> =
-      {};
+    if (process.platform !== 'win32') {
+      return false;
+    }
 
     try {
-      const output = child_process
-        .execSync(`wmic process get ProcessId,ParentProcessId,Name`, {
-          stdio: ['pipe', 'pipe', 'ignore'],
-        })
-        .toString();
+      const result = child_process.execFileSync(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-Command',
+          `
+$processId = ${process.ppid}
 
-      const lines = output
-        .split(/\r?\n/)
-        .map(line => line.trim())
-        .filter(line => line && !line.startsWith('Name'));
+for ($i = 0; $i -lt 30 -and $processId; $i++) {
+  $p = Get-CimInstance Win32_Process -Filter "ProcessId=$processId"
 
-      for (const line of lines) {
-        const match = line.match(/^(.+?)\s+(\d+)\s+(\d+)$/);
-        if (match) {
-          const [, name, ppidStr, pidStr] = match;
-          const pid = Number(pidStr);
-          const ppid = Number(ppidStr);
-          tree[pid] = { name: name.trim().toLowerCase(), pid, ppid };
-        }
-      }
-    } catch (err) {
-      console.error('WMIC parse error', err);
+  if (-not $p) { break }
+
+  switch ($p.Name.ToLower()) {
+    'powershell.exe' { 'true'; return }
+    'pwsh.exe'       { 'true'; return }
+    'cmd.exe'        { 'false'; return }
+  }
+
+  $processId = $p.ParentProcessId
+}
+
+'false'
+        `,
+        ],
+        {
+          encoding: 'utf8',
+          windowsHide: true,
+          timeout: 3000,
+        },
+      );
+
+      return result.trim() === 'true';
+    } catch {
+    return false;
     }
-
-    return tree;
     //#endregion
   };
 
-  const findAncestorProcessName = (targets: string[]): string | undefined => {
+export   const isRunningInWindowsCmd = (): boolean => {
     //#region @backendFunc
-    if (process.platform !== 'win32') return;
-
-    const tree = getProcessTree();
-    let currentPid = process.ppid;
-    let level = 0;
-
-    while (currentPid && level++ < 30) {
-      const proc = tree[currentPid];
-      if (!proc) break;
-
-      if (targets.includes(proc.name)) return proc.name;
-      currentPid = proc.ppid;
-    }
-
-    return;
+    return (
+      process.platform === 'win32' &&
+      !isRunningInWindowsPowerShell() &&
+      !isRunningInWindowsGitBash()
+    );
     //#endregion
   };
 
-  export const isRunningInWindowsPowerShell = (): boolean => {
+  export const isRunningInWindowsGitBash = (): boolean => {
+//#region @backendFunc
     return (
-      findAncestorProcessName(['powershell.exe', 'pwsh.exe']) !== undefined
+      !isRunningInWindowsPowerShell() &&
+      process.platform === 'win32' &&
+      (process.env.MSYSTEM !== undefined ||
+        process.env.MSYS !== undefined ||
+        process.env.SHELL?.toLowerCase().includes('bash') === true)
     );
-  };
-
-  export const isRunningInWindowsCmd = (): boolean => {
-    return findAncestorProcessName(['cmd.exe']) !== undefined;
+    //#endregion
   };
   //#endregion
 
