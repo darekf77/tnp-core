@@ -6,9 +6,9 @@ import { promisify } from 'util';
 import type NotificationCenter from 'node-notifier/notifiers/notificationcenter';
 
 import {
-dockerTemplates,
-dotTaonFolder,
-taonContainers,
+  dockerTemplates,
+  dotTaonFolder,
+  taonContainers,
   tnpPackageName,
 } from './constants';
 import { path, _, crossPlatformPath, os, win32Path } from './core-imports';
@@ -156,7 +156,7 @@ export namespace UtilsOs {
   //#endregion
 
   //#region utils os / is running in windows / powershell / cmd / gitbash
-  export   const isRunningInWindowsPowerShell = (): boolean => {
+  export const isRunningInWindowsPowerShell = (): boolean => {
     //#region @backendFunc
     if (process.platform !== 'win32') {
       return false;
@@ -197,12 +197,12 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
 
       return result.trim() === 'true';
     } catch {
-    return false;
+      return false;
     }
     //#endregion
   };
 
-export   const isRunningInWindowsCmd = (): boolean => {
+  export const isRunningInWindowsCmd = (): boolean => {
     //#region @backendFunc
     return (
       process.platform === 'win32' &&
@@ -213,7 +213,7 @@ export   const isRunningInWindowsCmd = (): boolean => {
   };
 
   export const isRunningInWindowsGitBash = (): boolean => {
-//#region @backendFunc
+    //#region @backendFunc
     return (
       !isRunningInWindowsPowerShell() &&
       process.platform === 'win32' &&
@@ -1257,6 +1257,54 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
 
     //#endregion
   }
+  //#endregion
+
+  //#region utils os / where package locationd
+  export const whichOrWherePackageLocated = (
+    packageName: string,
+  ): string | undefined => {
+    //#region @backendFunc
+    const command =
+      UtilsOs.isRunningInWindowsPowerShell() || UtilsOs.isRunningInWindowsCmd()
+        ? `where.exe ${packageName}`
+        : `which ${packageName}`;
+
+    const result = () => {
+      try {
+        Helpers.logInfo(`Executing: "${command}"`);
+        const output = child_process
+          .execSync(command, {
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+          })
+          .trim()
+          .split(/\r?\n/)
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        if (UtilsOs.isRunningInWindowsPowerShell()) {
+          // Prefer the extensionless executable over .cmd/.ps1/.exe wrappers
+          const exact = output.find(path => {
+            const lower = path.toLowerCase();
+            return (
+              lower.endsWith(`\\${packageName.toLowerCase()}`) ||
+              lower.endsWith(`/${packageName.toLowerCase()}`)
+            );
+          });
+
+          return exact ?? output[0];
+        }
+
+        return output[0];
+      } catch (err) {
+        frameworkName === tnpPackageName && console.error(err);
+        return undefined;
+      }
+    };
+
+    return crossPlatformPath(result());
+    //#endregion
+  };
   //#endregion
 }
 
