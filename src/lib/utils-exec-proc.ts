@@ -6,7 +6,7 @@ import { config } from './config';
 import { _, crossPlatformPath, chalk } from './core-imports';
 import { spawn } from './core-imports';
 import { Helpers } from './helpers';
-import { UtilsSudo } from './utils';
+import { UtilsSudo } from './utils-sudo';
 //#endregion
 
 /**

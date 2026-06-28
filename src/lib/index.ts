@@ -16,6 +16,13 @@ export * from './utils-terminal';
 export * from './utils-wait-notifier';
 export * from './utils-projects';
 export * from './utils-start-async';
+export * from './utils-time';
+export * from './utils-sudo';
+export * from './utils-cli';
+export * from './utils-json';
+export * from './utils-dot-file';
+export * from './utils-binary';
+export * from './utils-string-regex';
 export * from './lowdb'; // @backend
 
 export * from './core-cli';
