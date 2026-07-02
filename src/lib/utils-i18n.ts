@@ -13,15 +13,48 @@ export namespace UtilsI18n {
   export type LanguageCode = (typeof languages)[number];
 
   export const commonLocales = [
+    'pl-PL',
     'en-US',
     'en-GB',
-    'pl-PL',
     'de-DE',
     'fr-FR',
-    'pt-BR',
+    'es-ES',
+    'zh-CN',
   ] as const;
 
   export type CommonLocaleCode = (typeof commonLocales)[number];
+
+  export interface LangOption {
+    code: UtilsI18n.CommonLocaleCode;
+    label: string;
+  }
+
+  export const LangOptionArr: LangOption[] = [
+    {
+      code: 'en-US',
+      label: 'English (US)',
+    },
+    {
+      code: 'pl-PL',
+      label: 'Polski',
+    },
+    {
+      code: 'de-DE',
+      label: 'German',
+    },
+    {
+      code: 'fr-FR',
+      label: 'French',
+    },
+    {
+      code: 'es-ES',
+      label: 'Spain',
+    },
+    {
+      code: 'zh-CN',
+      label: 'China',
+    },
+  ];
 
   export interface GettextExtracted {
     lineNumber: number;
