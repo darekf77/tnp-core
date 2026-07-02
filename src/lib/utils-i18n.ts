@@ -1,60 +1,66 @@
 export namespace UtilsI18n {
-  export const languages = [
-    'en',
-    'pl',
-    'de',
-    'fr',
-    'es',
-    'it',
-    'pt',
-    'nl',
-  ] as const;
+  export const defaultLangLocale: UtilsI18n.CommonLocaleCode = 'en-US';
 
-  export type LanguageCode = (typeof languages)[number];
+  export enum CommonLocaleCodeEnum {
+    PL_PL = 'pl-PL',
+    EN_US = 'en-US',
+    EN_GB = 'en-GB',
+    DE_DE = 'de-DE',
+    FR_FR = 'fr-FR',
+    ES_ES = 'es-ES',
+    ZH_CN = 'zh-CN',
+  }
 
-  export const commonLocales = [
-    'pl-PL',
-    'en-US',
-    'en-GB',
-    'de-DE',
-    'fr-FR',
-    'es-ES',
-    'zh-CN',
-  ] as const;
+  const LangOptionMap = {
+    [CommonLocaleCodeEnum.PL_PL]: 'Polski',
+    [CommonLocaleCodeEnum.EN_US]: 'English (US)',
+    [CommonLocaleCodeEnum.EN_GB]: 'English (UK)',
+    [CommonLocaleCodeEnum.DE_DE]: 'German',
+    [CommonLocaleCodeEnum.FR_FR]: 'French',
+    [CommonLocaleCodeEnum.ES_ES]: 'Spain',
+    [CommonLocaleCodeEnum.ZH_CN]: 'Chinese',
+  };
 
-  export type CommonLocaleCode = (typeof commonLocales)[number];
+  export const commonLocales = Object.values(
+    CommonLocaleCodeEnum,
+  ) as CommonLocaleCode[];
+
+  export type CommonLocaleCode = `${CommonLocaleCodeEnum}`;
 
   export interface LangOption {
     code: UtilsI18n.CommonLocaleCode;
     label: string;
   }
 
-  export const LangOptionArr: LangOption[] = [
-    {
-      code: 'en-US',
-      label: 'English (US)',
-    },
-    {
-      code: 'pl-PL',
-      label: 'Polski',
-    },
-    {
-      code: 'de-DE',
-      label: 'German',
-    },
-    {
-      code: 'fr-FR',
-      label: 'French',
-    },
-    {
-      code: 'es-ES',
-      label: 'Spain',
-    },
-    {
-      code: 'zh-CN',
-      label: 'China',
-    },
-  ];
+  export const LangOptionArr = Object.keys(LangOptionMap).map(code => ({
+    code,
+    label: LangOptionMap[code],
+  })) as LangOption[];
+
+  export function detectLocale(): CommonLocaleCode {
+    const candidates = navigator.languages.length
+      ? navigator.languages
+      : [navigator.language];
+
+    for (const candidate of candidates) {
+      // Exact match
+      if (commonLocales.includes(candidate as CommonLocaleCode)) {
+        return candidate as CommonLocaleCode;
+      }
+
+      // Match by language only
+      const language = candidate.split('-')[0];
+      const fallback = commonLocales.find(
+        locale => locale.split('-')[0] === language,
+      );
+
+      if (fallback) {
+        return fallback;
+      }
+    }
+
+    return defaultLangLocale;
+  }
 
   export interface GettextExtracted {
     lineNumber: number;
