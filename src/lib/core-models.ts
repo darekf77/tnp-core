@@ -656,7 +656,11 @@ export namespace CoreModels {
    */
   export const parentLocation = 'parent-location';
 
-  export const hasExitCleaningFunction = 'has-exit-cleaning-function-for'
+  export const hasExitCleaningFunction = 'has-exit-cleaning-function-for';
 
   //#endregion
+
+  export type DeepPartial<T> = {
+    [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+  };
 }
