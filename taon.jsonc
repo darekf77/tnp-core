@@ -35,7 +35,6 @@
   ],
 
   "additionalNpmNames": ["taon-core"],
-
   "appId": "com.domain.example.tnp-core",
 
   "autoReleaseConfigAllowedItems": [
@@ -45,11 +44,11 @@
     },
   ],
 
+  "generateTranslationsFor": ["en-US", "pl-PL"],
   "isCoreProject": false,
-
   "isomorphicDependenciesForNpmLib": [],
-
   "resources": ["README.md"],
+  "shouldGenerateTranslationFiles": true,
 
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
@@ -61,5 +60,5 @@
     "scripts": {
       "mkdocs": "python3 -m mkdocs",
     },
-  },
+  }
 }
