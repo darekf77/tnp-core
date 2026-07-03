@@ -13,7 +13,6 @@
 /.tnp
 /.vscode/launch.json
 /*.filetemplate
-/*.i18n.data.ts
 /*.rest
 /*.schema.json
 /*.sqlite
@@ -27,7 +26,6 @@
 /**/.taon
 /**/.tnp
 /**/*.filetemplate
-/**/*.i18n.data.ts
 /**/*.schema.json
 /**/browser
 /**/dist*
