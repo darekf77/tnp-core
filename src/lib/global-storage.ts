@@ -1,3 +1,4 @@
+const globalStorClassKey = '__taon__GlobalStorageClass__';
 /**
  * TODO WIP
  * refactor:
@@ -6,17 +7,15 @@
  * 3. ng2-logger
  */
 class GlobalStorageClass {
-  private static instance: GlobalStorageClass;
-
   private store = new Map<string, any>();
 
   private constructor() {}
 
   static getInstance(): GlobalStorageClass {
-    if (!this.instance) {
-      this.instance = new GlobalStorageClass();
+    if (!globalThis[globalStorClassKey]) {
+      globalThis[globalStorClassKey] = new GlobalStorageClass();
     }
-    return this.instance;
+    return globalThis[globalStorClassKey];
   }
 
   set<T>(path: string, value: T): void {
