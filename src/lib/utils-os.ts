@@ -673,6 +673,57 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
   };
   //#endregion
 
+  //#region utils os / get editor keybinding path
+  export const getEditorKeybindingPath = (
+    editor: Editor,
+  ): string | undefined => {
+    //#region @backendFunc
+
+    const editorFolder: Record<Editor, string> = {
+      code: 'Code',
+      codium: 'VSCodium',
+      cursor: 'Cursor',
+      theia: 'Theia',
+    } as any;
+
+    const folder = editorFolder[editor];
+    const home = crossPlatformPath(os.userInfo().homedir);
+
+    switch (process.platform) {
+      case 'win32':
+        return crossPlatformPath([
+          home,
+          'AppData',
+          'Roaming',
+          folder,
+          'User',
+          'keybindings.json',
+        ]);
+
+      case 'linux':
+        return crossPlatformPath([
+          home,
+          '.config',
+          folder,
+          'User',
+          'keybindings.json',
+        ]);
+
+      case 'darwin':
+        return crossPlatformPath([
+          home,
+          'Library',
+          'Application Support',
+          folder,
+          'User',
+          'keybindings.json',
+        ]);
+    }
+
+    //#endregion
+  };
+  //#endregion
+
   //#region utils os / get editor settings json path
   export const getEditorSettingsJsonPath = (
     editor: Editor,
