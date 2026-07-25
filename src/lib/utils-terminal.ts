@@ -614,6 +614,66 @@ export namespace UtilsTerminal {
   };
   //#endregion
 
+  //#region utils terminal / can use interactive toogle
+  export async function canUseInteractiveToggle(): Promise<boolean> {
+    //#region @backendFunc
+    const { stdin, stdout } = await import('node:process');
+    if (!stdin.isTTY || !stdout.isTTY) {
+      return false;
+    }
+
+    if (typeof stdin.setRawMode !== 'function') {
+      return false;
+    }
+
+    const wasRaw = stdin.isRaw;
+
+    try {
+      stdin.setRawMode(true);
+      stdin.setRawMode(Boolean(wasRaw));
+      return true;
+    } catch {
+      return false;
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region utils terminal / basic yes no
+  export async function basicYesNo(
+    message: string,
+    defaultValue = false,
+  ): Promise<boolean> {
+    //#region @backendFunc
+    const readline = await import('node:readline/promises');
+    const { stdin, stdout } = await import('node:process');
+    if (!stdin.isTTY) {
+      return defaultValue;
+    }
+
+    const rl = readline.createInterface({
+      input: stdin,
+      output: stdout,
+      terminal: true,
+    });
+
+    try {
+      const suffix = defaultValue ? '[Y/n]' : '[y/N]';
+      const answer = await rl.question(`${message} ${suffix} `);
+      const normalized = answer.trim().toLowerCase();
+
+      if (!normalized) {
+        return defaultValue;
+      }
+
+      return normalized === 'y' || normalized === 'yes';
+    } finally {
+      rl.close();
+    }
+    //#endregion
+  }
+  //#endregion
+
   //#region utils terminal / confirm
   export const confirm = async (options?: {
     /**
@@ -651,19 +711,43 @@ export namespace UtilsTerminal {
       Helpers.info(`${message} - AUTORESPONSE: ${defaultValue ? 'YES' : 'NO'}`);
     } else {
       if (options.engine === 'inquirer-toggle') {
-        const inquirerToggle = (await import('inquirer-toggle')).default;
-        const answer = await inquirerToggle({
-          message,
-          default: defaultValue,
-          theme: {
-            style: {
-              highlight: chalk.bold.cyan.underline,
-            },
-          },
-        });
-        response = {
-          value: answer,
-        };
+        if (await canUseInteractiveToggle()) {
+          try {
+            const inquirerToggle = (await import('inquirer-toggle')).default;
+            const answer = await inquirerToggle({
+              message,
+              default: defaultValue,
+              theme: {
+                style: {
+                  highlight: chalk.bold.cyan.underline,
+                },
+              },
+            });
+            response = {
+              value: answer,
+            };
+          } catch (error: any) {
+            console.warn(
+              'Interactive toggle unavailable; using a standard yes/no prompt.',
+            );
+
+            const answer = await basicYesNo(message, defaultValue);
+
+            response = {
+              value: answer,
+            };
+          }
+        } else {
+          console.warn(
+            'Interactive toggle not allwoed - using a standard yes/no prompt.',
+          );
+
+          const answer = await basicYesNo(message, defaultValue);
+
+          response = {
+            value: answer,
+          };
+        }
       } else if (options.engine === '@inquirer/prompts') {
         // @ts-ignore
         const { confirm } = await import('@inquirer/prompts');
