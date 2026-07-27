@@ -29,7 +29,7 @@ import { ProcessStartOptions, startAsync } from './utils-start-async';
 import { UtilsTerminal } from './utils-terminal';
 import { UtilsTime } from './utils-time';
 
-import { frameworkName, PROGRESS_DATA, Utils, UtilsOs } from './index';
+import { frameworkName, UtilsProgress, Utils, UtilsOs } from './index';
 //#endregion
 
 //#region constants
@@ -216,8 +216,11 @@ export namespace Helpers {
     }
     details = transformData(details);
     const display = (dot = false) => {
-      if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details });
+      if (global.taonNonInteractive) {
+        UtilsProgress.emitProgress({
+          message: dot ? '.' : details,
+          type: 'error',
+        });
       }
       if (dot) {
         process.stdout.write(chalk.red('.'));
@@ -271,8 +274,11 @@ export namespace Helpers {
     }
     //#region @backend
     const display = (dot = false) => {
-      if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
+      if (global.taonNonInteractive) {
+        UtilsProgress.emitProgress({
+          message: dot ? '.' : details,
+          type: 'info',
+        });
       }
       if (dot) {
         process.stdout.write(chalk.blue('.'));
@@ -312,8 +318,11 @@ export namespace Helpers {
     //#region @backend
     details = transformData(details);
     const display = (dot = false) => {
-      if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
+      if (global.taonNonInteractive) {
+        UtilsProgress.emitProgress({
+          message: dot ? '.' : details,
+          type: 'info',
+        });
       }
       if (dot) {
         process.stdout.write(chalk.green('.'));
@@ -398,8 +407,11 @@ export namespace Helpers {
       if (global.hideLog && isLogTask) {
         return;
       }
-      if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
+      if (global.taonNonInteractive) {
+        UtilsProgress.emitProgress({
+          message: dot ? '.' : details,
+          type: 'info',
+        });
       }
       if (dot) {
         process.stdout.write(chalk.cyan('.'));
@@ -465,8 +477,11 @@ export namespace Helpers {
       //   console.warn(`Probabl you forgot set Helpers.taskStart() for Helpers.taskDone()`)
       // }
       details = details?.replace('...', '');
-      if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'info' });
+      if (global.taonNonInteractive) {
+        UtilsProgress.emitProgress({
+          message: dot ? '.' : details,
+          type: 'info',
+        });
       }
       if (dot) {
         process.stdout.write(chalk.green('.'));
@@ -539,8 +554,8 @@ export namespace Helpers {
 
     details = transformData(details);
     const display = (dot = false) => {
-      if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details });
+      if (global.taonNonInteractive) {
+        UtilsProgress.emitProgress({ message: dot ? '.' : details });
       }
       if (dot) {
         process.stdout.write('.');
@@ -620,8 +635,11 @@ export namespace Helpers {
       trace = true;
     }
     const display = (dot = false) => {
-      if (global.tnpNonInteractive) {
-        PROGRESS_DATA.log({ msg: dot ? '.' : details, type: 'warning' });
+      if (global.taonNonInteractive) {
+        UtilsProgress.emitProgress({
+          message: dot ? '.' : details,
+          type: 'warning',
+        });
       }
       if (dot) {
         process.stdout.write(chalk.yellow('.'));

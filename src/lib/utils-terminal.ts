@@ -707,7 +707,7 @@ export namespace UtilsTerminal {
     let response = {
       value: defaultValue,
     };
-    if (global.tnpNonInteractive) {
+    if (global.taonNonInteractive) {
       Helpers.info(`${message} - AUTORESPONSE: ${defaultValue ? 'YES' : 'NO'}`);
     } else {
       if (options.engine === 'inquirer-toggle') {

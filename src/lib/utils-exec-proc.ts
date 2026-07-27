@@ -140,7 +140,7 @@ export namespace UtilsExecProc {
         stdio,
         env: this.env,
         maxBuffer: this.maxBuffer,
-        shell: options.shell ? options.shell : this.execProcOptions.shell,
+        shell: options.shell ?? this.execProcOptions.shell,
         cwd: this.execProcOptions.cwd,
       });
 
@@ -227,7 +227,7 @@ ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}`),
         stdio,
         env: this.env,
         maxBuffer: this.maxBuffer,
-        shell: options.shell ? options.shell : this.execProcOptions.shell,
+        shell: options.shell ?? this.execProcOptions.shell,
         cwd: this.execProcOptions.cwd,
       });
 

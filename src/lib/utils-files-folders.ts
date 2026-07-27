@@ -648,7 +648,7 @@ export namespace UtilsFilesFoldersSync {
                 fse.copySync(sourceDir, destinationDir, options);
               }
             } catch (error) {
-              const exitOnError = global['tnpNonInteractive'];
+              const exitOnError = global['taonNonInteractive'];
               Helpers.log(error);
               if (!options!.dontAskOnError) {
                 console.trace(`[taon-helper] Not able to copy folder
@@ -948,7 +948,7 @@ ${sourceData}
         break;
       } catch (error) {
         console.log(error);
-        if (global['tnpNonInteractive']) {
+        if (global['taonNonInteractive']) {
           Helpers.error(`[${config.frameworkName}-helpers]${options.purpose ? `[${options.purpose}]` : ''} Not able to move files
 
 from: ${from}
