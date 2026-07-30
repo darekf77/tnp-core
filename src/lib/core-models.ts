@@ -157,6 +157,9 @@ export namespace CoreModels {
 
   export type EnvironmentNameTaon = `${EnvironmentName}`;
 
+  export const EnvironmentNameArr: readonly EnvironmentNameTaon[] =
+    Object.values(EnvironmentName);
+
   //#endregion
 
   //#region push type

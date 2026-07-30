@@ -8,6 +8,7 @@ import type NotificationCenter from 'node-notifier/notifiers/notificationcenter'
 import {
   dockerTemplates,
   dotTaonFolder,
+  isCloudflareWorker,
   taonContainers,
   tnpPackageName,
 } from './constants';
@@ -71,6 +72,16 @@ export namespace UtilsOs {
   //#region utils os / is running in ssr mode
   export const isRunningInSSRMode = (): boolean => {
     return typeof globalThis.window === 'undefined';
+  };
+  //#endregion
+
+  //#region utils os / is running in electron
+  /**
+   * check whether the current process is running inside
+   * Cloudflare worker
+   */
+  export const isRunningInCloudflareWorker = (): boolean => {
+    return isCloudflareWorker;
   };
   //#endregion
 

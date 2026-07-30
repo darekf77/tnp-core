@@ -16,7 +16,6 @@ import {
   spawn,
   win32Path,
   glob,
-  fkill,
 } from './core-imports'; // @backend
 import { json5 } from './core-imports';
 import { _, path, crossPlatformPath } from './core-imports';
@@ -1662,6 +1661,7 @@ export namespace Helpers {
     },
   ) => {
     //#region @backendFunc
+    const fkill = require('fkill');
     const showOutoput = !options || !options.silent;
     if (!_.isArray(portOrPortsToKill)) {
       portOrPortsToKill = [portOrPortsToKill];

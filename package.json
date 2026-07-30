@@ -154,6 +154,7 @@
     "@taon-dev/cloud": "~21.0.0",
     "@taon-dev/i18n": "~21.0.0",
     "@taon-dev/session": "~21.0.0",
+    "@taon-dev/vscode-plugin": "~21.0.0",
     "@testdeck/jest": "~0.3.3",
     "@testdeck/mocha": "~0.3.3",
     "@types/chai": "~4.3.20",

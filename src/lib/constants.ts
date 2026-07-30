@@ -350,6 +350,7 @@ export const appRelatedFiles = [
   'app.constants.ts',
   'app.hosts.ts',
   'app.electron.ts',
+  'app.cloudflare.ts',
   'app.vscode.ts',
   'app.mobile.ts',
   'app.context.ts',

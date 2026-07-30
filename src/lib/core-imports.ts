@@ -37,7 +37,7 @@ const isAdminBase = require('is-admin');
 const isElevatedBase = async (): Promise<boolean> => {
   return process.platform === 'win32' ? isAdminBase() : isRootBase();
 };
-import * as fkillBase from 'fkill';
+
 import * as psListBase from 'ps-list';
 import * as netBase from 'net';
 import * as spawnBase from 'cross-spawn';
@@ -84,7 +84,6 @@ import type * as osBaseType from 'os';
 import type * as child_processType from 'child_process';
 import type * as httpBaseType from 'http';
 import type * as httpsBaseType from 'https';
-import type * as fkillBaseType from 'fkill';
 import type * as psListBaseType from 'ps-list';
 import type * as netBaseType from 'net';
 import type * as spawnBaseType from 'cross-spawn';
@@ -208,13 +207,6 @@ isAdmin = isAdminBase;
 let isElevated = void 0 as () => Promise<boolean>;
 //#region @backend
 isElevated = isElevatedBase;
-//#endregion
-//#endregion
-
-//#region set up browser mocks / mock fkill
-let fkill = void 0 as typeof fkillBaseType;
-//#region @backend
-fkill = fkillBase;
 //#endregion
 //#endregion
 
@@ -397,7 +389,6 @@ export {
   http,
   https,
   isElevated,
-  fkill,
   psList,
   spawn,
   fg,
