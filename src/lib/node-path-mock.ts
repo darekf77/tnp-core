@@ -1,4 +1,4 @@
-//#region @browser
+
 function assertPath(path) {
   if (typeof path !== 'string') {
     throw new TypeError(
@@ -465,4 +465,3 @@ export const path = {
   },
   posix: null,
 };
-//#endregion

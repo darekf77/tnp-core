@@ -1,9 +1,6 @@
 //#region imports
 import 'reflect-metadata';
 import { ChildProcess } from 'child_process';
-import { promisify } from 'util';
-
-import { debounceTime, EMPTY, from, startWith, switchMap, tap } from 'rxjs';
 
 import { encoding } from './constants';
 import { _, chalk, crossPlatformPath, fse, os, path } from './core-imports';
@@ -366,6 +363,7 @@ export namespace UtilsProcess {
     //#region @backendFunc
     const cmd = `ps -o pid= --ppid ${pid}`;
     try {
+      const { promisify } = require('util');
       const execAsync = promisify(child_process.exec);
       const { stdout } = await execAsync(cmd);
       // Each line should contain just the PID
@@ -391,6 +389,7 @@ export namespace UtilsProcess {
     //#region @backendFunc
     const cmd = `wmic process where (ParentProcessId=${pid}) get ProcessId`;
     try {
+      const { promisify } = require('util');
       const execAsync = promisify(child_process.exec);
       const { stdout } = await execAsync(cmd);
       // The output generally has lines, including one that says "ProcessId" and then the PIDs

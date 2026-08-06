@@ -1,12 +1,8 @@
-import {
-  exec,
-  type ChildProcess,
-  type ExecException,
-  type ExecOptions,
-} from 'node:child_process';
+import type { ChildProcess, ExecException, ExecOptions } from 'child_process';
 
 import type { CancellationToken, OutputChannel, Progress } from 'vscode';
 
+import { child_process } from './core-imports';
 import { UtilsProgress } from './utils-progress';
 
 export type ExecVscodeProgress = {
@@ -151,7 +147,7 @@ export function execAsyncVscode(
       maxBuffer,
     };
 
-    const proc = exec(
+    const proc = child_process.exec(
       command,
       execOptions,
       (
@@ -308,7 +304,7 @@ function terminateChild(proc: ChildProcess): void {
      * exec() creates a shell. Killing only proc.kill() can leave descendants
      * such as Node/ONNX alive, so terminate the process tree.
      */
-    exec(
+    child_process.exec(
       `taskkill /pid ${proc.pid} /t /f`,
       {
         windowsHide: true,

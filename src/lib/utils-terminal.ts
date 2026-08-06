@@ -617,6 +617,12 @@ export namespace UtilsTerminal {
   //#region utils terminal / can use interactive toogle
   export async function canUseInteractiveToggle(): Promise<boolean> {
     //#region @backendFunc
+    if (UtilsOs.isRunningInCloudflareWorker()) {
+      console.warn(
+        `[canUseInteractiveToggle] Don't use terminal ui in cloudflare worker`,
+      );
+      return false;
+    }
     const { stdin, stdout } = await import('node:process');
     if (!stdin.isTTY || !stdout.isTTY) {
       return false;
@@ -645,6 +651,9 @@ export namespace UtilsTerminal {
     defaultValue = false,
   ): Promise<boolean> {
     //#region @backendFunc
+    if (UtilsOs.isRunningInCloudflareWorker()) {
+      throw `[basicYesNo] Don't use terminal ui in cloudflare worker`;
+    }
     const readline = await import('node:readline/promises');
     const { stdin, stdout } = await import('node:process');
     if (!stdin.isTTY) {

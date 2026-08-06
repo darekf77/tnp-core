@@ -3,7 +3,6 @@ import 'reflect-metadata';
 import type { Dirent } from 'fs';
 
 import { CopyOptionsSync } from 'fs-extra';
-import * as micromatch from 'micromatch'; // @backend
 
 import {
   dotTaonFolder,
@@ -260,6 +259,7 @@ export namespace UtilsFilesFoldersSync {
     },
   ): void => {
     //#region @backendFunc
+    const micromatch = require('micromatch');
     const visitedRealPaths = new Set<string>();
 
     const allowedInResult = (pathToFileOrFolder: string) => {

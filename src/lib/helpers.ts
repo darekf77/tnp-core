@@ -20,7 +20,7 @@ import {
 import { json5 } from './core-imports';
 import { _, path, crossPlatformPath } from './core-imports';
 import { CoreModels } from './core-models';
-import { load } from './json10-writer/index'; // @backend
+import { JsonValue, updateJsoncContent } from './jsonc-parser'; // @backend
 import { UtilsFilesFoldersSync } from './utils-files-folders';
 import { UtilsJson } from './utils-json';
 import { UtilsProcess } from './utils-process';
@@ -29,6 +29,7 @@ import { UtilsTerminal } from './utils-terminal';
 import { UtilsTime } from './utils-time';
 
 import { frameworkName, UtilsProgress, Utils, UtilsOs } from './index';
+// import { loadJsonC } from './json10writer';
 //#endregion
 
 //#region constants
@@ -200,7 +201,7 @@ export namespace Helpers {
   };
   export const error = (details: any, noExit = false, noTrace = false) => {
     //#region browser mode
-    if (Helpers.getIsBrowser()) {
+    if (Helpers.getIsBrowser() || UtilsOs.isRunningInCloudflareWorker()) {
       console.error(details);
       return;
     }
@@ -267,7 +268,7 @@ export namespace Helpers {
     //   hideInfos: global.hideInfos,
     // });
     // //#endregion
-    if (Helpers.getIsBrowser()) {
+    if (Helpers.getIsBrowser() || UtilsOs.isRunningInCloudflareWorker()) {
       console.info(details);
       return;
     }
@@ -310,7 +311,7 @@ export namespace Helpers {
     //#endregion
   };
   export const success = (details: any | string) => {
-    if (Helpers.getIsBrowser()) {
+    if (Helpers.getIsBrowser() || UtilsOs.isRunningInCloudflareWorker()) {
       console.info(details);
       return;
     }
@@ -394,7 +395,7 @@ export namespace Helpers {
     details: any | string,
     isLogTask: boolean = false,
   ) => {
-    if (Helpers.getIsBrowser()) {
+    if (Helpers.getIsBrowser() || UtilsOs.isRunningInCloudflareWorker()) {
       console.info(details);
       return;
     }
@@ -456,7 +457,7 @@ export namespace Helpers {
   };
 
   export const taskDone = (details?: any | string, isLessImportant = false) => {
-    if (Helpers.getIsBrowser()) {
+    if (Helpers.getIsBrowser() || UtilsOs.isRunningInCloudflareWorker()) {
       console.info(details);
       return;
     }
@@ -538,7 +539,7 @@ export namespace Helpers {
     debugLevel = 0,
     skipVisibleConditionChecking = false,
   ) => {
-    if (Helpers.getIsBrowser()) {
+    if (Helpers.getIsBrowser() || UtilsOs.isRunningInCloudflareWorker()) {
       console.log(details);
       return;
     }
@@ -625,7 +626,7 @@ export namespace Helpers {
     //#endregion
   };
   export const warn = (details: string, trace = false) => {
-    if (Helpers.getIsBrowser()) {
+    if (Helpers.getIsBrowser() || UtilsOs.isRunningInCloudflareWorker()) {
       console.warn(details);
       return;
     }
@@ -2618,33 +2619,60 @@ command: ${command}
       Helpers.mkdirp(path.dirname(absoluteFilePath));
     }
     if (writeJson5) {
-      const existedContent = Helpers.readFile(absoluteFilePath) || '{}';
+      // OLD
+      // const existedContent = Helpers.readFile(absoluteFilePath) || '{}';
+      // try {
+      //   var writer = loadJsonC(existedContent)
+
+      // } catch (error) {
+      //   if (error instanceof Error) {
+      //     console.error(error?.message);
+      //   } else {
+      //     console.error(error);
+      //   }
+      //   Helpers.error(
+      //     `Pleas fix your jsonc file (json with comments) in
+      //   ${absoluteFilePath}`,
+      //     false,
+      //     true,
+      //   );
+      // }
+      // writer.write(input);
+      // Helpers.writeFile(
+      //   absoluteFilePath,
+      //   removeEmptyLineFromString(
+      //     writer.toSource({
+      //       quote: 'double',
+      //       trailingComma: false,
+      //       quoteKeys: true,
+      //     }),
+      //   ),
+      // );
+      // OLD END
+
+      const existingContent = Helpers.readFile(absoluteFilePath) || '{}';
+
       try {
-        var writer = load(existedContent);
+        const updatedContent = updateJsoncContent(
+          existingContent,
+          input as JsonValue,
+        );
+
+        Helpers.writeFile(absoluteFilePath, updatedContent);
       } catch (error) {
-        if (error instanceof Error) {
-          console.error(error?.message);
-        } else {
-          console.error(error);
-        }
+        const message = error instanceof Error ? error.message : String(error);
+
+        console.error(message);
+
         Helpers.error(
-          `Pleas fix your jsonc file (json with comments) in
-        ${absoluteFilePath}`,
+          `Please fix your JSONC file at:
+      ${absoluteFilePath}`,
           false,
           true,
         );
+
+        return false;
       }
-      writer.write(input);
-      Helpers.writeFile(
-        absoluteFilePath,
-        removeEmptyLineFromString(
-          writer.toSource({
-            quote: 'double',
-            trailingComma: false,
-            quoteKeys: true,
-          }),
-        ),
-      );
     } else {
       fse.writeJSONSync(absoluteFilePath, input, {
         encoding,

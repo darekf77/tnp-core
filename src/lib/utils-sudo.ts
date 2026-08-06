@@ -1,5 +1,3 @@
-import { promisify } from 'util'; // @backend
-
 import { chalk, child_process, isElevated } from './core-imports';
 import { Helpers } from './helpers';
 import { UtilsOs } from './utils-os';
@@ -48,6 +46,7 @@ export namespace UtilsSudo {
    */
   async function getSudoEnabledValue(): Promise<number | null> {
     //#region @backendFunc
+    const { promisify } = require('util');
     const execAsync = promisify(child_process.exec);
     try {
       const { stdout } = await execAsync(

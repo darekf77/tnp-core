@@ -1,33 +1,40 @@
-//#region @browser
-import { Chalk } from 'chalk';
+import type { Chalk } from 'chalk';
 
 // TODO finish this MOCK @LAST
 // const c:Chalk = void 0;
 
+const displayData = (...args)=> {
+  console.log('using mock')
+  console.log(...args);
+}
+
 const allObj = {
   black(a) {
-    console.log(a);
+    displayData(a);
   },
   gray(a) {
-    console.log(a);
+    displayData(a);
+  },
+  blue(a) {
+    displayData(a);
   },
   red(a) {
-    console.log(a);
+    displayData(a);
   },
   green(a) {
-    console.log(a);
+    displayData(a);
   },
   italic(a) {
-    console.log(a);
+    displayData(a);
   },
   magenta(a) {
-    console.log(a);
+    displayData(a);
   },
   bold(a) {
-    console.log(a);
+    displayData(a);
   },
   underline(a) {
-    console.log(a);
+    displayData(a);
   },
 };
 
@@ -47,4 +54,3 @@ for (let i = 0; i < all.length; i++) {
 }
 
 export const chalk: Chalk = allObj as any;
-//#endregion

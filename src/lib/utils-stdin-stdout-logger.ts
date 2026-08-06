@@ -1,5 +1,3 @@
-import * as util from 'node:util'; // @backend
-
 import { fse, path, os } from './core-imports';
 
 export namespace UtilsStdinStdoutLogger {
@@ -82,6 +80,7 @@ export namespace UtilsStdinStdoutLogger {
       }
     };
 
+    const util = require('util');
     const formatConsoleArguments = (args: unknown[]): string => {
       return util.formatWithOptions(
         {

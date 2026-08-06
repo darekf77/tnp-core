@@ -2,7 +2,7 @@
 // QUICK_FIX for esm bundling
 const REQUIRE_MAP = {
   //#region @backend
-  jscodeshift: () => require('jscodeshift'),
+  // jscodeshift: () => require('jscodeshift'), // superheave, does not work in esm
   dateformat: () => require('dateformat'),
   ['body-parser']: () => require('body-parser'),
   ['cookie-parser']: () => require('cookie-parser'),
@@ -22,42 +22,50 @@ export function requireDefault<T>(id: keyof typeof REQUIRE_MAP): T {
   return m?.default ?? m;
   //#endregion
 }
-export { load } from './json10-writer';
+// export { load } from './json10writer';
 //#region @backend
-import * as fseBase from 'fs-extra';
-import * as osBase from 'os';
-import * as pathBase from 'path';
-import chalkBase from 'chalk';
-import * as cheerio from 'cheerio';
-import * as child_processBase from 'child_process';
+import * as fseBase from 'fs-extra'; // @esmRemove
+import * as osBase from 'os'; // @esmRemove
+import * as pathBase from 'path'; // @esmRemove
+import chalkBase from 'chalk'; // @esmRemove
+import * as cheerio from 'cheerio'; // @esmRemove
+import * as micromatchBase from 'micromatch'; // @esmRemove
+import * as child_processBase from 'child_process'; // @esmRemove
 import * as httpBase from 'http';
 import * as httpsBase from 'https';
+//#region @esmRemove
 const isRootBase = require('is-root');
 const isAdminBase = require('is-admin');
+//#endregion
 const isElevatedBase = async (): Promise<boolean> => {
+  //#region @esmRemove
   return process.platform === 'win32' ? isAdminBase() : isRootBase();
+  //#endregion
+  return void 0;
 };
 
-import * as psListBase from 'ps-list';
-import * as netBase from 'net';
-import * as spawnBase from 'cross-spawn';
-import * as globBase from 'glob';
-import * as fgBase from 'fast-glob';
-import * as rimrafBase from 'rimraf';
-import * as chokidarBase from 'chokidar';
-import * as mkdirpBase from 'mkdirp';
-import * as ncpBase from 'copy-paste';
-import * as psBase from 'ps-node';
-//#endregion
+import * as psListBase from 'ps-list'; // @esmRemove
+import * as spawnBase from 'cross-spawn'; // @esmRemove
+import * as globBase from 'glob'; // @esmRemove
+import * as fgBase from 'fast-glob'; // @esmRemove
+import * as rimrafBase from 'rimraf'; // @esmRemove
+import * as chokidarBase from 'chokidar'; // @esmRemove
+import * as mkdirpBase from 'mkdirp'; // @esmRemove
+import * as ncpBase from 'copy-paste'; // @esmRemove
+import * as psBase from 'ps-node'; // @esmRemove
+import axiosBase from 'axios'; // @esmRemove
 
-//#region @browser
-import jQuery from 'jquery';
+//#endregion
 import { chalk as chalkMock } from './node-chalk-mock';
 import { path as pathMock } from './node-path-mock';
+
+//#region @browser
+import axiosBasebrowser from 'axios';
+import jQuery from 'jquery';
+
 //#endregion
 import { _ } from './lodash.namespace';
 export { _ } from './lodash.namespace';
-import * as q from 'q';
 import { format } from 'date-fns';
 let dateformat: typeof import('dateformat') = ((
   date: Date | number,
@@ -73,7 +81,7 @@ let dateformat: typeof import('dateformat') = ((
 //#region @backend
 dateformat = requireDefault('dateformat');
 //#endregion
-import { Chalk } from 'chalk';
+import type { Chalk } from 'chalk';
 import * as json5 from 'json5';
 import type jQueryType from 'jquery';
 import type chalkBaseType from 'chalk';
@@ -85,7 +93,7 @@ import type * as child_processType from 'child_process';
 import type * as httpBaseType from 'http';
 import type * as httpsBaseType from 'https';
 import type * as psListBaseType from 'ps-list';
-import type * as netBaseType from 'net';
+import type * as micromatchType from 'micromatch';
 import type * as spawnBaseType from 'cross-spawn';
 import type * as fgBaseType from 'fast-glob';
 import type * as rimrafBaseType from 'rimraf';
@@ -93,7 +101,9 @@ import type * as chokidarBaseType from 'chokidar';
 import type * as mkdirpBaseType from 'mkdirp';
 import type * as ncpBaseType from 'copy-paste';
 import type * as psBaseType from 'ps-node';
+import type axiosType from 'axios';
 import { Helpers } from './index';
+import { axiosFetchReplacement } from './axios-fetch';
 
 //#region set up browser mocks
 
@@ -103,15 +113,22 @@ let $: jQueryType;
 $ = jQuery;
 //#endregion
 //#region @backend
+//#region @esmRemove
 $ = cheerio;
+//#endregion
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock path
-
 let path = void 0 as typeof pathBaseType;
 // #region @backend
+//#region @esmRemove
 path = pathBase;
+//#endregion
+//#region @cjsRemove
+// @ts-ignore
+path = pathMock;
+//#endregion
 //#endregion
 
 //#region @browser
@@ -120,23 +137,57 @@ path = pathMock;
 //#endregion
 //#endregion
 
-//#region set up browser mocks / mock chalk
-
-let chalk: Chalk = void 0 as typeof chalkBaseType;
+//#region set up browser mocks / mock axios
+let axios = void 0 as typeof axiosType;
 // #region @backend
-chalk = chalkBase as any;
+//#region @esmRemove
+axios = axiosBase;
+//#endregion
+//#region @cjsRemove
+// @ts-ignore
+axios = axiosFetchReplacement;
+//#endregion
+//#endregion
+//#region @browser
+axios = axiosBasebrowser;
+//#endregion
 //#endregion
 
+//#region set up browser mocks / mock chalk
+let chalk: Chalk = void 0 as typeof chalkBaseType;
+// #region @backend
+//#region @esmRemove
+chalk = chalkBase as any;
+//#endregion
+//#region @cjsRemove
+// chalk = chalkMock as any;
+//#endregion
+//#endregion
 //#region @browser
 // @ts-ignore
-chalk = chalkMock;
+// chalk = chalkMock;
+//#endregion
+//#endregion
+
+//#region set up browser mocks / micromatch
+let micromatch: micromatchType = void 0 as typeof micromatchType;
+// #region @backend
+//#region @esmRemove
+micromatch = micromatchBase as any;
+//#endregion
+//#endregion
+//#region @browser
+// @ts-ignore
+// micromatch = micromatch;
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock glob
 let glob = void 0 as typeof globBaseType;
 //#region @backend
+//#region @esmRemove
 glob = globBase;
+//#endregion
 //#endregion
 //#region @browser
 // TODO: implement browser glob
@@ -146,7 +197,9 @@ glob = globBase;
 //#region set up browser mocks / mock fse
 let fse = void 0 as typeof fseBaseType;
 //#region @backend
+//#region @esmRemove
 fse = fseBase;
+//#endregion
 //#endregion
 //#region @browser
 // TODO: implement browser fse
@@ -156,7 +209,9 @@ fse = fseBase;
 //#region set up browser mocks / mock os
 let os = void 0 as typeof osBaseType;
 //#region @backend
+//#region @esmRemove
 os = osBase;
+//#endregion
 //#endregion
 //#region @browser
 // TODO: implement browser os
@@ -166,7 +221,9 @@ os = osBase;
 //#region set up browser mocks / mock child_process
 let child_process = void 0 as typeof child_processType;
 //#region @backend
+//#region @esmRemove
 child_process = child_processBase;
+//#endregion
 //#endregion
 //#endregion
 
@@ -187,14 +244,18 @@ https = httpsBase;
 //#region set up browser mocks / mock isRoot
 let isRoot = void 0 as () => Promise<boolean>;
 //#region @backend
+//#region @esmRemove
 isRoot = isRootBase;
+//#endregion
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock isAdmin
 let isAdmin = void 0 as () => Promise<boolean>;
 //#region @backend
+//#region @esmRemove
 isAdmin = isAdminBase;
+//#endregion
 //#endregion
 //#endregion
 
@@ -213,63 +274,72 @@ isElevated = isElevatedBase;
 //#region set up browser mocks / mock psList
 let psList = void 0 as typeof psListBaseType;
 //#region @backend
+//#region @esmRemove
 psList = psListBase;
 //#endregion
-//#endregion
-
-//#region set up browser mocks / mock net
-let net = void 0 as typeof netBaseType;
-//#region @backend
-net = netBase;
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock spawn
 let spawn = void 0 as typeof spawnBaseType;
 //#region @backend
+//#region @esmRemove
 spawn = spawnBase;
+//#endregion
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock rimraf
 let rimraf = void 0 as typeof rimrafBaseType;
 //#region @backend
+//#region @esmRemove
 rimraf = rimrafBase;
+//#endregion
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock chokidar
 let chokidar = void 0 as typeof chokidarBaseType;
 //#region @backend
+//#region @esmRemove
 chokidar = chokidarBase;
+//#endregion
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock mkdirp
-let mkdirp = void 0 as typeof mkdirpBaseType;
+let mkdirp = (args)=> void 0 as typeof mkdirpBaseType;
 //#region @backend
+//#region @esmRemove
 mkdirp = mkdirpBase;
+//#endregion
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock ncp
 let ncp = void 0 as typeof ncpBaseType;
 //#region @backend
+//#region @esmRemove
 ncp = ncpBase;
+//#endregion
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock ps
 let ps = void 0 as typeof psBaseType;
 //#region @backend
+//#region @esmRemove
 ps = psBase;
+//#endregion
 //#endregion
 //#endregion
 
 //#region set up browser mocks / mock fg
 let fg = void 0 as typeof fgBaseType;
 //#region @backend
+//#region @esmRemove
 fg = fgBase;
+//#endregion
 //#endregion
 //#endregion
 
@@ -374,7 +444,7 @@ const crossPlatformPath = (
 
 //#region exports
 export {
-  q,
+  axios,
   dateformat,
   crossPlatformPath,
   win32Path,
@@ -396,8 +466,8 @@ export {
   mkdirp,
   ncp,
   rimraf,
-  net,
   ps,
+  micromatch,
 };
 
 //#endregion

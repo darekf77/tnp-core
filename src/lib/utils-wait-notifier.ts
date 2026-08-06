@@ -1,5 +1,3 @@
-import { EventEmitter, once } from 'node:events'; // @backend
-
 export namespace UtilsWaitNotifier {
   export interface NotifierOptions {
     checkIfAwakeEveryMS?: number;
@@ -9,7 +7,7 @@ export namespace UtilsWaitNotifier {
   export function getNotifier(options: NotifierOptions = {}) {
     //#region @backend
     const { checkIfAwakeEveryMS = 5000, exitTimeoutMs = 'Infinite' } = options;
-
+    const { EventEmitter, once } = require('events');
     const emitter = new EventEmitter();
 
     let isWaiting = false;

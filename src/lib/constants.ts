@@ -365,6 +365,10 @@ export const TAGS = {
   WEBSQL: `@${'web' + 'sql'}`,
   WEBSQL_FUNC: `@${'web' + 'sqlFunc'}`,
   NOT_FOR_NPM: `@${'not' + 'ForNpm'}`,
+  ESM_REMOVE: `@${'esm' + 'Remove'}`,
+  ESM_ONLY_LINE: `@${'esm' + 'OnlyLine'}`,
+  CJS_REMOVE: `@${'cjs' + 'Remove'}`,
+  CJS_ONLY_LINE: `@${'cjs' + 'OnlyLine'}`,
   CUT_CODE_IF_TRUE: '@cutCode' + 'IfTrue',
   CUT_CODE_IF_FALSE: '@cutCode' + 'IfFalse',
   COMMENT_REGION: `//${'#reg' + 'ion'}`,
@@ -373,7 +377,10 @@ export const TAGS = {
   APP_TS_PLACEHOLDER_IMPORTS: `${'@place' + 'holder-for-imports'}`,
   APP_TS_PLACEHOLDER_ROUTES: `${'@place' + 'holder-for-routes'}`,
   APP_TS_PLACEHOLDER_CONTEXTS_INIT: `${'@place' + 'holder-for-contexts-init'}`,
-};
+} as const;
+
+export type ReplacementString = (typeof TAGS)[keyof typeof TAGS];
+
 
 export const BaselineSiteJoinprefix = '__';
 

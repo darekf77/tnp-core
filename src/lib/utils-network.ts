@@ -1,6 +1,5 @@
 //#region imports
 import 'reflect-metadata';
-import * as net from 'net';
 import { URL } from 'url'; // @backend
 
 import { Subject } from 'rxjs';
@@ -86,6 +85,7 @@ export namespace UtilsNetwork {
     timeoutMs = 3000,
   ): Promise<boolean> => {
     //#region @backendFunc
+    const net = require('net');
     return new Promise(resolve => {
       const socket = new net.Socket();
 

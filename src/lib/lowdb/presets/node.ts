@@ -1,5 +1,5 @@
 //#region @backend
-import { PathLike } from 'node:fs';
+import type { PathLike } from 'fs';
 
 import { Memory, MemorySync } from '../adapters/Memory';
 import { JSONFile, JSONFileSync } from '../adapters/node/JSONFile';

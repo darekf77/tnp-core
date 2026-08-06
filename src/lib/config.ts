@@ -82,6 +82,17 @@ if (
   )[0];
   dirnameForTnp = dirnameForTnp.replace(match, 'tnp');
 }
+
+if (
+  frameworkName === 'tnp' &&
+  dirnameForTnp.endsWith('/tnp/node_modules/tnp-core/lib')
+) {
+  dirnameForTnp = dirnameForTnp.replace(
+    '/tnp/node_modules/tnp-core/lib',
+    '/tnp',
+  );
+}
+
 //#endregion
 //#endregion
 

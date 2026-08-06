@@ -1,7 +1,5 @@
 //#region imports
 import 'reflect-metadata';
-import * as net from 'net';
-import { promisify } from 'util';
 
 import type NotificationCenter from 'node-notifier/notifiers/notificationcenter';
 
@@ -349,6 +347,7 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
   //#region utils os / is port in use
   const isPortInUseOnHost = (port: number, host: string): Promise<boolean> => {
     //#region @backendFunc
+    const net = require('net');
     return new Promise(async (resolve, reject) => {
       const server = net.createServer();
 
@@ -418,6 +417,7 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
       return false;
     }
     //#region @backendFunc
+    const { promisify } = require('util');
     const execAsync = promisify(child_process.exec);
     try {
       // 1. Detect docker binary (different command depending on shell/OS)
@@ -550,6 +550,184 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
     //#endregion
   };
   //#endregion
+
+  //#region utils os / get temp folder
+  export interface GetTempFolderOptions {
+    /**
+     * Automatically remove this folder after the specified number of days.
+     *
+     * Folders with expiration enabled are created inside:
+     *   <system-temp>/__temp__folders__with__exp__date
+     */
+    deleteAfterDays?: number;
+
+    /**
+     * Optional readable part of the generated folder name.
+     */
+    prefix?: string;
+  }
+
+  interface TempFolderMetadata {
+    createdAt: string;
+    expiresAt: string;
+    deleteAfterDays: number;
+    folderPath: string;
+  }
+
+  const MANAGED_TEMP_FOLDER_NAME = '__temp__folders__with__exp__date';
+  const TEMP_METADATA_FILE_NAME = '__temp_folder_metadata__.json';
+
+  export const getTempFolder = (options: GetTempFolderOptions = {}): string => {
+    //#region @backendFunc
+    const { scrypt, randomBytes, timingSafeEqual } = require('crypto');
+    const systemTempFolder = getSystemTempFolder();
+
+    if (options.deleteAfterDays === undefined) {
+      return systemTempFolder;
+    }
+
+    if (
+      !Number.isFinite(options.deleteAfterDays) ||
+      options.deleteAfterDays <= 0
+    ) {
+      throw new Error(
+        `deleteAfterDays must be a finite number greater than zero.`,
+      );
+    }
+
+    const managedTempRoot = crossPlatformPath([
+      systemTempFolder,
+      MANAGED_TEMP_FOLDER_NAME,
+    ]);
+
+    fse.mkdirSync(managedTempRoot, {
+      recursive: true,
+    });
+
+    cleanupExpiredTempFolders(managedTempRoot);
+
+    const createdAt = new Date();
+    const expiresAt = new Date(
+      createdAt.getTime() + options.deleteAfterDays * 24 * 60 * 60 * 1000,
+    );
+
+    const safePrefix = sanitizeTempFolderPrefix(options.prefix || 'temp');
+
+    const uniquePart = [
+      createdAt.getTime(),
+      process.pid,
+      randomBytes(6).toString('hex'),
+    ].join('-');
+
+    const tempFolderPath = crossPlatformPath([
+      managedTempRoot,
+      `${safePrefix}-${uniquePart}`,
+    ]);
+
+    fse.mkdirSync(tempFolderPath, {
+      recursive: true,
+    });
+
+    const metadata: TempFolderMetadata = {
+      createdAt: createdAt.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      deleteAfterDays: options.deleteAfterDays,
+      folderPath: tempFolderPath,
+    };
+
+    fse.writeFileSync(
+      crossPlatformPath([tempFolderPath, TEMP_METADATA_FILE_NAME]),
+      JSON.stringify(metadata, null, 2),
+      'utf8',
+    );
+
+    return crossPlatformPath(tempFolderPath);
+    //#endregion
+  };
+
+  function getSystemTempFolder(): string {
+    //#region @backendFunc
+    let tempFolder = '/tmp';
+
+    if (process.platform === 'darwin') {
+      tempFolder = '/private/tmp';
+    }
+
+    if (process.platform === 'win32') {
+      tempFolder = crossPlatformPath([
+        UtilsOs.getRealHomeDir(),
+        '/AppData/Local/Temp',
+      ]);
+    }
+
+    fse.mkdirSync(tempFolder, {
+      recursive: true,
+    });
+
+    return tempFolder;
+    //#endregion
+  }
+
+  function cleanupExpiredTempFolders(managedTempRoot: string): void {
+    //#region @backendFunc
+    if (!fse.existsSync(managedTempRoot)) {
+      return;
+    }
+
+    const now = Date.now();
+
+    for (const entryName of fse.readdirSync(managedTempRoot)) {
+      const folderPath = crossPlatformPath([managedTempRoot, entryName]);
+
+      try {
+        if (!fse.statSync(folderPath).isDirectory()) {
+          continue;
+        }
+
+        const metadataPath = crossPlatformPath([
+          folderPath,
+          TEMP_METADATA_FILE_NAME,
+        ]);
+
+        if (!fse.existsSync(metadataPath)) {
+          continue;
+        }
+
+        const metadata = JSON.parse(
+          fse.readFileSync(metadataPath, 'utf8'),
+        ) as Partial<TempFolderMetadata>;
+
+        const expiresAt = Date.parse(metadata.expiresAt || '');
+
+        if (!Number.isFinite(expiresAt)) {
+          continue;
+        }
+
+        if (expiresAt <= now) {
+          Helpers.info(`Cleaning expired temp folder ${folderPath}..`);
+          fse.rmSync(folderPath, {
+            recursive: true,
+            force: true,
+          });
+        }
+      } catch {
+        // One locked or corrupted temp folder should not prevent
+        // creation of another temporary folder.
+      }
+    }
+    //#endregion
+  }
+
+  function sanitizeTempFolderPrefix(prefix: string): string {
+    //#region @backendFunc
+    const result = prefix
+      .trim()
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    return result || 'temp';
+    //#endregion
+  }
 
   //#region utils os / editor
   export type Editor =
@@ -1369,6 +1547,7 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
   };
   //#endregion
 }
+//#endregion
 
 export const taonRepoPathUserInUserDirFn = () => {
   //#region @backendFunc

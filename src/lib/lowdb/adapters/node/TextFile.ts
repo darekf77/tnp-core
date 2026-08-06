@@ -1,36 +1,34 @@
 //#region @backend
-import { PathLike, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises'
+import type { PathLike } from 'fs';
 
-import { path } from '../../../core-imports';
-import { Adapter, SyncAdapter } from '../../core/Low'
+import { fse, path } from '../../../core-imports';
+import { Adapter, SyncAdapter } from '../../core/Low';
 
-import { Writer } from './steno'
-
+import { Writer } from './steno';
 
 export class TextFile implements Adapter<string> {
-  __filename: PathLike
+  __filename: PathLike;
 
-  __writer: Writer
+  __writer: Writer;
 
   constructor(filename: PathLike) {
-    this.__filename = filename
-    this.__writer = new Writer(filename)
+    this.__filename = filename;
+    this.__writer = new Writer(filename);
   }
 
   async read(): Promise<string | null> {
-    let data
+    let data;
 
     try {
-      data = await readFile(this.__filename, 'utf-8')
+      data = await fse.readFile(this.__filename, 'utf-8');
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
-        return null
+        return null;
       }
-      throw e
+      throw e;
     }
 
-    return data
+    return data;
   }
 
   write(str: string): Promise<void> {
@@ -39,34 +37,37 @@ export class TextFile implements Adapter<string> {
 }
 
 export class TextFileSync implements SyncAdapter<string> {
-  __tempFilename: PathLike
+  __tempFilename: PathLike;
 
-  __filename: PathLike
+  __filename: PathLike;
 
   constructor(filename: PathLike) {
-    this.__filename = filename
-    const f = filename.toString()
-    this.__tempFilename = path.join(path.dirname(f), `.${path.basename(f)}.tmp`)
+    this.__filename = filename;
+    const f = filename.toString();
+    this.__tempFilename = path.join(
+      path.dirname(f),
+      `.${path.basename(f)}.tmp`,
+    );
   }
 
   read(): string | null {
-    let data
+    let data;
 
     try {
-      data = readFileSync(this.__filename, 'utf-8')
+      data = fse.readFileSync(this.__filename, 'utf-8');
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
-        return null
+        return null;
       }
-      throw e
+      throw e;
     }
 
-    return data
+    return data;
   }
 
   write(str: string): void {
-    writeFileSync(this.__tempFilename, str)
-    renameSync(this.__tempFilename, this.__filename)
+    fse.writeFileSync(this.__tempFilename, str);
+    fse.renameSync(this.__tempFilename, this.__filename);
   }
 }
 //#endregion
