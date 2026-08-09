@@ -60,5 +60,6 @@
     "scripts": {
       "mkdocs": "python3 -m mkdocs",
     },
-  }
+  },
+  "shortName": "tnp-ce"
 }

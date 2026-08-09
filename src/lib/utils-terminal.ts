@@ -242,6 +242,12 @@ export namespace UtilsTerminal {
     defaultSelected?: string[];
   }): Promise<T[]> => {
     //#region @backendFunc
+    if (UtilsOs.isRunningInCloudflareWorker()) {
+      throw new Error(
+        `[tnp-core][multiselect][inquirer-select-pro] No supported in esm`,
+      );
+    }
+    //#region @esmRemove
     const { select } = await import('inquirer-select-pro');
     const fuzzy = await import('fuzzy');
     options = _.cloneDeep(options);
@@ -348,6 +354,8 @@ export namespace UtilsTerminal {
     // return res.value;
     //#endregion
     //#endregion
+    //#endregion
+    return void 0 as any;
   };
   //#endregion
 
@@ -652,8 +660,9 @@ export namespace UtilsTerminal {
   ): Promise<boolean> {
     //#region @backendFunc
     if (UtilsOs.isRunningInCloudflareWorker()) {
-      throw `[basicYesNo] Don't use terminal ui in cloudflare worker`;
+      throw `[basicYesNo] Don't use terminal ui in cloudflare (esm)  worker`;
     }
+    //#region @esmRemove
     const readline = await import('node:readline/promises');
     const { stdin, stdout } = await import('node:process');
     if (!stdin.isTTY) {
@@ -680,6 +689,8 @@ export namespace UtilsTerminal {
       rl.close();
     }
     //#endregion
+    //#endregion
+    return void 0 as any;
   }
   //#endregion
 
@@ -721,6 +732,12 @@ export namespace UtilsTerminal {
     } else {
       if (options.engine === 'inquirer-toggle') {
         if (await canUseInteractiveToggle()) {
+          if (UtilsOs.isRunningInCloudflareWorker()) {
+            throw new Error(
+              `[tnp-core][confirm][inquirer-toggle] No supported in esm`,
+            );
+          }
+          //#region @esmRemove
           try {
             const inquirerToggle = (await import('inquirer-toggle')).default;
             const answer = await inquirerToggle({
@@ -746,6 +763,7 @@ export namespace UtilsTerminal {
               value: answer,
             };
           }
+          //#endregion
         } else {
           console.warn(
             'Interactive toggle not allwoed - using a standard yes/no prompt.',
@@ -758,6 +776,12 @@ export namespace UtilsTerminal {
           };
         }
       } else if (options.engine === '@inquirer/prompts') {
+        if (UtilsOs.isRunningInCloudflareWorker()) {
+          throw new Error(
+            `[tnp-core][confirm][@inquirer/prompts] No supported in esm`,
+          );
+        }
+        //#region @esmRemove
         // @ts-ignore
         const { confirm } = await import('@inquirer/prompts');
         const answer = await confirm({
@@ -767,6 +791,7 @@ export namespace UtilsTerminal {
         response = {
           value: answer,
         };
+        //#endregion
       } else if (options.engine === 'prompts') {
         const prompts = require('prompts');
         response = await prompts({
