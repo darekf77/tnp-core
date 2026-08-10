@@ -1,10 +1,16 @@
 import { fse, path, os } from './core-imports';
+import { GlobalStorage } from './global-storage';
 
 export namespace UtilsStdinStdoutLogger {
+  export const __REGISTER_STARTED__ = 'UtilsStdinStdoutLogger-registering-started';
   export interface RegisteredAppLogging {
     logFilePath: string;
     unregister: () => void;
   }
+
+  export const startedRegistering = (): boolean => {
+    return !!GlobalStorage.get(__REGISTER_STARTED__);
+  };
 
   //#region register loggin app
   export const registerFor = (
@@ -12,6 +18,7 @@ export namespace UtilsStdinStdoutLogger {
     groupName: string,
   ): RegisteredAppLogging => {
     //#region @backendFunc
+    GlobalStorage.set(__REGISTER_STARTED__, true);
     const safeWorkerName = sanitizeFileName(workerName);
     const safeGroupName = sanitizeFileName(groupName);
 

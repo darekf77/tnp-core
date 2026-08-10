@@ -15,8 +15,6 @@
     "@types/lodash",
     "ps-list",
     "ps-node",
-    "q",
-    "@types/q",
     "json5",
     "is-elevated",
     "cross-spawn",
@@ -30,8 +28,8 @@
     "fast-glob",
     "js-yaml",
     "cfonts",
-    "jscodeshift",
-    "jquery"
+    "jquery",
+    "micromatch",
   ],
 
   "additionalNpmNames": ["taon-core"],
