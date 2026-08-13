@@ -107,6 +107,14 @@ export namespace CoreModels {
      */
     PROD = 'prod',
     /**
+     * Cloudflare full backend/frontend deployment
+     */
+    CLOUDFLARE = 'cloudflare',
+    /**
+     * Taon cloud full backend/frontend deployment
+     */
+    CLOUD = 'cloud',
+    /**
      *  Automated test environment for running unit, integration, or automated tests.
      */
     TEST = 'test',

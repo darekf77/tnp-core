@@ -46,8 +46,9 @@
   "isCoreProject": false,
   "isomorphicDependenciesForNpmLib": [],
   "resources": ["README.md"],
-  "shouldGenerateTranslationFiles": true,
+  "shortName": "tnp-ce",
 
+  "shouldGenerateTranslationFiles": true,
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
     "description": "Description for tnp-core. Hello world!",
@@ -58,6 +59,5 @@
     "scripts": {
       "mkdocs": "python3 -m mkdocs",
     },
-  },
-  "shortName": "tnp-ce"
+  }
 }
