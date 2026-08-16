@@ -168,6 +168,25 @@ export namespace CoreModels {
   export const EnvironmentNameArr: readonly EnvironmentNameTaon[] =
     Object.values(EnvironmentName);
 
+  export function splitEnv(value: string): {
+    envName: string | EnvironmentNameTaon;
+    envNumber: number | undefined;
+  } {
+    const match = value.match(/^(.+?)(\d+)?$/);
+
+    if (!match) {
+      return {
+        envName: value,
+        envNumber: undefined,
+      };
+    }
+
+    return {
+      envName: match[1],
+      envNumber: match[2] !== undefined ? Number(match[2]) : undefined,
+    };
+  }
+
   //#endregion
 
   //#region push type
