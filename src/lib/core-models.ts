@@ -172,6 +172,14 @@ export namespace CoreModels {
     envName: string | EnvironmentNameTaon;
     envNumber: number | undefined;
   } {
+
+    if (!value) {
+      return {
+        envName: value,
+        envNumber: undefined,
+      };
+    }
+
     const match = value.match(/^(.+?)(\d+)?$/);
 
     if (!match) {
