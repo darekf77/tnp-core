@@ -1,3 +1,5 @@
+import { _ } from './lodash.namespace';
+
 //#region utils string
 export namespace UtilsString {
   //#region utils string / kebab case no split numbers
@@ -13,6 +15,33 @@ export namespace UtilsString {
     );
   };
   //#endregion
+
+  export const listDiff = (
+    arr1: string[],
+    arr2: string[],
+  ): {
+    added: string[];
+    removed: string[];
+    infoMessage: () => void;
+  } => {
+    const added = _.difference(arr2, arr1);
+    const removed = _.difference(arr1, arr2);
+
+    return {
+      added,
+      removed,
+
+      infoMessage: () => {
+        if (added.length) {
+          console.info(`added: ${added.join(', ')}`);
+        }
+
+        if (removed.length) {
+          console.info(`removed: ${removed.join(', ')}`);
+        }
+      },
+    };
+  };
 }
 //#endregion
 
