@@ -40,4 +40,16 @@ export * from './config';
 export * from './constants';
 export * from './start-cli'; // @backend
 
+import type * as ora from 'ora';
+export const globalSpinner = {
+  get instance(): Pick<
+    ora.Ora,
+    'start' | 'text' | 'succeed' | 'stop' | 'fail'
+  > {
+    //#region @backendFunc
+    return global.spinner;
+    //#endregion
+  },
+};
+
 export default {};

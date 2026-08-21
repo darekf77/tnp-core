@@ -1,4 +1,4 @@
-import type * as ora from 'ora';
+// @taonSkipCut
 
 // @ts-ignore
 export const isCloudflareWorker = typeof WebSocketPair !== 'undefined';
@@ -358,29 +358,43 @@ export const appRelatedFiles = [
 ];
 
 export const TAGS = {
-  BACKEND: `@${'back' + 'end'}`,
-  BACKEND_FUNC: `@${'back' + 'endFunc'}`,
-  BROWSER: `@${'brow' + 'ser'}`,
-  WEBSQL_ONLY: `@${'web' + 'sqlOnly'}`,
-  WEBSQL: `@${'web' + 'sql'}`,
-  WEBSQL_FUNC: `@${'web' + 'sqlFunc'}`,
-  NOT_FOR_NPM: `@${'not' + 'ForNpm'}`,
-  ESM_REMOVE: `@${'esm' + 'Remove'}`,
-  ESM_ONLY_LINE: `@${'esm' + 'OnlyLine'}`,
-  CJS_REMOVE: `@${'cjs' + 'Remove'}`,
-  CJS_ONLY_LINE: `@${'cjs' + 'OnlyLine'}`,
-  CUT_CODE_IF_TRUE: '@cutCode' + 'IfTrue',
-  CUT_CODE_IF_FALSE: '@cutCode' + 'IfFalse',
-  COMMENT_REGION: `//${'#reg' + 'ion'}`,
-  COMMENT_END_REGION: `//${'#end' + 'region'}`,
-  APP_TS_GENERATED: `${'@app-ts-gene' + 'rated'}`,
-  APP_TS_PLACEHOLDER_IMPORTS: `${'@place' + 'holder-for-imports'}`,
-  APP_TS_PLACEHOLDER_ROUTES: `${'@place' + 'holder-for-routes'}`,
-  APP_TS_PLACEHOLDER_CONTEXTS_INIT: `${'@place' + 'holder-for-contexts-init'}`,
+  BACKEND: `@backend`,
+  BACKEND_FUNC: `@backendFunc`,
+  BROWSER: `@browser`,
+  WEBSQL_ONLY: `@websqlOnly`,
+  WEBSQL: `@websql`,
+  WEBSQL_FUNC: `@websqlFunc`,
+  NOT_FOR_NPM: `@notForNpm`,
+  ESM_REMOVE: `@esmRemove`,
+  ESM_ONLY_LINE: `@esmOnlyLine`,
+  CJS_REMOVE: `@cjsRemove`,
+  CJS_ONLY_LINE: `@cjsOnlyLine`,
+  CUT_CODE_IF_TRUE: '@cutCodeIfTrue',
+  CUT_CODE_IF_FALSE: '@cutCodeIfFalse',
+  COMMENT_REGION: `//#region`,
+  COMMENT_END_REGION: `//#endregion`,
+  APP_TS_GENERATED: `@app-ts-generated`,
+  APP_TS_PLACEHOLDER_IMPORTS: `@placeholder-for-imports`,
+  APP_TS_PLACEHOLDER_ROUTES: `@placeholder-for-routes`,
+  APP_TS_PLACEHOLDER_CONTEXTS_INIT: `@placeholder-for-contexts-init`,
 } as const;
 
-export type ReplacementString = (typeof TAGS)[keyof typeof TAGS];
+/**
+ * don't cut next line
+ */
+export const taonCutNextLineCut = '// @taonSkipNextLineCut';
+/**
+ * Don't cut anything from file
+ */
+export const taonSkipCut = '// @taonSkipCut';
 
+export type Replacement<EnvConfig = any> =
+  | ReplacementString
+  | [ReplacementString, string]
+  | [ReplacementString, (expression: any, env: EnvConfig) => () => boolean];
+
+
+export type ReplacementString = (typeof TAGS)[keyof typeof TAGS];
 
 export const BaselineSiteJoinprefix = '__';
 
@@ -476,14 +490,3 @@ export const encoding = 'utf8';
  * output when building multiple projects
  */
 export const taonActionFromParent = 'taon-action-from-parent';
-
-export const globalSpinner = {
-  get instance(): Pick<
-    ora.Ora,
-    'start' | 'text' | 'succeed' | 'stop' | 'fail'
-  > {
-    //#region @backendFunc
-    return global.spinner;
-    //#endregion
-  },
-};
