@@ -13,6 +13,7 @@ describe('UtilsMdDocs.getRenderImports', () => {
         relativePath: './my-file',
         context: undefined,
         rawRenderTagString: `<!-- @render './my-file' -->`,
+        magicRenameRules: '',
       },
     ]);
   });
@@ -31,6 +32,60 @@ describe('UtilsMdDocs.getRenderImports', () => {
           title: 'asdas',
         },
         rawRenderTagString: `<!-- @render './my-file' { title: "asdas" } -->`,
+        magicRenameRules: '',
+      },
+    ]);
+  });
+
+  it('should support magic rename rules', () => {
+    const md = `
+      <!-- @render './my-file' { title: "asdas" } 'tnp -> taon' -->
+    `;
+
+    expect(UtilsMdDocs.getRenderImports(md)).toEqual([
+      {
+        packageName: undefined,
+        isLocal: true,
+        relativePath: './my-file',
+        context: {
+          title: 'asdas',
+        },
+        rawRenderTagString: `<!-- @render './my-file' { title: "asdas" } 'tnp -> taon' -->`,
+        magicRenameRules: 'tnp -> taon',
+      },
+    ]);
+  });
+
+  it('should support magic rename rules without context', () => {
+    const md = `
+      <!-- @render './my-file' 'tnp -> taon' -->
+    `;
+
+    expect(UtilsMdDocs.getRenderImports(md)).toEqual([
+      {
+        packageName: undefined,
+        isLocal: true,
+        relativePath: './my-file',
+        context: undefined,
+        rawRenderTagString: `<!-- @render './my-file' 'tnp -> taon' -->`,
+        magicRenameRules: 'tnp -> taon',
+      },
+    ]);
+  });
+
+  it('should support double quotes for magic rename rules', () => {
+    const md = `
+      <!-- @render './my-file' "tnp -> taon" -->
+    `;
+
+    expect(UtilsMdDocs.getRenderImports(md)).toEqual([
+      {
+        packageName: undefined,
+        isLocal: true,
+        relativePath: './my-file',
+        context: undefined,
+        rawRenderTagString: `<!-- @render './my-file' "tnp -> taon" -->`,
+        magicRenameRules: 'tnp -> taon',
       },
     ]);
   });
@@ -49,6 +104,7 @@ describe('UtilsMdDocs.getRenderImports', () => {
           title: 'asdas',
         },
         rawRenderTagString: `<!-- @render "./my-file" { title: 'asdas' } -->`,
+        magicRenameRules: '',
       },
     ]);
   });
@@ -65,6 +121,7 @@ describe('UtilsMdDocs.getRenderImports', () => {
         relativePath: 'README.md',
         context: undefined,
         rawRenderTagString: `<!-- @render 'taon/README.md' -->`,
+        magicRenameRules: '',
       },
     ]);
   });
@@ -80,8 +137,8 @@ describe('UtilsMdDocs.getRenderImports', () => {
         isLocal: false,
         relativePath: 'docs/introduction.md',
         context: undefined,
-        rawRenderTagString:
-          `<!-- @render 'taon/docs/introduction.md' -->`,
+        rawRenderTagString: `<!-- @render 'taon/docs/introduction.md' -->`,
+        magicRenameRules: '',
       },
     ]);
   });
@@ -97,8 +154,8 @@ describe('UtilsMdDocs.getRenderImports', () => {
         isLocal: false,
         relativePath: 'docs/introduction.md',
         context: undefined,
-        rawRenderTagString:
-          `<!-- @render '@taon-dev/api-workers/docs/introduction.md' -->`,
+        rawRenderTagString: `<!-- @render '@taon-dev/api-workers/docs/introduction.md' -->`,
+        magicRenameRules: '',
       },
     ]);
   });
@@ -106,7 +163,7 @@ describe('UtilsMdDocs.getRenderImports', () => {
   it('should support // @render syntax', () => {
     const md = [
       `// @render './my-file' { title: "asdas" }`,
-      `// @render "./other-file" { title: 'hello' }`,
+      `// @render "./other-file" { title: 'hello' } 'tnp -> taon'`,
     ].join('\n');
 
     expect(UtilsMdDocs.getRenderImports(md)).toEqual([
@@ -117,8 +174,8 @@ describe('UtilsMdDocs.getRenderImports', () => {
         context: {
           title: 'asdas',
         },
-        rawRenderTagString:
-          `// @render './my-file' { title: "asdas" }`,
+        rawRenderTagString: `// @render './my-file' { title: "asdas" }`,
+        magicRenameRules: '',
       },
       {
         packageName: undefined,
@@ -127,8 +184,8 @@ describe('UtilsMdDocs.getRenderImports', () => {
         context: {
           title: 'hello',
         },
-        rawRenderTagString:
-          `// @render "./other-file" { title: 'hello' }`,
+        rawRenderTagString: `// @render "./other-file" { title: 'hello' } 'tnp -> taon'`,
+        magicRenameRules: 'tnp -> taon',
       },
     ]);
   });
@@ -139,7 +196,7 @@ describe('UtilsMdDocs.getRenderImports', () => {
         title: 'Hello',
         count: 123,
         enabled: true
-      } -->
+      } 'tnp -> taon' -->
     `;
 
     expect(UtilsMdDocs.getRenderImports(md)).toEqual([
@@ -156,7 +213,8 @@ describe('UtilsMdDocs.getRenderImports', () => {
         title: 'Hello',
         count: 123,
         enabled: true
-      } -->`,
+      } 'tnp -> taon' -->`,
+        magicRenameRules: 'tnp -> taon',
       },
     ]);
   });
@@ -169,7 +227,7 @@ describe('UtilsMdDocs.getRenderImports', () => {
 
       Some text.
 
-      <!-- @render 'taon/docs/introduction.md' { title: 'Taon' } -->
+      <!-- @render 'taon/docs/introduction.md' { title: 'Taon' } 'tnp -> taon' -->
 
       More text.
 
@@ -187,6 +245,7 @@ describe('UtilsMdDocs.getRenderImports', () => {
         relativePath: './header',
         context: undefined,
         rawRenderTagString: `<!-- @render './header' -->`,
+        magicRenameRules: '',
       },
       {
         packageName: 'taon',
@@ -195,16 +254,16 @@ describe('UtilsMdDocs.getRenderImports', () => {
         context: {
           title: 'Taon',
         },
-        rawRenderTagString:
-          `<!-- @render 'taon/docs/introduction.md' { title: 'Taon' } -->`,
+        rawRenderTagString: `<!-- @render 'taon/docs/introduction.md' { title: 'Taon' } 'tnp -> taon' -->`,
+        magicRenameRules: 'tnp -> taon',
       },
       {
         packageName: '@taon-dev/api-workers',
         isLocal: false,
         relativePath: 'docs/api.md',
         context: undefined,
-        rawRenderTagString:
-          `<!-- @render '@taon-dev/api-workers/docs/api.md' -->`,
+        rawRenderTagString: `<!-- @render '@taon-dev/api-workers/docs/api.md' -->`,
+        magicRenameRules: '',
       },
     ]);
   });
@@ -213,7 +272,7 @@ describe('UtilsMdDocs.getRenderImports', () => {
     const md = `
 Some content
 
-<!--   @render   "./my-file"   { title: 'Hello' }   -->
+<!--   @render   "./my-file"   { title: 'Hello' }   'tnp -> taon'   -->
 
 More content
 `;
@@ -221,15 +280,17 @@ More content
     const [result] = UtilsMdDocs.getRenderImports(md);
 
     expect(result.rawRenderTagString).toBe(
-      `<!--   @render   "./my-file"   { title: 'Hello' }   -->`,
+      `<!--   @render   "./my-file"   { title: 'Hello' }   'tnp -> taon'   -->`,
     );
+
+    expect(result.magicRenameRules).toBe('tnp -> taon');
   });
 
   it('should allow replacing raw render tag in original content', () => {
     const md = `
 # Header
 
-<!-- @render './my-file' { title: 'Hello' } -->
+<!-- @render './my-file' { title: 'Hello' } 'tnp -> taon' -->
 
 Footer
 `;

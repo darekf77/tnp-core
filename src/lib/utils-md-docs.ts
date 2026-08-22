@@ -10,6 +10,7 @@ export namespace UtilsMdDocs {
     relativePath: string;
     context: any;
     rawRenderTagString: string;
+    magicRenameRules: string;
   }
 
   export function getRenderImports(mdContent: string): RenderImport[] {
@@ -21,22 +22,45 @@ export namespace UtilsMdDocs {
      *
      * <!-- @render './my-file' -->
      * <!-- @render "./my-file" { title: 'hello' } -->
+     * <!-- @render "./my-file" { title: 'hello' } 'tnp -> taon' -->
+     * <!-- @render "./my-file" 'tnp -> taon' -->
      *
      * // @render './my-file'
      * // @render "./my-file" { title: 'hello' }
+     * // @render "./my-file" { title: 'hello' } 'tnp -> taon'
+     * // @render "./my-file" 'tnp -> taon'
      */
+
     const renderRegex =
-      /(<!--\s*@render\s+(['"])(.*?)\2(?:\s+(\{[\s\S]*?\}))?\s*-->|\/\/\s*@render\s+(['"])(.*?)\5(?:\s+(\{.*?\}))?\s*$)/gm;
+      /<!--[\s]*@render[\s\S]*?-->|\/\/[ \t]*@render[^\r\n]*/gm;
 
     let match: RegExpExecArray | null;
 
     while ((match = renderRegex.exec(mdContent))) {
       const rawRenderTagString = match[0];
 
-      // HTML comment variant uses groups 2-4,
-      // // variant uses groups 5-7.
-      const importPath = (match[3] ?? match[6]).trim();
-      const contextRaw = (match[4] ?? match[7])?.trim();
+      // Remove comment wrappers, leaving only:
+      //
+      // @render "./my-file" { ... } 'tnp -> taon'
+      //
+      const renderContent = rawRenderTagString
+        .replace(/^<!--\s*/, '')
+        .replace(/\s*-->$/, '')
+        .replace(/^\/\/\s*/, '')
+        .trim();
+
+      const contentRegex =
+        /^@render\s+(['"])(.*?)\1(?:\s+(\{[\s\S]*?\}))?(?:\s+(['"])(.*?)\4)?\s*$/;
+
+      const contentMatch = contentRegex.exec(renderContent);
+
+      if (!contentMatch) {
+        continue;
+      }
+
+      const importPath = contentMatch[2].trim();
+      const contextRaw = contentMatch[3]?.trim();
+      const magicRenameRules = contentMatch[5]?.trim() ?? '';
 
       const isLocal =
         importPath.startsWith('./') ||
@@ -77,6 +101,7 @@ export namespace UtilsMdDocs {
         relativePath,
         context,
         rawRenderTagString,
+        magicRenameRules,
       });
     }
 
