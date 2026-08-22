@@ -9,6 +9,7 @@ export namespace UtilsMdDocs {
     isLocal: boolean;
     relativePath: string;
     context: any;
+    rawRenderTagString: string;
   }
 
   export function getRenderImports(mdContent: string): RenderImport[] {
@@ -25,13 +26,17 @@ export namespace UtilsMdDocs {
      * // @render "./my-file" { title: 'hello' }
      */
     const renderRegex =
-      /@render\s+(['"])(.*?)\1(?:\s+(\{[\s\S]*?\}))?(?=\s*(?:-->|$))/gm;
+      /(<!--\s*@render\s+(['"])(.*?)\2(?:\s+(\{[\s\S]*?\}))?\s*-->|\/\/\s*@render\s+(['"])(.*?)\5(?:\s+(\{.*?\}))?\s*$)/gm;
 
     let match: RegExpExecArray | null;
 
     while ((match = renderRegex.exec(mdContent))) {
-      const importPath = match[2].trim();
-      const contextRaw = match[3]?.trim();
+      const rawRenderTagString = match[0];
+
+      // HTML comment variant uses groups 2-4,
+      // // variant uses groups 5-7.
+      const importPath = (match[3] ?? match[6]).trim();
+      const contextRaw = (match[4] ?? match[7])?.trim();
 
       const isLocal =
         importPath.startsWith('./') ||
@@ -71,6 +76,7 @@ export namespace UtilsMdDocs {
         isLocal,
         relativePath,
         context,
+        rawRenderTagString,
       });
     }
 
