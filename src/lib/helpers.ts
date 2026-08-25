@@ -216,7 +216,7 @@ export namespace Helpers {
     }
     details = transformData(details);
     const display = (dot = false) => {
-      if (global.taonNonInteractive) {
+      if (global.taonNonInteractive && !global.taonSkipEmitTerminalProgress) {
         UtilsProgress.emitProgress({
           message: dot ? '.' : details,
           type: 'error',
@@ -274,7 +274,7 @@ export namespace Helpers {
     }
     //#region @backend
     const display = (dot = false) => {
-      if (global.taonNonInteractive) {
+      if (global.taonNonInteractive && !global.taonSkipEmitTerminalProgress) {
         UtilsProgress.emitProgress({
           message: dot ? '.' : details,
           type: 'info',
@@ -318,7 +318,7 @@ export namespace Helpers {
     //#region @backend
     details = transformData(details);
     const display = (dot = false) => {
-      if (global.taonNonInteractive) {
+      if (global.taonNonInteractive && !global.taonSkipEmitTerminalProgress) {
         UtilsProgress.emitProgress({
           message: dot ? '.' : details,
           type: 'info',
@@ -407,7 +407,7 @@ export namespace Helpers {
       if (global.hideLog && isLogTask) {
         return;
       }
-      if (global.taonNonInteractive) {
+      if (global.taonNonInteractive && !global.taonSkipEmitTerminalProgress) {
         UtilsProgress.emitProgress({
           message: dot ? '.' : details,
           type: 'info',
@@ -477,7 +477,7 @@ export namespace Helpers {
       //   console.warn(`Probabl you forgot set Helpers.taskStart() for Helpers.taskDone()`)
       // }
       details = details?.replace('...', '');
-      if (global.taonNonInteractive) {
+      if (global.taonNonInteractive && !global.taonSkipEmitTerminalProgress) {
         UtilsProgress.emitProgress({
           message: dot ? '.' : details,
           type: 'info',
@@ -554,7 +554,7 @@ export namespace Helpers {
 
     details = transformData(details);
     const display = (dot = false) => {
-      if (global.taonNonInteractive) {
+      if (global.taonNonInteractive && !global.taonSkipEmitTerminalProgress) {
         UtilsProgress.emitProgress({ message: dot ? '.' : details });
       }
       if (dot) {
@@ -635,7 +635,7 @@ export namespace Helpers {
       trace = true;
     }
     const display = (dot = false) => {
-      if (global.taonNonInteractive) {
+      if (global.taonNonInteractive && !global.taonSkipEmitTerminalProgress) {
         UtilsProgress.emitProgress({
           message: dot ? '.' : details,
           type: 'warning',
