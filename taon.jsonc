@@ -30,6 +30,7 @@
     "cfonts",
     "jquery",
     "micromatch",
+    "rxjs"
   ],
 
   "additionalNpmNames": ["taon-core"],

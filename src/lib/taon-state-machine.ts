@@ -1,3 +1,5 @@
+import { BehaviorSubject, Observable } from 'rxjs';
+
 import { _ } from './lodash.namespace';
 
 export type JsPrimitive =
@@ -11,6 +13,10 @@ export type JsPrimitive =
 
 export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
   private _currentValue: T;
+
+  private readonly currentStateSubject: BehaviorSubject<T>;
+
+  public readonly currentState$: Observable<T>;
 
   constructor(
     private readonly config: {
@@ -31,6 +37,10 @@ export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
     },
   ) {
     this._currentValue = config.defaultValue;
+
+    this.currentStateSubject = new BehaviorSubject<T>(config.defaultValue);
+
+    this.currentState$ = this.currentStateSubject.asObservable();
   }
 
   public get debugMode(): boolean {
@@ -54,6 +64,7 @@ export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
     }
 
     const allowed = this.config.allowedStateMap.get(this._currentValue) ?? [];
+
     return allowed.includes(nextState);
   }
 
@@ -71,18 +82,24 @@ export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
       const allowed = this.config.allowedStateMap.get(previousState) ?? [];
 
       if (!allowed.includes(nextState)) {
-        const message = `Invalid state transition: ${String(previousState)} -> ${String(nextState)}`;
+        const message =
+          `Invalid state transition: ` +
+          `${String(previousState)} -> ${String(nextState)}`;
 
         if (this.config.throwOnInvalidTransition) {
           throw new Error(message);
         }
 
         this.debugMode && console.warn(message);
+
         return false;
       }
     }
 
     this._currentValue = nextState;
+
+    // Notify observers only after successful transition.
+    this.currentStateSubject.next(nextState);
 
     void this.config.effect?.(nextState, previousState, this.debugMode);
 
