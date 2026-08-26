@@ -308,7 +308,7 @@ chokidar = chokidarBase;
 //#endregion
 
 //#region set up browser mocks / mock mkdirp
-let mkdirp = (args)=> void 0 as typeof mkdirpBaseType;
+let mkdirp = args => void 0 as typeof mkdirpBaseType;
 //#region @backend
 //#region @esmRemove
 mkdirp = mkdirpBase;
@@ -440,6 +440,30 @@ const crossPlatformPath = (
 
   return pathStringOrPathParts;
 };
+//#endregion
+
+export interface BackendSignal<T> {
+  (): T;
+  set(value: T): void;
+}
+
+//#region @backend
+// @ts-ignore
+export function signal<T>(initialValue: T): BackendSignal<T> {
+  let value = initialValue;
+
+  const fn = (() => value) as BackendSignal<T>;
+
+  fn.set = (newValue: T): void => {
+    value = newValue;
+  };
+
+  return fn;
+}
+//#endregion
+//#region @browser
+// @ts-ignore
+export { signal } from '@angula/core';
 //#endregion
 
 //#region exports

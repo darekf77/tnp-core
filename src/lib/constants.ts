@@ -305,6 +305,8 @@ export const backendWebsqlNodejsFiles = ['subscriber.ts', 'test.ts'].map(
   ext => `.${ext}`,
 );
 
+export const stateServiceSuffix = '.state.service.ts';
+
 export const frontendFiles = [
   'browser.ts',
   'component.ts',
