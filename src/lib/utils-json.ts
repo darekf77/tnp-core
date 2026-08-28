@@ -1,5 +1,6 @@
 import { crossPlatformPath, fse } from './core-imports';
 import { Helpers } from './helpers';
+import { _ } from './lodash.namespace';
 
 export namespace UtilsJson {
   export interface AttrJsoncProp {
@@ -186,6 +187,133 @@ export namespace UtilsJson {
   ): any => {
     //#region @backendFunc
     return Helpers.readJson(absoluteFilePath, defaultValue, true);
+    //#endregion
+  };
+  //#endregion
+
+  //#region lodash path validation
+  export const validateLodashPath = (
+    lodashGetPath: string | string[],
+  ): string => {
+    if (_.isArray(lodashGetPath)) {
+      lodashGetPath = lodashGetPath.join('.');
+    }
+
+    if (!_.isString(lodashGetPath)) {
+      throw new Error(`Invalid lodash path: path cannot be empty.`);
+    }
+
+    const path = lodashGetPath.trim();
+
+    /**
+     * Allowed:
+     * foo
+     * foo.bar
+     * foo.bar.baz
+     * foo[0].bar
+     * foo.bar[123].baz
+     *
+     * Rejected:
+     * foo..bar
+     * .foo
+     * foo.
+     * foo[]
+     * foo[abc]
+     * foo[asd].bar
+     */
+    const validPathRegex =
+      /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\[\d+\])*(?:\.[a-zA-Z_$][a-zA-Z0-9_$]*(?:\[\d+\])*)*$/;
+
+    if (!validPathRegex.test(path)) {
+      throw new Error(`Invalid lodash path: "${path}"`);
+    }
+
+    const forbiddenKeys = ['__proto__', 'prototype', 'constructor'];
+
+    const parts = path.replace(/\[(\d+)\]/g, '.$1').split('.');
+
+    const forbiddenKey = parts.find(part => forbiddenKeys.includes(part));
+
+    if (forbiddenKey) {
+      throw new Error(
+        `Invalid lodash path: forbidden key "${forbiddenKey}" in "${path}"`,
+      );
+    }
+
+    return path;
+  };
+  //#endregion
+
+  //#region get value
+  export const getValue = (
+    filepath: string | string[],
+    lodashGetPath: string | string[],
+    options?: {
+      defaultValue?: any;
+      /**
+       * true by default
+       */
+      isJsonWithComments?: boolean;
+    },
+  ): any => {
+    //#region @backendFunc
+    options = options || ({} as any);
+
+    options.isJsonWithComments = _.isBoolean(options.isJsonWithComments)
+      ? options.isJsonWithComments
+      : true;
+
+    filepath = crossPlatformPath(filepath);
+    lodashGetPath = validateLodashPath(lodashGetPath);
+
+    if (!fse.existsSync(filepath)) {
+      return options.defaultValue;
+    }
+
+    const json = options.isJsonWithComments
+      ? readJsonWithComments(filepath)
+      : readJson(filepath);
+
+    return _.get(json, lodashGetPath, options.defaultValue);
+    //#endregion
+  };
+  //#endregion
+
+  //#region set value
+  export const setValue = (
+    filepath: string | string[],
+    lodashGetPath: string | string[],
+    value: any,
+    options?: {
+      defaultValue?: any;
+      /**
+       * true by default
+       */
+      isJsonWithComments?: boolean;
+    },
+  ): void => {
+    //#region @backendFunc
+    options = options || ({} as any);
+
+    options.isJsonWithComments = _.isBoolean(options.isJsonWithComments)
+      ? options.isJsonWithComments
+      : true;
+
+    filepath = crossPlatformPath(filepath);
+    lodashGetPath = validateLodashPath(lodashGetPath);
+
+    if (!fse.existsSync(filepath)) {
+      Helpers.warn(`Recreating nonexistent json file: ${filepath}`);
+      Helpers.writeJson(filepath, {});
+    }
+
+    const json = options.isJsonWithComments
+      ? readJsonWithComments(filepath)
+      : readJson(filepath);
+
+    _.set(json, lodashGetPath, value);
+
+    Helpers.writeJsonC(filepath, json);
     //#endregion
   };
   //#endregion
