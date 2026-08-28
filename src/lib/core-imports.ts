@@ -460,10 +460,37 @@ export function signal<T>(initialValue: T): BackendSignal<T> {
 
   return fn;
 }
+type Constructor<T> = new (...args: any[]) => T;
+
+const instances = new Map<Constructor<any>, any>();
+
+// @ts-ignore
+export function inject<T>(token: Constructor<T>): T {
+  let instance = instances.get(token);
+
+  if (!instance) {
+    instance = new token();
+    instances.set(token, instance);
+  }
+
+  return instance;
+}
+
+// @ts-ignore
+export function Injectable(_options?: any): ClassDecorator {
+  return () => {
+    // noop on backend
+  };
+}
+
 //#endregion
 //#region @browser
 // @ts-ignore
-export { signal } from '@angula/core';
+export { signal } from '@angular/core';
+// @ts-ignore
+export { inject } from '@angular/core';
+// @ts-ignore
+export { Injectable } from '@angular/core';
 //#endregion
 
 //#region exports
