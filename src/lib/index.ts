@@ -40,6 +40,7 @@ export * from './global-task-manager';
 export * from './config';
 export * from './constants';
 export * from './start-cli'; // @backend
+export * from './axios-simple-cookie-jar'; // @backend
 
 import type * as ora from 'ora';
 export const globalSpinner = {

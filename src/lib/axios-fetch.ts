@@ -1,3 +1,11 @@
+export interface TaonCookieJar {
+  getCookieHeader(
+    url: string,
+  ): Promise<string | undefined> | string | undefined;
+
+  setCookie(cookie: string, url: string): Promise<void> | void;
+}
+
 export interface FetchRequestConfig {
   url: string;
   method?: string;
@@ -7,6 +15,10 @@ export interface FetchRequestConfig {
 
   // axios compatibility
   validateStatus?: (status: number) => boolean;
+
+  // Taon cookie support
+  jar?: TaonCookieJar;
+  withCredentials?: boolean;
 }
 
 export interface FetchResponse<T = any> {
@@ -18,15 +30,57 @@ export interface FetchResponse<T = any> {
   request: Response;
 }
 
+let globalCookieJar: TaonCookieJar | undefined;
+
+export function setGlobalCookieJar(jar: TaonCookieJar | undefined): void {
+  globalCookieJar = jar;
+}
+
 export async function request<T = any>(
   config: FetchRequestConfig,
 ): Promise<FetchResponse<T>> {
+  const headers = new Headers(config.headers);
+
+  const jar = config.jar ?? globalCookieJar;
+
+  //
+  // CookieJar -> request Cookie header
+  //
+  if (jar && config.withCredentials !== false) {
+    const cookieHeader = await jar.getCookieHeader(config.url);
+
+    if (cookieHeader) {
+      headers.set('cookie', cookieHeader);
+    }
+  }
+
   const response = await fetch(config.url, {
     method: config.method ?? 'GET',
-    headers: config.headers,
+    headers,
     body: config.body,
     signal: config.signal,
   });
+
+  //
+  // response Set-Cookie -> CookieJar
+  //
+  if (jar && config.withCredentials !== false) {
+    const responseHeaders = response.headers as Headers & {
+      getSetCookie?: () => string[];
+    };
+
+    const setCookies =
+      typeof responseHeaders.getSetCookie === 'function'
+        ? responseHeaders.getSetCookie()
+        : (() => {
+            const cookie = response.headers.get('set-cookie');
+            return cookie ? [cookie] : [];
+          })();
+
+    for (const cookie of setCookies) {
+      await jar.setCookie(cookie, config.url);
+    }
+  }
 
   const validateStatus =
     config.validateStatus ??
@@ -62,56 +116,95 @@ type AxiosLike = {
   <T = any>(config: FetchRequestConfig): Promise<FetchResponse<T>>;
 
   request<T = any>(config: FetchRequestConfig): Promise<FetchResponse<T>>;
+
+  defaults: {
+    jar?: TaonCookieJar;
+    withCredentials?: boolean;
+  };
 };
 
+const defaults: AxiosLike['defaults'] = {
+  withCredentials: true,
+};
+
+function withDefaults(config: FetchRequestConfig): FetchRequestConfig {
+  return {
+    ...defaults,
+    ...config,
+
+    headers: {
+      ...(defaults as any).headers,
+      ...(config.headers as any),
+    },
+  };
+}
+
 export const axiosFetchReplacement = Object.assign(
-  <T = any>(config: FetchRequestConfig) => request<T>(config),
+  <T = any>(config: FetchRequestConfig) => request<T>(withDefaults(config)),
   {
-    request,
+    defaults,
+
+    request: <T = any>(config: FetchRequestConfig) =>
+      request<T>(withDefaults(config)),
+
     get: <T = any>(url: string, config: Partial<FetchRequestConfig> = {}) =>
-      request<T>({ ...config, url, method: 'GET' }),
+      request<T>(
+        withDefaults({
+          ...config,
+          url,
+          method: 'GET',
+        } as FetchRequestConfig),
+      ),
 
     post: <T = any>(
       url: string,
       body?: BodyInit | null,
       config: Partial<FetchRequestConfig> = {},
     ) =>
-      request<T>({
-        ...config,
-        url,
-        method: 'POST',
-        body,
-      }),
+      request<T>(
+        withDefaults({
+          ...config,
+          url,
+          method: 'POST',
+          body,
+        } as FetchRequestConfig),
+      ),
 
     put: <T = any>(
       url: string,
       body?: BodyInit | null,
       config: Partial<FetchRequestConfig> = {},
     ) =>
-      request<T>({
-        ...config,
-        url,
-        method: 'PUT',
-        body,
-      }),
+      request<T>(
+        withDefaults({
+          ...config,
+          url,
+          method: 'PUT',
+          body,
+        } as FetchRequestConfig),
+      ),
 
     patch: <T = any>(
       url: string,
       body?: BodyInit | null,
       config: Partial<FetchRequestConfig> = {},
     ) =>
-      request<T>({
-        ...config,
-        url,
-        method: 'PATCH',
-        body,
-      }),
+      request<T>(
+        withDefaults({
+          ...config,
+          url,
+          method: 'PATCH',
+          body,
+        } as FetchRequestConfig),
+      ),
 
     delete: <T = any>(url: string, config: Partial<FetchRequestConfig> = {}) =>
-      request<T>({
-        ...config,
-        url,
-        method: 'DELETE',
-      }),
+      request<T>(
+        withDefaults({
+          ...config,
+          url,
+          method: 'DELETE',
+        } as FetchRequestConfig),
+      ),
   },
 ) as AxiosLike;
