@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, map, Observable } from 'rxjs';
 
 import { _ } from './lodash.namespace';
 
@@ -14,9 +14,15 @@ export type JsPrimitive =
 export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
   private _currentValue: T;
 
-  private readonly currentStateSubject: BehaviorSubject<T>;
+  private readonly currentStateSubject: BehaviorSubject<{
+    currentState: T;
+    previousState: T;
+  }>;
 
-  public readonly currentState$: Observable<T>;
+  public readonly currentState$: Observable<{
+    currentState: T;
+    previousState: T;
+  }>;
 
   constructor(
     private readonly config: {
@@ -38,7 +44,10 @@ export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
   ) {
     this._currentValue = config.defaultValue;
 
-    this.currentStateSubject = new BehaviorSubject<T>(config.defaultValue);
+    this.currentStateSubject = new BehaviorSubject({
+      previousState: config.defaultValue,
+      currentState: config.defaultValue,
+    });
 
     this.currentState$ = this.currentStateSubject.asObservable();
   }
@@ -99,7 +108,7 @@ export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
     this._currentValue = nextState;
 
     // Notify observers only after successful transition.
-    this.currentStateSubject.next(nextState);
+    this.currentStateSubject.next({ previousState, currentState: nextState });
 
     void this.config.effect?.(nextState, previousState, this.debugMode);
 
