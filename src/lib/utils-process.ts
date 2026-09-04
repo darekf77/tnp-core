@@ -225,6 +225,8 @@ export namespace UtilsProcess {
       }
       // For Linux (gnome-terminal as an example)
       const terminals = [
+        { cmd: 'ptyxis', args: ['--', 'bash', '-c'] }, // Fedora GNOME / modern GNOME
+        { cmd: 'kgx', args: ['--', 'bash', '-c'] }, // GNOME Console
         { cmd: 'gnome-terminal', args: ['--', 'bash', '-c'] }, // GNOME Terminal
         { cmd: 'konsole', args: ['-e', 'bash', '-c'] }, // Konsole
         { cmd: 'xfce4-terminal', args: ['-e', 'bash', '-c'] }, // XFCE4 Terminal
