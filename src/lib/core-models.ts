@@ -6,15 +6,16 @@ import { LibTypeNames } from './constants';
 
 export namespace CoreModels {
   //#region package
-  export type Package = {
+  export interface Package {
     name: string;
     version?: string;
     installType?: InstalationType;
-  };
+  }
   //#endregion
 
   //#region npm install options
-  export type NpmInstallOptions = {
+  export interface NpmInstallOptions {
+    NODE_TLS_REJECT_UNAUTHORIZED?: boolean;
     pkg?: CoreModels.Package;
     /**
      * false by default
@@ -44,7 +45,7 @@ export namespace CoreModels {
      * false by default
      */
     skipRemovingNodeModules?: boolean;
-  };
+  }
   //#endregion
 
   //#region installation type
@@ -172,7 +173,6 @@ export namespace CoreModels {
     envName: string | EnvironmentNameTaon;
     envNumber: number | undefined;
   } {
-
     if (!value) {
       return {
         envName: value,
