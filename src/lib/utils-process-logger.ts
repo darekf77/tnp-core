@@ -1,4 +1,5 @@
 //#region imports
+
 import 'reflect-metadata';
 import { ChildProcess } from 'child_process';
 import * as crypto from 'crypto'; // @backend
@@ -6,11 +7,10 @@ import type { WriteStream } from 'fs';
 
 import { _, crossPlatformPath } from './core-imports';
 import { fse } from './core-imports';
+import { Helpers } from './helpers';
 import { FilePathMetaData } from './utils';
 import { UtilsOs } from './utils-os';
 import { UtilsTerminal } from './utils-terminal';
-
-import { Helpers } from './index';
 
 //#endregion
 

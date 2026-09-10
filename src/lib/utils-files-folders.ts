@@ -13,9 +13,10 @@ import {
 import { path, _, crossPlatformPath, os, json5 } from './core-imports';
 import { fse } from './core-imports';
 import { CoreModels } from './core-models';
+import { Helpers } from './helpers';
 import { UtilsTerminal } from './utils-terminal';
 
-import { config, Helpers } from './index';
+import { config } from './index';
 //#endregion
 
 export namespace UtilsFilesFoldersSync {

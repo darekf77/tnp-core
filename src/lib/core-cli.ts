@@ -1,4 +1,5 @@
 //#region imports
+import { Helpers } from './helpers';
 import { chalk } from './core-imports';
 import { child_process } from './core-imports';
 import { frameworkName } from './framework-name';
@@ -6,7 +7,6 @@ import { requiredForDev } from './required-global-npm-packages';
 import { UtilsOs } from './utils-os';
 import { UtilsProcess } from './utils-process';
 
-import { Helpers } from './index';
 //#endregion
 
 export class CLI {

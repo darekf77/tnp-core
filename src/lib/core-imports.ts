@@ -1,3 +1,4 @@
+
 // let forceTrace = false;
 // QUICK_FIX for esm bundling
 const REQUIRE_MAP = {
@@ -102,7 +103,7 @@ import type * as mkdirpBaseType from 'mkdirp';
 import type * as ncpBaseType from 'copy-paste';
 import type * as psBaseType from 'ps-node';
 import type axiosType from 'axios';
-import { Helpers } from './index';
+// import { Helpers } from './helpers';
 import { axiosFetchReplacement } from './axios-fetch';
 
 //#region set up browser mocks
@@ -402,11 +403,11 @@ const crossPlatformPath = (
 
   if (hasNonAscii) {
     const allNonAscii = pathStringOrPathParts.match(/[^\u0000-\u0080]+/g) || '';
-    Helpers.logWarn(
+    console.warn(
       `[taon-core][crossPlatformPath]: path below contains non-ascii characters (${allNonAscii}):
 "${pathStringOrPathParts}"`,
     );
-    Helpers.logWarn(pathStringOrPathParts);
+    console.warn(pathStringOrPathParts);
   }
 
   pathStringOrPathParts = (pathStringOrPathParts || '')

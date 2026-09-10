@@ -1,5 +1,6 @@
 //#region imports
 import 'reflect-metadata';
+import { Helpers } from './helpers';
 import { URL } from 'url'; // @backend
 
 import { Subject } from 'rxjs';
@@ -7,7 +8,6 @@ import { Subject } from 'rxjs';
 import { _, crossPlatformPath, os, chalk, isElevated } from './core-imports';
 import { UtilsNetwork } from './utils-network';
 
-import { Helpers } from './index';
 //#endregion
 
 export namespace UtilsEtcHosts {

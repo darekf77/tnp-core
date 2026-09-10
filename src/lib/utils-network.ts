@@ -7,10 +7,10 @@ import { Subject } from 'rxjs';
 import { _, os, https } from './core-imports';
 import { spawn } from './core-imports';
 import { fse } from './core-imports';
+import { Helpers } from './helpers';
 import { Utils } from './utils';
 import { UtilsEtcHosts } from './utils-etc-hosts';
 
-import { Helpers } from './index';
 //#endregion
 
 export namespace UtilsNetwork {

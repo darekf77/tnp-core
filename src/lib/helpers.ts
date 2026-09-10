@@ -1,4 +1,7 @@
 //#region imports
+import { UtilsOs } from './utils-os';
+import { Utils } from './utils';
+import { UtilsProgress } from './utils-progress';
 import { Blob } from 'buffer'; // @backend
 import type { ChildProcess } from 'child_process';
 
@@ -28,7 +31,7 @@ import { ProcessStartOptions, startAsync } from './utils-start-async';
 import { UtilsTerminal } from './utils-terminal';
 import { UtilsTime } from './utils-time';
 
-import { frameworkName, UtilsProgress, Utils, UtilsOs } from './index';
+import { frameworkName } from './index';
 // import { loadJsonC } from './json10writer';
 //#endregion
 

@@ -2,31 +2,14 @@
 import 'reflect-metadata';
 
 import {
-  dotTaonFolder,
-  dotTnpFolder,
-  encoding,
-  extAllowedToReplace,
-} from './constants';
-import {
   path,
   _,
-  crossPlatformPath,
-  os,
-  chalk,
-  win32Path,
-  isElevated,
-  https,
-  json5,
 } from './core-imports';
 import { dateformat } from './core-imports';
-import { spawn, child_process } from './core-imports';
-import { fse } from './core-imports';
-import { CoreModels } from './core-models';
+import { Helpers } from './helpers';
 import { UtilsOs } from './utils-os';
-import { UtilsTerminal } from './utils-terminal';
 import { UtilsTime } from './utils-time';
 
-import { config, frameworkName, Helpers } from './index';
 //#endregion
 
 //#region utils

@@ -5,11 +5,12 @@ import { dotTaonFolder } from './constants';
 import { _, crossPlatformPath, os, chalk, win32Path } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { CoreModels } from './core-models';
+import { Helpers } from './helpers';
 import { Utils } from './utils';
 import { UtilsOs } from './utils-os';
 import { UtilsProcess } from './utils-process';
 
-import { frameworkName, Helpers } from './index';
+import { frameworkName } from './index';
 
 //#endregion
 
