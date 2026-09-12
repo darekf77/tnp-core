@@ -30,6 +30,7 @@ export * from './utils-md-docs';
 export * from './taon-state-machine';
 export * from './utils-env';
 export * from './utils-jwt';
+export * from './utils-http';
 // export * from './utils-imports';
 export * from './lowdb'; // @backend
 export * from './jsonc-parser';
