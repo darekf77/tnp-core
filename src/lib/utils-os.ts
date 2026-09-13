@@ -288,6 +288,46 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
   };
   //#endregion
 
+  //#region utils os / is running in linux distro
+  /**
+   * check what linux you are running
+   */
+  export const isRunningInLinuxDistro = (
+    linuxType?: 'arch' | 'ubuntu' | 'fedora',
+  ): boolean => {
+    //#region @backend
+    if (process.platform !== 'linux') {
+      return false;
+    }
+
+    // Any Linux
+    if (!linuxType) {
+      return true;
+    }
+
+    if (!fse.existsSync('/etc/os-release')) {
+      return false;
+    }
+
+    const osRelease = fse.readFileSync('/etc/os-release', 'utf8');
+
+    const id =
+      osRelease.match(/^ID=(?:"([^"]+)"|([^\n]+))$/m)?.[1] ??
+      osRelease.match(/^ID=(?:"([^"]+)"|([^\n]+))$/m)?.[2];
+
+    const idLike =
+      osRelease.match(/^ID_LIKE=(?:"([^"]+)"|([^\n]+))$/m)?.[1] ??
+      osRelease.match(/^ID_LIKE=(?:"([^"]+)"|([^\n]+))$/m)?.[2] ??
+      '';
+
+    return id === linuxType || idLike.split(/\s+/).includes(linuxType);
+    //#endregion
+    //#region @browser
+    return false;
+    //#endregion
+  };
+  //#endregion
+
   //#region utils os / is running in linux graphics capable environment
   export const isRunningInLinuxGraphicsCapableEnvironment = (): boolean => {
     //#region @backendFunc
