@@ -605,6 +605,19 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
      * Optional readable part of the generated folder name.
      */
     prefix?: string;
+
+    /**
+     * When true, creates a unique folder on every call.
+     *
+     * Example:
+     *   /tmp/cloudflare-db-1789309118998-1234-a1b2c3d4e5f6
+     *
+     * When false, creates/reuses a persistent folder:
+     *   /tmp/cloudflare-db
+     *
+     * @default false
+     */
+    everytimeNew?: boolean;
   }
 
   interface TempFolderMetadata {
@@ -619,67 +632,88 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
 
   export const getTempFolder = (options: GetTempFolderOptions = {}): string => {
     //#region @backendFunc
-    const { scrypt, randomBytes, timingSafeEqual } = require('crypto');
+    const { randomBytes } = require('crypto');
+
     const systemTempFolder = getSystemTempFolder();
 
-    if (options.deleteAfterDays === undefined) {
+    const shouldCreateTempFolder =
+      options.prefix !== undefined || options.deleteAfterDays !== undefined;
+
+    if (!shouldCreateTempFolder) {
       return systemTempFolder;
     }
 
+    const everytimeNew = options.everytimeNew ?? false;
+
     if (
-      !Number.isFinite(options.deleteAfterDays) ||
-      options.deleteAfterDays <= 0
+      options.deleteAfterDays !== undefined &&
+      (!Number.isFinite(options.deleteAfterDays) ||
+        options.deleteAfterDays <= 0)
     ) {
       throw new Error(
         `deleteAfterDays must be a finite number greater than zero.`,
       );
     }
 
-    const managedTempRoot = crossPlatformPath([
-      systemTempFolder,
-      MANAGED_TEMP_FOLDER_NAME,
-    ]);
+    if (options.deleteAfterDays !== undefined && !everytimeNew) {
+      throw new Error(
+        `deleteAfterDays cannot be used together with everytimeNew=false.`,
+      );
+    }
 
-    fse.mkdirSync(managedTempRoot, {
+    const parentFolder =
+      options.deleteAfterDays !== undefined
+        ? crossPlatformPath([systemTempFolder, MANAGED_TEMP_FOLDER_NAME])
+        : systemTempFolder;
+
+    fse.mkdirSync(parentFolder, {
       recursive: true,
     });
 
-    cleanupExpiredTempFolders(managedTempRoot);
+    if (options.deleteAfterDays !== undefined) {
+      cleanupExpiredTempFolders(parentFolder);
+    }
 
     const createdAt = new Date();
-    const expiresAt = new Date(
-      createdAt.getTime() + options.deleteAfterDays * 24 * 60 * 60 * 1000,
-    );
 
     const safePrefix = sanitizeTempFolderPrefix(options.prefix || 'temp');
 
-    const uniquePart = [
-      createdAt.getTime(),
-      process.pid,
-      randomBytes(6).toString('hex'),
-    ].join('-');
+    let folderName = safePrefix;
 
-    const tempFolderPath = crossPlatformPath([
-      managedTempRoot,
-      `${safePrefix}-${uniquePart}`,
-    ]);
+    if (everytimeNew) {
+      const uniquePart = [
+        createdAt.getTime(),
+        process.pid,
+        randomBytes(6).toString('hex'),
+      ].join('-');
+
+      folderName = `${safePrefix}-${uniquePart}`;
+    }
+
+    const tempFolderPath = crossPlatformPath([parentFolder, folderName]);
 
     fse.mkdirSync(tempFolderPath, {
       recursive: true,
     });
 
-    const metadata: TempFolderMetadata = {
-      createdAt: createdAt.toISOString(),
-      expiresAt: expiresAt.toISOString(),
-      deleteAfterDays: options.deleteAfterDays,
-      folderPath: tempFolderPath,
-    };
+    if (options.deleteAfterDays !== undefined) {
+      const expiresAt = new Date(
+        createdAt.getTime() + options.deleteAfterDays * 24 * 60 * 60 * 1000,
+      );
 
-    fse.writeFileSync(
-      crossPlatformPath([tempFolderPath, TEMP_METADATA_FILE_NAME]),
-      JSON.stringify(metadata, null, 2),
-      'utf8',
-    );
+      const metadata: TempFolderMetadata = {
+        createdAt: createdAt.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        deleteAfterDays: options.deleteAfterDays,
+        folderPath: tempFolderPath,
+      };
+
+      fse.writeFileSync(
+        crossPlatformPath([tempFolderPath, TEMP_METADATA_FILE_NAME]),
+        JSON.stringify(metadata, null, 2),
+        'utf8',
+      );
+    }
 
     return crossPlatformPath(tempFolderPath);
     //#endregion
