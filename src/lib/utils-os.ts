@@ -768,6 +768,7 @@ for ($i = 0; $i -lt 30 -and $processId; $i++) {
     return result || 'temp';
     //#endregion
   }
+  //#endregion
 
   //#region utils os / editor
   export type Editor =
@@ -1587,8 +1588,8 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
   };
   //#endregion
 }
-//#endregion
 
+//#region taon repo path in user dir fn
 export const taonRepoPathUserInUserDirFn = () => {
   //#region @backendFunc
   return crossPlatformPath([
@@ -1601,6 +1602,7 @@ export const taonRepoPathUserInUserDirFn = () => {
 };
 //#endregion
 
+//#region taon repo path for global template fn
 export const taonBasePathToGlobalDockerTemplatesFn = () => {
   //#region @backendFunc
   return crossPlatformPath([
@@ -1611,3 +1613,4 @@ export const taonBasePathToGlobalDockerTemplatesFn = () => {
   //#endregion
   return '';
 };
+//#endregion
