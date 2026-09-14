@@ -716,6 +716,20 @@ export namespace UtilsProcess {
   };
   //#endregion
 
+  //#region utils process / is current process attached to terminal
+  export function isCurrentProcessAttachedToTerminal(): boolean {
+    //#region @backendFunc
+    //#region @esmRemove
+    return Boolean(
+      process.stdin?.isTTY || process.stdout?.isTTY || process.stderr?.isTTY,
+    );
+    //#endregion
+    return false;
+    //#endregion
+  }
+  //#endregion
+
+  //#region utils process / get path of executable
   export const getPathOfExecutable = async (
     command: string,
   ): Promise<string | null> => {
@@ -739,4 +753,5 @@ export namespace UtilsProcess {
     }
     //#endregion
   };
+  //#endregion
 }
