@@ -10,9 +10,10 @@ import {
   encoding,
   extAllowedToReplace,
 } from './constants';
-import { path, _, crossPlatformPath, os, json5 } from './core-imports';
+import { path, _, os, json5 } from './core-imports';
 import { fse } from './core-imports';
 import { CoreModels } from './core-models';
+import { crossPlatformPath } from './cross-platform-path';
 import { Helpers } from './helpers';
 import { UtilsTerminal } from './utils-terminal';
 

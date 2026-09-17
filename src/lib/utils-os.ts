@@ -10,10 +10,11 @@ import {
   taonContainers,
   tnpPackageName,
 } from './constants';
-import { path, _, crossPlatformPath, os, win32Path } from './core-imports';
+import { path, _, os } from './core-imports';
 import { child_process } from './core-imports';
 import { fse } from './core-imports';
 import { CoreModels } from './core-models';
+import { crossPlatformPath, win32Path } from './cross-platform-path';
 import { frameworkName } from './framework-name';
 import { GlobalStorage } from './global-storage';
 import { Helpers } from './helpers';

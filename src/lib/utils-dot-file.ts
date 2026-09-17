@@ -1,4 +1,5 @@
-import { crossPlatformPath, fse, path } from "./core-imports";
+import {  fse, path } from "./core-imports";
+import { win32Path, crossPlatformPath } from './cross-platform-path';
 import { frameworkName } from "./framework-name";
 import { Helpers } from "./helpers";
 

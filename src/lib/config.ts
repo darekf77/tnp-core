@@ -7,15 +7,9 @@ import {
   isCloudflareWorker,
   tempFoldersName,
 } from './constants';
-import {
-  path,
-  fse,
-  os,
-  child_process,
-  crossPlatformPath,
-} from './core-imports'; // @backend
-
+import { path, fse, os, child_process } from './core-imports'; // @backend
 import { CoreModels } from './core-models';
+import { win32Path, crossPlatformPath } from './cross-platform-path';
 import { frameworkName } from './framework-name';
 //#endregion
 

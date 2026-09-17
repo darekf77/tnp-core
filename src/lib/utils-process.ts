@@ -3,9 +3,10 @@ import 'reflect-metadata';
 import { ChildProcess } from 'child_process';
 
 import { encoding } from './constants';
-import { _, chalk, crossPlatformPath, fse, os, path } from './core-imports';
+import { _, chalk,  fse, os, path } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { CoreModels } from './core-models';
+import { crossPlatformPath } from './cross-platform-path';
 import { Helpers } from './helpers';
 import { Utils } from './utils';
 import { UtilsExecProc } from './utils-exec-proc';

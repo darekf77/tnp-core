@@ -1,4 +1,5 @@
-import { crossPlatformPath, fse } from './core-imports';
+import { fse } from './core-imports';
+import { crossPlatformPath } from './cross-platform-path';
 import { Helpers } from './helpers';
 import { _ } from './lodash.namespace';
 

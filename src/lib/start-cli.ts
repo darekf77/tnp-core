@@ -2,14 +2,12 @@
 // import { Helpers, BaseCommandLineFeature } from 'tnp-helpers/src';
 // import { BaseProject, BaseStartConfig } from 'tnp-helpers/src'; // @backend
 
-import { BehaviorSubject, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 
-import { chokidar, crossPlatformPath } from './core-imports';
 import { Utils } from './utils';
-import { UtilsProcess } from './utils-process';
-import { UtilsTerminal } from './utils-terminal';
-import { startAsync } from './utils-start-async';
 import { UtilsOs } from './utils-os';
+import { startAsync } from './utils-start-async';
+import { UtilsTerminal } from './utils-terminal';
 
 // class $Version extends BaseCommandLineFeature<{}> {
 //   public _() {

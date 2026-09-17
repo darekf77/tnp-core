@@ -3,8 +3,9 @@ import 'reflect-metadata';
 import { ChildProcess } from 'child_process';
 
 import { config } from './config';
-import { _, crossPlatformPath, chalk } from './core-imports';
+import { _, chalk } from './core-imports';
 import { spawn } from './core-imports';
+import { win32Path, crossPlatformPath } from './cross-platform-path';
 import { Helpers } from './helpers';
 import { UtilsSudo } from './utils-sudo';
 //#endregion

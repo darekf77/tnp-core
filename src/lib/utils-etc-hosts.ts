@@ -1,11 +1,12 @@
 //#region imports
 import 'reflect-metadata';
-import { Helpers } from './helpers';
 import { URL } from 'url'; // @backend
 
 import { Subject } from 'rxjs';
 
-import { _, crossPlatformPath, os, chalk, isElevated } from './core-imports';
+import { _, os, chalk, isElevated } from './core-imports';
+import { win32Path, crossPlatformPath } from './cross-platform-path';
+import { Helpers } from './helpers';
 import { UtilsNetwork } from './utils-network';
 
 //#endregion

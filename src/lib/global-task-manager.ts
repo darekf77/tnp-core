@@ -1,4 +1,5 @@
-import { crossPlatformPath, dateformat, fse } from './core-imports';
+import {  dateformat, fse } from './core-imports';
+import { win32Path, crossPlatformPath } from './cross-platform-path';
 import { GlobalSpinner } from './global-spinner';
 import { Helpers } from './helpers';
 import { UtilsOs } from './utils-os';

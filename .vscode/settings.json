@@ -86,7 +86,9 @@
     "webpack.*": true,
     ".eslintrc*": true,
     "tslint.*": true,
-    "!templates-subprojects/**/package.json": true
+    "!templates-subprojects/**/package.json": true,
+    "*.i18n.data.ts": true,
+    "**/*.i18n.data.ts": true
   },
 
   "workbench.colorCustomizations": {

@@ -5,13 +5,13 @@ import { ChildProcess } from 'child_process';
 import * as crypto from 'crypto'; // @backend
 import type { WriteStream } from 'fs';
 
-import { _, crossPlatformPath } from './core-imports';
+import { _ } from './core-imports';
 import { fse } from './core-imports';
+import { win32Path, crossPlatformPath } from './cross-platform-path';
 import { Helpers } from './helpers';
 import { FilePathMetaData } from './utils';
 import { UtilsOs } from './utils-os';
 import { UtilsTerminal } from './utils-terminal';
-
 //#endregion
 
 /**
