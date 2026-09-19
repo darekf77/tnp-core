@@ -280,6 +280,8 @@ export namespace UtilsFilesFoldersSync {
         },
       );
 
+      // console.log(`Exclude=${exclude ? 'true' : 'false'} ${pathToFileOrFolder} ${options.omitPatterns}`);
+
       // if (!exclude
       //   //  && pathToFileOrFolder.includes('node_modules')
       //   ) {
