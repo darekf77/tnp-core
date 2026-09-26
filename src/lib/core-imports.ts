@@ -1,4 +1,3 @@
-
 // let forceTrace = false;
 // QUICK_FIX for esm bundling
 const REQUIRE_MAP = {
@@ -83,7 +82,9 @@ let dateformat: typeof import('dateformat') = ((
 dateformat = requireDefault('dateformat');
 //#endregion
 import type { Chalk } from 'chalk';
-import * as json5 from 'json5';
+import * as json5Norma from 'json5';
+import json5def from 'json5';
+const json5 = json5def ? json5def : json5Norma;
 import type jQueryType from 'jquery';
 import type chalkBaseType from 'chalk';
 import type * as pathBaseType from 'path';
@@ -345,7 +346,6 @@ fg = fgBase;
 //#endregion
 
 //#endregion
-
 
 export interface BackendSignal<T> {
   (): T;
