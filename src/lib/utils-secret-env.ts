@@ -205,10 +205,8 @@ export namespace UtilsSecretEnv {
 
       return new TextDecoder().decode(decrypted);
     } catch {
-      Helpers.error(
+      throw new Error(
         'Unable to decrypt Taon secret. Invalid password or corrupted data.',
-        false,
-        true,
       );
     }
   }
