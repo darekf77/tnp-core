@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 
 import { dotTaonFolder } from './constants';
-import { _,  os, chalk } from './core-imports';
+import { _, os, chalk } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { CoreModels } from './core-models';
 import { win32Path, crossPlatformPath } from './cross-platform-path';
@@ -620,6 +620,47 @@ export namespace UtilsTerminal {
       }
       return anwser;
     }
+    //#endregion
+  };
+  //#endregion
+
+  //#region utils terminal / password
+  export const password = async ({
+    question,
+    required,
+    validate,
+  }: {
+    defaultValue?: string;
+    question: string;
+    required?: boolean;
+    validate?: (value: string) => boolean;
+  }): Promise<string> => {
+    //#region @backendFunc
+
+    const inquirer = await import('inquirer');
+
+    while (true) {
+      const response = await inquirer.prompt({
+        type: 'password',
+        name: 'value',
+        message: question,
+        required,
+        mask: '*',
+      });
+
+      const answer = response.value as string;
+
+      if (required && !answer) {
+        continue;
+      }
+
+      if (_.isFunction(validate) && !validate(answer)) {
+        continue;
+      }
+
+      return answer;
+    }
+
     //#endregion
   };
   //#endregion
