@@ -1,5 +1,4 @@
 import { Blob } from 'buffer'; // @backend
-import { axios } from './core-imports';
 
 import { path } from './core-imports';
 import { CoreModels } from './core-models';
@@ -382,13 +381,16 @@ export namespace UtilsBinary {
 
   //#region binay utils / get blob from url
   export async function getBlobFrom(url: string): Promise<Blob> {
-    return (
-      await axios.request({
-        url,
-        method: 'get',
-        responseType: 'blob',
-      })
-    ).data;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to get blob from "${url}". ` +
+          `HTTP ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    return (await response.blob()) as any;
   }
   //#endregion
 }

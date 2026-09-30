@@ -46,7 +46,6 @@ export * from './global-task-manager';
 
 export * from './constants';
 export * from './start-cli'; // @backend
-export * from './axios-simple-cookie-jar'; // @backend
 export * from './config';
 
 import type * as ora from 'ora';

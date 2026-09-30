@@ -53,14 +53,12 @@ import * as chokidarBase from 'chokidar'; // @esmRemove
 import * as mkdirpBase from 'mkdirp'; // @esmRemove
 import * as ncpBase from 'copy-paste'; // @esmRemove
 import * as psBase from 'ps-node'; // @esmRemove
-import axiosBase from 'axios'; // @esmRemove
 
 //#endregion
 import { chalk as chalkMock } from './node-chalk-mock';
 import { path as pathMock } from './node-path-mock';
 
 //#region @browser
-import axiosBasebrowser from 'axios';
 import jQuery from 'jquery';
 
 //#endregion
@@ -103,9 +101,8 @@ import type * as chokidarBaseType from 'chokidar';
 import type * as mkdirpBaseType from 'mkdirp';
 import type * as ncpBaseType from 'copy-paste';
 import type * as psBaseType from 'ps-node';
-import type axiosType from 'axios';
+
 // import { Helpers } from './helpers';
-import { axiosFetchReplacement } from './axios-fetch';
 
 //#region set up browser mocks
 
@@ -136,22 +133,6 @@ path = pathMock;
 //#region @browser
 // @ts-ignore
 path = pathMock;
-//#endregion
-//#endregion
-
-//#region set up browser mocks / mock axios
-let axios = void 0 as typeof axiosType;
-// #region @backend
-//#region @esmRemove
-axios = axiosBase;
-//#endregion
-//#region @cjsRemove
-// @ts-ignore
-axios = axiosFetchReplacement;
-//#endregion
-//#endregion
-//#region @browser
-axios = axiosBasebrowser;
 //#endregion
 //#endregion
 
@@ -400,7 +381,6 @@ export { Injectable } from '@angular/core';
 
 //#region exports
 export {
-  axios,
   dateformat,
   path,
   chalk,
