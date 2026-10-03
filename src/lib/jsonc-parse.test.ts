@@ -6,12 +6,13 @@ import { parse, type ParseError } from 'jsonc-parser';
 import { UtilsOs } from 'tnp-core/src';
 
 import { updateJsoncContent, type JsonValue } from './jsonc-parser';
+import { UtilsTempFolder } from './utils-temp-folder';
 
 describe('updateJsoncContent', () => {
   let testTempFolder: string;
 
   beforeAll(() => {
-    testTempFolder = UtilsOs.getTempFolder({
+    testTempFolder = UtilsTempFolder.getPathForNodeOnly({
       prefix: 'update-jsonc-content-tests',
       deleteAfterDays: 1,
     });

@@ -30,7 +30,8 @@
     "cfonts",
     "jquery",
     "micromatch",
-    "rxjs"
+    "rxjs",
+    "@cloudflare/workers-types",
   ],
 
   "additionalNpmNames": ["taon-core"],
@@ -39,7 +40,7 @@
   "autoReleaseConfigAllowedItems": [
     {
       "artifactName": "npm-lib-and-cli-tool",
-      "taskName": "npm"
+      "taskName": "npm",
     },
   ],
 
@@ -60,5 +61,5 @@
     "scripts": {
       "mkdocs": "python3 -m mkdocs",
     },
-  }
+  },
 }

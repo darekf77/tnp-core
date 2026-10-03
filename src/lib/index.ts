@@ -34,6 +34,7 @@ export * from './utils-http';
 export * from './cross-platform-path';
 export * from './utils-secret-env';
 export * from './utils-passwords';
+export * from './utils-temp-folder';
 // export * from './utils-imports';
 export * from './lowdb'; // @backend
 export * from './jsonc-parser';
