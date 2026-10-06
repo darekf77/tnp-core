@@ -175,6 +175,8 @@ export namespace UtilsJson {
       );
       return json;
     } catch (error) {
+      console.error(error);
+      Helpers.error(`Error reading JSON from file: ${absoluteFilePath}`, false, true);
       return defaultValue;
     }
     //#endregion
