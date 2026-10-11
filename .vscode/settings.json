@@ -88,7 +88,15 @@
     "tslint.*": true,
     "!templates-subprojects/**/package.json": true,
     "*.i18n.data.ts": true,
-    "**/*.i18n.data.ts": true
+    "**/*.i18n.data.ts": true,
+    "AGENTS.md": true,
+    "**/AGENTS.md": true,
+    ".ai": true,
+    "**/.ai": true,
+    ".github/copilot-instructions.md": true,
+    "**/.github/copilot-instructions.md": true,
+    ".ai/examples": true,
+    "**/.ai/examples": true
   },
 
   "workbench.colorCustomizations": {
