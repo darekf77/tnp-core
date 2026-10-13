@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { ChildProcess } from 'child_process';
 
 import { encoding } from './constants';
-import { _, chalk,  fse, os, path } from './core-imports';
+import { _, chalk, fse, os, path } from './core-imports';
 import { spawn, child_process } from './core-imports';
 import { CoreModels } from './core-models';
 import { crossPlatformPath } from './cross-platform-path';
@@ -229,6 +229,10 @@ export namespace UtilsProcess {
         { cmd: 'ptyxis', args: ['--', 'bash', '-c'] }, // Fedora GNOME / modern GNOME
         { cmd: 'kgx', args: ['--', 'bash', '-c'] }, // GNOME Console
         { cmd: 'gnome-terminal', args: ['--', 'bash', '-c'] }, // GNOME Terminal
+        {
+          cmd: 'deepin-terminal',
+          args: ['-e', 'bash', '-ic'],
+        }, // Deepin Terminal
         { cmd: 'konsole', args: ['-e', 'bash', '-c'] }, // Konsole
         { cmd: 'xfce4-terminal', args: ['-e', 'bash', '-c'] }, // XFCE4 Terminal
         { cmd: 'xterm', args: ['-e', 'bash', '-c'] }, // Xterm
