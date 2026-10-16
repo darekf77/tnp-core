@@ -305,8 +305,6 @@ export const backendWebsqlNodejsFiles = ['subscriber.ts', 'test.ts'].map(
   ext => `.${ext}`,
 );
 
-export const stateServiceSuffix = '.state.service.ts';
-
 export const frontendFiles = [
   'browser.ts',
   'component.ts',
@@ -363,6 +361,7 @@ export const TAGS = {
   BACKEND: `@backend`,
   BACKEND_FUNC: `@backendFunc`,
   BROWSER: `@browser`,
+  BROWSER_FUNC: `@browserFunc`,
   WEBSQL_ONLY: `@websqlOnly`,
   WEBSQL: `@websql`,
   WEBSQL_FUNC: `@websqlFunc`,
