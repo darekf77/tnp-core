@@ -453,6 +453,8 @@ export namespace CoreModels {
   export const localhostIp127 = '127.0.0.1';
   export const localhostDomain = 'localhost';
 
+  export const StatusCode401 = 401;
+
   export const SPECIAL_WORKER_READY_MESSAGE = '$$$ WORKER_READY $$$';
   export const SPECIAL_APP_READY_MESSAGE = '$$$ APP_READY $$$';
 
