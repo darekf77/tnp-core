@@ -1226,37 +1226,75 @@ ${opt.subtitle ? opt.subtitle + '\n' : ''}${opt.body ?? ''}
         return;
       }
       if (platform === 'darwin') {
-        await new Promise<void>(resolve => {
-          let resolved = false;
+        const macOsVersion = child_process
+          .execFileSync('/usr/bin/sw_vers', ['-productVersion'], {
+            encoding: 'utf8',
+          })
+          .trim();
 
-          const finish = () => {
-            if (!resolved) {
-              resolved = true;
-              opt.doneCallback?.();
-              resolve();
-            }
-          };
+        const macOsMajor = Number(macOsVersion.split('.')[0]);
 
-          setTimeout(finish, (opt.timeoutMs ?? defaultTimeoutMs) + 1000);
-          const cfg = {
-            title: opt.title,
-            message: opt.body ?? '',
-            subtitle: opt.subtitle,
-            sound: false,
-            wait: false,
-            timeout: opt.timeoutMs,
-          } as NotificationCenter.Notification;
-          if (opt.iconPath && fse.existsSync(opt.iconPath)) {
-            cfg.icon = opt.iconPath;
-          }
+        if (macOsMajor >= 27) {
+          // osascript workaround
 
-          notifier.notify(cfg, () => {
-            finish();
+          await new Promise<void>(resolve => {
+            child_process.execFile(
+              '/usr/bin/osascript',
+              [
+                '-e',
+                `display notification ${JSON.stringify(opt.body ?? '')} with title ${JSON.stringify(opt.title)}${
+                  opt.subtitle
+                    ? ` subtitle ${JSON.stringify(opt.subtitle)}`
+                    : ''
+                }`,
+              ],
+              error => {
+                if (error) {
+                  console.log('macOS notification error', error);
+                }
+
+                opt.doneCallback?.();
+                resolve();
+              },
+            );
           });
 
-          // fallback timeout (guaranteed resolve)
-        });
-        return;
+          return;
+        } else {
+          // existing node-notifier
+
+          await new Promise<void>(resolve => {
+            let resolved = false;
+
+            const finish = () => {
+              if (!resolved) {
+                resolved = true;
+                opt.doneCallback?.();
+                resolve();
+              }
+            };
+
+            setTimeout(finish, (opt.timeoutMs ?? defaultTimeoutMs) + 1000);
+            const cfg = {
+              title: opt.title,
+              message: opt.body ?? '',
+              subtitle: opt.subtitle,
+              sound: false,
+              wait: false,
+              timeout: opt.timeoutMs,
+            } as NotificationCenter.Notification;
+            if (opt.iconPath && fse.existsSync(opt.iconPath)) {
+              cfg.icon = opt.iconPath;
+            }
+
+            notifier.notify(cfg, () => {
+              finish();
+            });
+
+            // fallback timeout (guaranteed resolve)
+          });
+          return;
+        }
       }
 
       // 👉 Linux (DBus - no external deps like notify-send)
