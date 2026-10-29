@@ -415,18 +415,15 @@ ${chalk.bold(`${this.command} ${this.args.join(' ')}`)}`),
   /**
    * @TODO @IN_PROGRESS
    */
-  export const executeUntilEndOrThrow = async ({
-    command,
-    cwd,
-    shell,
-  }: {
-    command: string;
-    cwd: string;
-    shell?: boolean;
-  }): Promise<void> => {
+  export const executeUntilEndOrThrow = async (
+    opt: {
+      command: string;
+    } & ExecProcOptions &
+      ExecProcWaitUntilDoneOrThrow,
+  ): Promise<void> => {
     //#region @backendFunc
-    const child = spawnAsync(command, { cwd, shell });
-    await child.waitUntilDoneOrThrow();
+    const child = spawnAsync(opt.command, opt);
+    await child.waitUntilDoneOrThrow(opt);
     //#endregion
   };
   //#endregion
