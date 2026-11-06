@@ -84,6 +84,7 @@ export interface ProcessStartOptions {
 /**
  * TODO IMPLEMENT
  * start async node process
+ * @deprecated use startAsyncProc
  */
 export const startAsync = async (
   command: string,

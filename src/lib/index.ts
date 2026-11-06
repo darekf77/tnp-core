@@ -16,7 +16,8 @@ export * from './utils-process-logger';
 export * from './utils-terminal';
 export * from './utils-wait-notifier';
 export * from './utils-projects';
-export * from './utils-start-async';
+export * from './start-async'; // deprecated
+export * from './start-async-proc';
 export * from './utils-time';
 export * from './utils-sudo';
 export * from './utils-cli';
