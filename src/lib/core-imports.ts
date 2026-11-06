@@ -143,7 +143,7 @@ let chalk: Chalk = void 0 as typeof chalkBaseType;
 chalk = chalkBase as any;
 //#endregion
 //#region @cjsRemove
-// chalk = chalkMock as any;
+chalk = chalkMock as any;
 //#endregion
 //#endregion
 //#region @browser
