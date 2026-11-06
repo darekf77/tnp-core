@@ -27,7 +27,7 @@ import { UtilsJson } from './utils-json';
 import { UtilsOs } from './utils-os';
 import { UtilsProcess } from './utils-process';
 import { UtilsProgress } from './utils-progress';
-import { ProcessStartOptions, startAsync } from './utils-start-async';
+import { ProcessStartOptions, startAsync } from './start-async';
 import { UtilsTerminal } from './utils-terminal';
 import { UtilsTime } from './utils-time';
 

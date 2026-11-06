@@ -540,70 +540,132 @@ export namespace UtilsProcess {
   //#endregion
 
   //#region utils process / kill process on port
-  export const killProcessOnPort = async (port: number): Promise<boolean> => {
-    if (!port || isNaN(port) || UtilsOs.isBrowser) {
-      Helpers.warn(
-        `[UtilsProcess.killProcessOnPort]: Invalid port number: ${port}`,
-      );
+  export const killProcessOnPort = async (
+    port: number,
+    killParent = false,
+  ): Promise<boolean> => {
+    if (
+      !Number.isInteger(port) ||
+      port < 1 ||
+      port > 65535 ||
+      UtilsOs.isBrowser
+    ) {
+      Helpers.warn(`[UtilsProcess.killProcessOnPort]: Invalid port: ${port}`);
       return false;
     }
 
     //#region @backendFunc
     Helpers.taskStarted(`Killing process on port ${port}...`);
-    return new Promise(resolve => {
-      const platform = process.platform;
 
-      // Cross-platform commands for listing process IDs by port
-      const findCommand =
-        platform === 'win32'
-          ? `netstat -ano | findstr :${port}`
-          : `lsof -i :${port} -sTCP:LISTEN -t || netstat -nlp 2>/dev/null | grep :${port}`;
+    const { execFile } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const execFileAsync = promisify(execFile);
 
-      child_process.exec(findCommand, (err, stdout) => {
-        if (err || !stdout) {
-          return resolve(false); // nothing listening
-        }
+    const platform = process.platform;
 
-        const pids: string[] = [];
-        const lines = stdout.split('\n').filter(Boolean);
+    try {
+      let pids: number[] = [];
 
-        if (platform === 'win32') {
-          // Windows output format -> extract PID (last column)
-          for (const line of lines) {
+      if (platform === 'win32') {
+        const { stdout } = await execFileAsync('netstat', ['-ano']);
+
+        pids = stdout
+          .split(/\r?\n/)
+          .filter(line => {
             const parts = line.trim().split(/\s+/);
-            const pid = parts[parts.length - 1];
-            if (pid && /^\d+$/.test(pid)) {
-              pids.push(pid);
+            return (
+              parts[0]?.toUpperCase() === 'TCP' &&
+              parts[1]?.endsWith(`:${port}`) &&
+              parts[3]?.toUpperCase() === 'LISTENING'
+            );
+          })
+          .map(line => Number(line.trim().split(/\s+/).at(-1)))
+          .filter(pid => Number.isInteger(pid) && pid > 0);
+      } else {
+        const { stdout } = await execFileAsync('lsof', [
+          '-nP',
+          '-t',
+          `-iTCP:${port}`,
+          '-sTCP:LISTEN',
+        ]);
+
+        pids = stdout
+          .trim()
+          .split(/\s+/)
+          .map(Number)
+          .filter(pid => Number.isInteger(pid) && pid > 0);
+      }
+
+      pids = [...new Set(pids)];
+
+      if (pids.length === 0) {
+        return false;
+      }
+
+      for (const pid of pids) {
+        try {
+          if (killParent) {
+            if (platform === 'win32') {
+              // Windows: parent PID via PowerShell
+              const { stdout } = await execFileAsync('powershell', [
+                '-NoProfile',
+                '-Command',
+                `(Get-CimInstance Win32_Process -Filter "ProcessId=${pid}").ParentProcessId`,
+              ]);
+
+              const parentPid = Number(stdout.trim());
+
+              if (
+                Number.isInteger(parentPid) &&
+                parentPid > 1 &&
+                parentPid !== process.pid
+              ) {
+                await execFileAsync('taskkill', [
+                  '/PID',
+                  String(parentPid),
+                  '/T',
+                  '/F',
+                ]);
+              }
+            } else {
+              // macOS / Linux: parent PID via ps
+              const { stdout } = await execFileAsync('ps', [
+                '-p',
+                String(pid),
+                '-o',
+                'ppid=',
+              ]);
+
+              const parentPid = Number(stdout.trim());
+
+              if (
+                Number.isInteger(parentPid) &&
+                parentPid > 1 &&
+                parentPid !== process.pid
+              ) {
+                process.kill(parentPid, 'SIGTERM');
+              }
             }
           }
-        } else {
-          // macOS / Linux: either `lsof` or `netstat`
-          for (const line of lines) {
-            const pidMatch = line.match(/\b\d+\b/);
-            if (pidMatch) {
-              pids.push(pidMatch[0]);
-            }
+
+          // Kill the actual process holding the port
+          if (platform === 'win32') {
+            await execFileAsync('taskkill', ['/PID', String(pid), '/T', '/F']);
+          } else {
+            process.kill(pid, 'SIGKILL');
           }
+        } catch (error) {
+          Helpers.warn(
+            `[UtilsProcess.killProcessOnPort]: Failed to kill PID ${pid}: ${error}`,
+          );
         }
+      }
 
-        if (pids.length === 0) {
-          return resolve(false);
-        }
-
-        // Build kill command
-        const killCommand =
-          platform === 'win32'
-            ? `taskkill /PID ${pids.join(' /PID ')} /F`
-            : `kill -9 ${pids.join(' ')}`;
-
-        child_process.exec(killCommand, killErr => {
-          if (killErr) {
-            return resolve(false);
-          }
-          resolve(true);
-        });
-      });
-    });
+      return true;
+    } catch (error) {
+      Helpers.warn(`[UtilsProcess.killProcessOnPort]: ${error}`);
+      return false;
+    }
     //#endregion
   };
   //#endregion

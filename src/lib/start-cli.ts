@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 
 import { Utils } from './utils';
 import { UtilsOs } from './utils-os';
-import { startAsync } from './utils-start-async';
+import { startAsync } from './start-async';
 import { UtilsTerminal } from './utils-terminal';
 
 // class $Version extends BaseCommandLineFeature<{}> {
