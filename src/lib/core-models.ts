@@ -460,6 +460,10 @@ export namespace CoreModels {
 
   export const TaonHttpErrorCustomProp = '$$taonError$$';
 
+  export const TaonRetryHttpErrorStatus = 503;
+  export const TaonXStatusHeader = 'X-Taon-Status';
+  export const TaonRetryLogicHeader = 'Retry-After';
+
   /**
    * Absolute path to project children;
    */
