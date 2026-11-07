@@ -84,8 +84,6 @@ export namespace CoreModels {
   export type PROGRESS_DATA_TYPE = 'info' | 'error' | 'warning' | 'event';
   //#endregion
 
-  //#region environment name
-
   //#region push type
   export type PUSHTYPE =
     | 'feat'
@@ -463,6 +461,9 @@ export namespace CoreModels {
   export const TaonRetryHttpErrorStatus = 503;
   export const TaonXStatusHeader = 'X-Taon-Status';
   export const TaonRetryLogicHeader = 'Retry-After';
+
+  export const queryExtract = 'queryExtract:';
+  export const queryNormal = 'query:';
 
   /**
    * Absolute path to project children;
