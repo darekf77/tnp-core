@@ -460,8 +460,10 @@ export namespace CoreModels {
 
   export const TaonRetryHttpErrorStatus = 503;
   export const TaonXStatusHeader = 'X-Taon-Status';
-  export const TaonRetryLogicHeader = 'Retry-After';
-
+  export const TaonXRetryCauseHeader = 'X-Taon-Retry-Cause';
+  export const TaonXStatusInitializing = 'initializing';
+  export const TaonRetryLogicHeader = 'X-Taon-Retry-After';
+  export const TaonMaxRetriesLogicHeader = 'X-Taon-Max-Retries';
   export const queryExtract = 'queryExtract:';
   export const queryNormal = 'query:';
 
