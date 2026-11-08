@@ -313,6 +313,7 @@ export const frontendFiles = [
   'pipe.ts',
   'module.ts',
   'service.ts',
+  'registry.ts',
   'store.ts',
   'actions.ts',
   'action.ts',
