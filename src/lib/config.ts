@@ -28,68 +28,6 @@ if (isCloudflareWorker) {
 
 //#endregion
 
-//#region resolve tnp location
-// @LAST RESOLVE TNP LOCATION !!! for each context and RELEASE TNP-CORE
-let dirnameForTnp: string;
-//#region @backend
-dirnameForTnp = crossPlatformPath(path.resolve(DIRNAME_ROOT, '..'));
-
-if (process.platform === 'win32' && dirnameForTnp.endsWith('dist')) {
-  // TODO QUICK_FIX for windows
-  dirnameForTnp = crossPlatformPath(path.dirname(dirnameForTnp));
-}
-
-if (dirnameForTnp.endsWith(`/tnp-core/dist`)) {
-  // local folder with tnp
-  dirnameForTnp = dirnameForTnp.replace(`/tnp-core/dist`, '/tnp');
-} else if (dirnameForTnp.endsWith(`/tnp/node_modules/tnp-core`)) {
-  // local folder with tnp
-  dirnameForTnp = dirnameForTnp.replace(`/tnp/node_modules/tnp-core`, '/tnp');
-} else {
-  // global tnp node_modules being use in firedev case
-  dirnameForTnp = dirnameForTnp.replace(/\/tnp\-core$/, '/tnp');
-}
-global.dirnameForTaon = dirnameForTnp;
-
-if (path.basename(dirnameForTnp) === 'node_modules') {
-  dirnameForTnp = crossPlatformPath(path.join(dirnameForTnp, 'tnp'));
-}
-
-if (
-  frameworkName === 'tnp' &&
-  dirnameForTnp.endsWith('/local_release/npm-lib-and-cli-tool')
-) {
-  dirnameForTnp = dirnameForTnp.replace(
-    '/local_release/npm-lib-and-cli-tool',
-    '',
-  );
-}
-
-if (
-  frameworkName === 'tnp' &&
-  /tnp\/\.(tnp|taon)\/npm-lib-and-cli-tool\/local\/[a-zA-Z0-9_-]+$/.test(
-    dirnameForTnp,
-  )
-) {
-  const match = dirnameForTnp.match(
-    /tnp\/\.(tnp|taon)\/npm-lib-and-cli-tool\/local\/[a-zA-Z0-9_-]+$/,
-  )[0];
-  dirnameForTnp = dirnameForTnp.replace(match, 'tnp');
-}
-
-if (
-  frameworkName === 'tnp' &&
-  dirnameForTnp.endsWith('/tnp/node_modules/tnp-core/lib')
-) {
-  dirnameForTnp = dirnameForTnp.replace(
-    '/tnp/node_modules/tnp-core/lib',
-    '/tnp',
-  );
-}
-
-//#endregion
-//#endregion
-
 //#region config
 
 // console.log({
@@ -98,7 +36,6 @@ if (
 // process.exit(0)
 
 export const config = {
-  dirnameForTnp,
   packagesThat: {
     areTrustedForPatchUpdate,
   },
