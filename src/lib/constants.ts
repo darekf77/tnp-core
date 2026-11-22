@@ -464,7 +464,7 @@ export const notAllowedNames = [
   'browser',
   'websql',
   'compiled',
-  'docs',
+  // 'docs',
   '.vscode',
   'environments',
   'env',
