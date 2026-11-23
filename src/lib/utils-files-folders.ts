@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 import type { Dirent } from 'fs';
 
-import { CopyOptionsSync } from 'fs-extra';
+import type { CopyOptionsSync } from 'fs-extra';
 
 import {
   dotTaonFolder,
@@ -457,251 +457,356 @@ export namespace UtilsFilesFoldersSync {
   };
 
   //#region utils files folders sync / copy
+
   export const copy = (
     sourceDir: string | string[],
     destinationDir: string | string[],
-    options?: {
-      filter?: any;
+    options: {
+      filter?: CopyOptionsSync['filter'];
       overwrite?: boolean;
       recursive?: boolean;
-      asSeparatedFiles?: boolean;
-      asSeparatedFilesAllowNotCopied?: boolean;
-      asSeparatedFilesSymlinkAsFile?: boolean;
+
       /**
-       * folders to omit: example: ['src','node_modules']
-       *
-       * This option works only with omitFoldersBaseFolder
+       * Folders to omit, e.g. ['src', 'node_modules'].
+       * Works with omitFoldersBaseFolder.
        */
       omitFolders?: string[];
-      /**
-       * absolute path for base folder for omitFolder option
-       */
       omitFoldersBaseFolder?: string;
+
       copySymlinksAsFiles?: boolean;
       copySymlinksAsFilesDeleteUnexistedLinksFromSourceFirst?: boolean;
       useTempFolder?: boolean;
       dontAskOnError?: boolean;
-    } & CopyOptionsSync,
+
+      /**
+       * Modify UTF-8 text content while copying.
+       * Source files are never modified.
+       */
+      modifyContent?: (content: string) => string;
+
+      /**
+       * Determines which files should have their content modified.
+       * Receives the original source file path.
+       *
+       * Only used when modifyContent is defined.
+       */
+      modifyContentFilter?: (filePath: string) => boolean;
+    } & CopyOptionsSync = {},
   ): void => {
     //#region @backendFunc
-    if (_.isArray(sourceDir)) {
-      sourceDir = crossPlatformPath(sourceDir);
-    }
-    if (_.isArray(destinationDir)) {
-      destinationDir = crossPlatformPath(destinationDir);
-    }
 
-    // sourceDir = sourceDir ? (sourceDir.replace(/\/$/, '')) : sourceDir;
-    // destinationDir = destinationDir ? (destinationDir.replace(/\/$/, '')) : destinationDir;
-    if (!fse.existsSync(sourceDir)) {
+    const source = _.isArray(sourceDir)
+      ? crossPlatformPath(sourceDir)
+      : sourceDir;
+
+    const destination = _.isArray(destinationDir)
+      ? crossPlatformPath(destinationDir)
+      : destinationDir;
+
+    if (!fse.existsSync(source)) {
       Helpers.warn(
-        `[taon-helper][copy] Source dir doesnt exist: ${sourceDir} for destination: ${destinationDir}`,
+        `[taon-helper][copy] Source doesn't exist: ${source} -> ${destination}`,
       );
       return;
     }
-    if (!fse.existsSync(path.dirname(destinationDir))) {
-      if (Helpers.isUnexistedLink(path.dirname(destinationDir))) {
-        Helpers.removeFileIfExists(path.dirname(destinationDir));
-      }
-      Helpers.mkdirp(path.dirname(destinationDir));
-    }
-    if (!options) {
-      options = {} as any;
-    }
-    if (_.isUndefined(options.overwrite)) {
-      options.overwrite = true;
-    }
-    if (_.isUndefined(options.recursive)) {
-      options.recursive = true;
-    }
 
-    if (_.isUndefined(options.useTempFolder)) {
-      options.useTempFolder = false;
-    }
-
-    if (options.copySymlinksAsFiles) {
-      options['dereference'] = true;
-    }
-
-    if (!options.omitFolders) {
-      options.omitFolders = [];
-    }
-
-    if (options.asSeparatedFilesSymlinkAsFile) {
-      options.asSeparatedFilesSymlinkAsFile = true;
-    }
-
-    // const [srcStat, destStat] = [
-    //   fse.existsSync(sourceDir) && fse.statSync(sourceDir),
-    //   fse.existsSync(destinationDir) && fse.statSync(destinationDir),
-    // ];
-    // if (destStat && destStat.ino && destStat.dev && destStat.ino === srcStat.ino && destStat.dev === srcStat.dev) {
-    //   Helpers.warn(`[taon-helper][copy] Same location stats.. Trying to copy same source and destination:
-    //   from: ${sourceDir}
-    //   to: ${destinationDir}
-    //   `);
-    //   return;
-    // }
     if (
-      _.isArray(options.omitFolders) &&
-      options.omitFolders.length >= 1 &&
-      _.isNil(options.filter) &&
-      _.isString(options.omitFoldersBaseFolder) &&
-      path.isAbsolute(options.omitFoldersBaseFolder)
+      crossPlatformPath(path.resolve(source)) ===
+      crossPlatformPath(path.resolve(destination))
     ) {
-      options.filter = filterDontCopy(
-        options.omitFolders,
-        options.omitFoldersBaseFolder,
+      Helpers.warn(
+        `[taon-helper][copy] Source and destination are the same: ${source}`,
       );
+      return;
     }
 
-    if (options.copySymlinksAsFilesDeleteUnexistedLinksFromSourceFirst) {
+    const {
+      modifyContent,
+      modifyContentFilter,
+      copySymlinksAsFiles,
+      copySymlinksAsFilesDeleteUnexistedLinksFromSourceFirst,
+      useTempFolder,
+      dontAskOnError,
+      omitFolders = [],
+      omitFoldersBaseFolder,
+      recursive = true,
+      ...copyOptions
+    } = options;
+
+    const fseOptions: CopyOptionsSync = {
+      overwrite: true,
+      ...copyOptions,
+      ...(copySymlinksAsFiles ? { dereference: true } : {}),
+    };
+
+    if (
+      omitFolders.length > 0 &&
+      !fseOptions.filter &&
+      omitFoldersBaseFolder &&
+      path.isAbsolute(omitFoldersBaseFolder)
+    ) {
+      fseOptions.filter = filterDontCopy(omitFolders, omitFoldersBaseFolder);
+    }
+
+    const ensureParent = (target: string): void => {
+      const parent = path.dirname(target);
+
+      if (Helpers.isUnexistedLink(parent)) {
+        Helpers.removeFileIfExists(parent);
+      }
+
+      fse.ensureDirSync(parent);
+    };
+
+    const shouldModify = (sourceFile: string): boolean => {
+      return (
+        !!modifyContent &&
+        (!modifyContentFilter || modifyContentFilter(sourceFile))
+      );
+    };
+
+    const isBinary = (buffer: Buffer): boolean => {
+      return buffer.includes(0);
+    };
+
+    /**
+     * Copy a file, optionally modifying its content.
+     */
+    const copyRegularFile = (
+      from: string,
+      to: string,
+      originalSource: string,
+    ): void => {
+      if (fse.pathExistsSync(to) && fseOptions.overwrite === false) {
+        if (fseOptions.errorOnExist) {
+          throw new Error(`Destination already exists: ${to}`);
+        }
+        return;
+      }
+
+      ensureParent(to);
+
+      if (!shouldModify(originalSource)) {
+        fse.copySync(from, to, {
+          ...fseOptions,
+          filter: undefined,
+        });
+        return;
+      }
+
+      const buffer = fse.readFileSync(from);
+
+      if (isBinary(buffer)) {
+        fse.copySync(from, to, {
+          ...fseOptions,
+          filter: undefined,
+        });
+        return;
+      }
+
+      const original = buffer.toString('utf8');
+      const modified = modifyContent!(original);
+
+      if (typeof modified !== 'string') {
+        throw new TypeError(
+          `modifyContent must return a string: ${originalSource}`,
+        );
+      }
+
+      fse.writeFileSync(to, modified, 'utf8');
+
+      const stat = fse.statSync(from);
+      fse.chmodSync(to, stat.mode);
+
+      if (fseOptions.preserveTimestamps) {
+        fse.utimesSync(to, stat.atime, stat.mtime);
+      }
+    };
+
+    /**
+     * Recursively copy files while applying optional transformations.
+     */
+    const copyRecursive = (
+      from: string,
+      to: string,
+      originalSource: string,
+      isRoot = false,
+    ): void => {
+      if (fseOptions.filter && !fseOptions.filter(from, to)) {
+        return;
+      }
+
+      const stat = fse.lstatSync(from);
+
+      if (stat.isSymbolicLink()) {
+        if (fseOptions.dereference) {
+          const realSource = fse.realpathSync(from);
+
+          copyRecursive(realSource, to, originalSource, isRoot);
+        } else {
+          ensureParent(to);
+
+          fse.copySync(from, to, {
+            ...fseOptions,
+            filter: undefined,
+          });
+        }
+
+        return;
+      }
+
+      if (stat.isDirectory()) {
+        if (!isRoot && omitFolders.includes(path.basename(originalSource))) {
+          return;
+        }
+
+        fse.ensureDirSync(to);
+
+        if (!recursive) {
+          return;
+        }
+
+        for (const entry of fse.readdirSync(from)) {
+          copyRecursive(
+            path.join(from, entry),
+            path.join(to, entry),
+            path.join(originalSource, entry),
+          );
+        }
+
+        return;
+      }
+
+      if (stat.isFile()) {
+        copyRegularFile(from, to, originalSource);
+      }
+    };
+
+    /**
+     * Remove broken symlinks from the source before copying.
+     */
+    const removeBrokenSourceSymlinks = (): void => {
+      if (!copySymlinksAsFilesDeleteUnexistedLinksFromSourceFirst) {
+        return;
+      }
+
       Helpers.taskDone('Deleting unexisted symlinks from source before copy');
-      const files = Helpers.getFilesFrom(sourceDir, {
+
+      const files = UtilsFilesFoldersSync.getFilesFrom(source, {
         recursive: true,
         followSymlinks: false,
-      }).filter(f => Helpers.isUnexistedLink(f));
-      for (let index = 0; index < files.length; index++) {
-        const file = files[index];
+      });
+
+      for (const file of files) {
+        if (!Helpers.isUnexistedLink(file)) {
+          continue;
+        }
+
         Helpers.logWarn(`Removing link: ${file}`);
+
         try {
           fse.unlinkSync(file);
-        } catch (error) {}
-      }
-      Helpers.taskDone(
-        'Deleting unexisted symlinks from source before copy done',
-      );
-    }
-
-    if (
-      crossPlatformPath(sourceDir) === crossPlatformPath(destinationDir) ||
-      crossPlatformPath(path.resolve(sourceDir)) ===
-        crossPlatformPath(path.resolve(destinationDir))
-    ) {
-      Helpers.warn(`[taon-helper][copy] Trying to copy same source and destination
-      from: ${sourceDir}
-      to: ${destinationDir}
-      `);
-    } else {
-      // Helpers.warn('filter', _.isFunction(options.filter));
-      // Helpers.warn('sourceDir', sourceDir);
-      // Helpers.warn('destinationDir', destinationDir);
-      // Helpers.log(JSON.stringify(options))
-      // try {
-
-      if (options.useTempFolder) {
-        let tempDestination = `${os.platform() === 'darwin' ? '/private/tmp' : '/tmp'}/${_.camelCase(destinationDir)}`;
-        Helpers.removeFolderIfExists(tempDestination);
-        fse.copySync(sourceDir, tempDestination, options);
-        fse.copySync(tempDestination, destinationDir, options);
-      } else {
-        if (
-          crossPlatformPath(sourceDir) ===
-            crossPlatformPath(path.resolve(sourceDir)) &&
-          Helpers.isExistedSymlink(sourceDir) &&
-          !Helpers.exists(fse.readlinkSync(sourceDir))
-        ) {
-          Helpers.warn(`[taon-helpers] Not copying empty link from: ${sourceDir}
-          `);
-        } else {
-          const copyFn = (): void => {
-            try {
-              if (options.asSeparatedFiles) {
-                const copyRecFn = (cwdForFiles: string): void => {
-                  const files = getFilesFrom(cwdForFiles, {
-                    omitPatterns: options.omitFolders,
-                  });
-                  for (let index = 0; index < files.length; index++) {
-                    const from = files[index];
-                    const to = from.replace(sourceDir, destinationDir);
-
-                    if (Helpers.isFolder(from)) {
-                      if (
-                        options.omitFolders.includes(
-                          path.basename(path.dirname(from)),
-                        ) ||
-                        options.omitFolders.includes(path.basename(from))
-                      ) {
-                        continue;
-                      } else {
-                        copyRecFn(from);
-                      }
-                    } else {
-                      const copyFileFn = () => {
-                        if (
-                          !options.asSeparatedFilesSymlinkAsFile &&
-                          Helpers.isExistedSymlink(from)
-                        ) {
-                          Helpers.createSymLink(from, to);
-                        } else {
-                          copyFile(from, to);
-                        }
-                      };
-                      if (options.asSeparatedFilesAllowNotCopied) {
-                        try {
-                          copyFileFn();
-                        } catch (e) {}
-                      } else {
-                        copyFileFn();
-                      }
-                    }
-                  }
-                };
-                copyRecFn(sourceDir);
-              } else {
-                fse.copySync(sourceDir, destinationDir, options);
-              }
-            } catch (error) {
-              const exitOnError = global['taonNonInteractive'];
-              Helpers.log(error);
-              if (!options!.dontAskOnError) {
-                console.trace(`[taon-helper] Not able to copy folder
-
-source: ${sourceDir}
-dest: ${destinationDir}
-
-                  `);
-                Helpers.error(
-                  `[taon-helper] Not able to copy folder:
-                from: ${crossPlatformPath(sourceDir)}
-                to: ${crossPlatformPath(destinationDir)}
-                options: ${json5.stringify(options)}
-                error: ${error?.message}
-                `,
-                  !exitOnError,
-                );
-
-                UtilsTerminal.pressKeyAndContinueSync(
-                  `Press any key to repeat copy action...`,
-                );
-              }
-              copyFn();
-            }
-          };
-          if (process.platform === 'win32') {
-            while (true) {
-              try {
-                copyFn();
-                break;
-              } catch (error) {
-                Helpers.warn(`WARNING not able to copy .. trying again`);
-                Helpers.sleep(1);
-                continue;
-              }
-            }
-          } else {
-            copyFn();
-          }
+        } catch {
+          // Preserve existing behavior.
         }
       }
 
-      // } catch (error) {
-      //   console.trace(error);
-      //   process.exit(0)
-      // }
+      Helpers.taskDone(
+        'Deleting unexisted symlinks from source before copy done',
+      );
+    };
+
+    /**
+     * Use native fs-extra copying unless content transformation is needed.
+     */
+    const executeCopy = (
+      from: string,
+      to: string,
+      originalSource: string,
+    ): void => {
+      if (modifyContent) {
+        copyRecursive(from, to, originalSource, true);
+      } else {
+        fse.copySync(from, to, fseOptions);
+      }
+    };
+
+    /**
+     * Copy with optional temporary directory and retry handling.
+     */
+    const copyWithRetry = (): void => {
+      while (true) {
+        try {
+          if (useTempFolder) {
+            const tempDestination = path.join(
+              os.tmpdir(),
+              _.camelCase(destination),
+            );
+
+            Helpers.removeFolderIfExists(tempDestination);
+
+            try {
+              fse.copySync(source, tempDestination, fseOptions);
+
+              executeCopy(tempDestination, destination, source);
+            } finally {
+              Helpers.removeFolderIfExists(tempDestination);
+            }
+          } else {
+            executeCopy(source, destination, source);
+          }
+
+          return;
+        } catch (error) {
+          const exitOnError = global['taonNonInteractive'];
+
+          Helpers.log(error);
+
+          if (dontAskOnError || exitOnError) {
+            throw error;
+          }
+
+          console.trace(
+            `[taon-helper] Not able to copy:
+source: ${source}
+destination: ${destination}`,
+          );
+
+          Helpers.error(
+            `[taon-helper] Not able to copy:
+from: ${crossPlatformPath(source)}
+to: ${crossPlatformPath(destination)}
+options: ${json5.stringify({
+              ...options,
+              modifyContent: modifyContent ? '[Function]' : undefined,
+              modifyContentFilter: modifyContentFilter
+                ? '[Function]'
+                : undefined,
+            })}
+error: ${(error as Error)?.message}`,
+            !exitOnError,
+          );
+
+          UtilsTerminal.pressKeyAndContinueSync(
+            'Press any key to repeat copy action...',
+          );
+        }
+      }
+    };
+
+    ensureParent(destination);
+    removeBrokenSourceSymlinks();
+
+    if (Helpers.isUnexistedLink(source)) {
+      Helpers.warn(`[taon-helper] Not copying broken symlink from: ${source}`);
+      return;
     }
+
+    copyWithRetry();
+
     //#endregion
   };
+
   //#endregion
 
   //#region utils files folders sync / filter dont copy
