@@ -17,6 +17,7 @@ export namespace CoreModels {
   //#region npm install options
   export interface NpmInstallOptions {
     NODE_TLS_REJECT_UNAUTHORIZED?: boolean;
+    onnxruntimeNodeInstallCudaSkip?: boolean;
     pkg?: CoreModels.Package;
     /**
      * false by default
